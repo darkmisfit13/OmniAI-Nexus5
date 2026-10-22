@@ -22,7 +22,8 @@ import {
   MessageSquare,
   Bot,
   Cloud,
-  Shapes
+  Shapes,
+  Clapperboard
 } from 'lucide-react';
 import { StudioId } from './OmniStudiosView';
 import { HoloOrb } from './HoloOrb';
@@ -56,6 +57,7 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
     { id: 'motion', name: 'OmniMotion', tag: 'CapCut Video Studio', icon: Video, color: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
     { id: 'beat', name: 'OmniBeat', tag: 'Freebeat Music Video', icon: Film, color: 'text-purple-400 bg-purple-500/20 border-purple-500/30' },
     { id: 'wave', name: 'OmniWave', tag: 'Suno Song Generator', icon: Music, color: 'text-amber-400 bg-amber-500/20 border-amber-500/30' },
+    { id: 'storyboard', name: 'Omni Storyboard', tag: 'Scene & Face Anchor', icon: Clapperboard, color: 'text-[#00ffcc] bg-[#00ffcc]/15 border-[#00ffcc]/35' },
     { id: 'forge', name: 'OmniForge', tag: 'Three-State Fluid Mobile Builder', icon: Hammer, color: 'text-indigo-400 bg-indigo-500/20 border-indigo-500/30' },
     { id: 'vector', name: 'Vector and Brand Lab', tag: 'VTracer & Infinite SVG', icon: Shapes, color: 'text-[#00ffcc] bg-[#00ffcc]/15 border-[#00ffcc]/35' },
     { id: 'code', name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code, color: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' },

@@ -15,7 +15,9 @@ import {
   Lock,
   Sparkles,
   X,
-  FolderLock
+  FolderLock,
+  Undo2,
+  Trash2
 } from 'lucide-react';
 import { 
   auth, 
@@ -83,6 +85,50 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
   const [quickNoteBody, setQuickNoteBody] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Workspace Undo Stack for 3-finger swipe left gesture
+  const [undoStack, setUndoStack] = useState<{ id: string; desc: string; runUndo: () => void }[]>([]);
+
+  // Listen for 3-finger swipe left undo event
+  useEffect(() => {
+    const handleWorkspaceUndo = () => {
+      if (undoStack.length > 0) {
+        const [lastAction, ...rest] = undoStack;
+        lastAction.runUndo();
+        setUndoStack(rest);
+
+        // Tactile vibration click
+        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([20, 40, 20]);
+          } catch {
+            try { navigator.vibrate(25); } catch {}
+          }
+        }
+
+        setToastMessage(`↩️ Undid: ${lastAction.desc}`);
+        setTimeout(() => setToastMessage(null), 3200);
+      } else {
+        try {
+          document.execCommand('undo');
+        } catch {}
+
+        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([20, 40, 20]);
+          } catch {
+            try { navigator.vibrate(25); } catch {}
+          }
+        }
+
+        setToastMessage('↩️ Workspace Undo executed (No actions in history stack)');
+        setTimeout(() => setToastMessage(null), 2500);
+      }
+    };
+
+    window.addEventListener('omni_workspace_undo', handleWorkspaceUndo);
+    return () => window.removeEventListener('omni_workspace_undo', handleWorkspaceUndo);
+  }, [undoStack, keepNotes]);
+
   // Synchronize Note directly with Global Vault & LocalStorage
   const syncNoteToVault = (title: string, body: string) => {
     const cleanTitle = title.trim() || 'Untitled Scratchpad';
@@ -133,8 +179,9 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
     if (!newNoteTitle.trim() && !newNoteBody.trim()) return;
     const title = newNoteTitle.trim() || 'Untitled Note';
     const body = newNoteBody.trim();
+    const newNoteId = `keep_${Date.now()}`;
     const newNote: KeepNoteItem = {
-      id: `keep_${Date.now()}`,
+      id: newNoteId,
       title,
       body,
       isPinned: true,
@@ -146,6 +193,25 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
     try {
       localStorage.setItem('omni_keep_notes', JSON.stringify(updated));
     } catch {}
+
+    // Register undo action for 3-finger swipe left
+    setUndoStack((prev) => [
+      {
+        id: newNoteId,
+        desc: `Created Note "${title}"`,
+        runUndo: () => {
+          setKeepNotes((curr) => {
+            const reverted = curr.filter((n) => n.id !== newNoteId);
+            try {
+              localStorage.setItem('omni_keep_notes', JSON.stringify(reverted));
+            } catch {}
+            return reverted;
+          });
+        },
+      },
+      ...prev,
+    ]);
+
     syncNoteToVault(title, body);
     setNewNoteTitle('');
     setNewNoteBody('');
@@ -156,8 +222,9 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
     if (!quickNoteTitle.trim() && !quickNoteBody.trim()) return;
     const title = quickNoteTitle.trim() || 'Quick Scratchpad';
     const body = quickNoteBody.trim();
+    const newNoteId = `keep_${Date.now()}`;
     const newNote: KeepNoteItem = {
-      id: `keep_${Date.now()}`,
+      id: newNoteId,
       title,
       body,
       isPinned: true,
@@ -169,10 +236,60 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
     try {
       localStorage.setItem('omni_keep_notes', JSON.stringify(updated));
     } catch {}
+
+    // Register undo action for 3-finger swipe left
+    setUndoStack((prev) => [
+      {
+        id: newNoteId,
+        desc: `Saved Scratchpad "${title}"`,
+        runUndo: () => {
+          setKeepNotes((curr) => {
+            const reverted = curr.filter((n) => n.id !== newNoteId);
+            try {
+              localStorage.setItem('omni_keep_notes', JSON.stringify(reverted));
+            } catch {}
+            return reverted;
+          });
+        },
+      },
+      ...prev,
+    ]);
+
     syncNoteToVault(title, body);
     setQuickNoteTitle('');
     setQuickNoteBody('');
     setShowQuickScratchpad(false);
+  };
+
+  const handleDeleteKeepNote = (id: string) => {
+    const noteToDelete = keepNotes.find((n) => n.id === id);
+    if (!noteToDelete) return;
+    const updated = keepNotes.filter((n) => n.id !== id);
+    setKeepNotes(updated);
+    try {
+      localStorage.setItem('omni_keep_notes', JSON.stringify(updated));
+    } catch {}
+
+    // Register undo action
+    setUndoStack((prev) => [
+      {
+        id,
+        desc: `Deleted Note "${noteToDelete.title}"`,
+        runUndo: () => {
+          setKeepNotes((curr) => {
+            const restored = [noteToDelete, ...curr.filter((n) => n.id !== id)];
+            try {
+              localStorage.setItem('omni_keep_notes', JSON.stringify(restored));
+            } catch {}
+            return restored;
+          });
+        },
+      },
+      ...prev,
+    ]);
+
+    setToastMessage(`🗑️ Deleted "${noteToDelete.title}". 3-Finger swipe left to undo.`);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   useEffect(() => {
@@ -245,8 +362,55 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
     }
   };
 
+  // 3-Finger touch detection on WorkspaceHub container
+  const touch3StartX = React.useRef(0);
+  const touch3StartY = React.useRef(0);
+  const touch3LastX = React.useRef(0);
+  const touch3LastY = React.useRef(0);
+  const touch3StartTime = React.useRef(0);
+  const is3Swiping = React.useRef(false);
+
+  const handleContainerTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 3) {
+      const avgX = (e.touches[0].clientX + e.touches[1].clientX + e.touches[2].clientX) / 3;
+      const avgY = (e.touches[0].clientY + e.touches[1].clientY + e.touches[2].clientY) / 3;
+      touch3StartX.current = avgX;
+      touch3StartY.current = avgY;
+      touch3LastX.current = avgX;
+      touch3LastY.current = avgY;
+      touch3StartTime.current = Date.now();
+      is3Swiping.current = true;
+    } else {
+      is3Swiping.current = false;
+    }
+  };
+
+  const handleContainerTouchMove = (e: React.TouchEvent) => {
+    if (is3Swiping.current && e.touches.length === 3) {
+      touch3LastX.current = (e.touches[0].clientX + e.touches[1].clientX + e.touches[2].clientX) / 3;
+      touch3LastY.current = (e.touches[0].clientY + e.touches[1].clientY + e.touches[2].clientY) / 3;
+    }
+  };
+
+  const handleContainerTouchEnd = (e: React.TouchEvent) => {
+    if (is3Swiping.current) {
+      is3Swiping.current = false;
+      const deltaX = touch3LastX.current - touch3StartX.current;
+      const deltaY = touch3LastY.current - touch3StartY.current;
+      const elapsed = Date.now() - touch3StartTime.current;
+      if (deltaX < -35 && Math.abs(deltaY) <= 120 && elapsed <= 1000) {
+        window.dispatchEvent(new CustomEvent('omni_workspace_undo', { detail: { timestamp: Date.now() } }));
+      }
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full bg-[#0b0a14] text-[#e8e6f2] overflow-y-auto font-mono">
+    <div 
+      onTouchStart={handleContainerTouchStart}
+      onTouchMove={handleContainerTouchMove}
+      onTouchEnd={handleContainerTouchEnd}
+      className="flex flex-col h-full bg-[#0b0a14] text-[#e8e6f2] overflow-y-auto font-mono"
+    >
       {/* 1. GOOGLE WORKSPACE AUTHENTICATION HEADER */}
       <div className="p-3.5 bg-[#14121f] border-b border-[#211d34] flex items-center justify-between">
         {currentUser ? (
@@ -526,12 +690,34 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                 <CheckSquare className="w-4 h-4 text-[#00f0ff]" />
                 Keep Notes & Ledgers
               </span>
-              <button
-                onClick={() => setShowAddNote(!showAddNote)}
-                className="px-2.5 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-xs font-bold hover:bg-[#00f0ff] hover:text-black transition"
-              >
-                {showAddNote ? 'Cancel' : '+ New Note'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent('omni_workspace_undo', {
+                        detail: { timestamp: Date.now() },
+                      })
+                    );
+                  }}
+                  className="px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-700 hover:border-[#00ffcc] text-[#00ffcc] text-[11px] font-bold transition flex items-center gap-1 shadow-sm active:scale-95"
+                  title="3-Finger Swipe Left to Undo (or click to revert)"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                  <span>Undo</span>
+                  {undoStack.length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#00ffcc] text-black text-[9px] font-bold flex items-center justify-center">
+                      {undoStack.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowAddNote(!showAddNote)}
+                  className="px-2.5 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-xs font-bold hover:bg-[#00f0ff] hover:text-black transition"
+                >
+                  {showAddNote ? 'Cancel' : '+ New Note'}
+                </button>
+              </div>
             </div>
 
             {showAddNote && (
@@ -563,13 +749,23 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
               {keepNotes.map((note) => (
                 <div
                   key={note.id}
-                  className="p-3 rounded-xl bg-[#14121f] border border-[#211d34] hover:border-[#00f0ff]/40 transition space-y-2"
+                  className="p-3 rounded-xl bg-[#14121f] border border-[#211d34] hover:border-[#00f0ff]/40 transition space-y-2 group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#00f0ff]">
                       {note.title}
                     </span>
-                    <span className="text-[10px] text-[#9490ac]">{note.updatedAt}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-[#9490ac]">{note.updatedAt}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteKeepNote(note.id)}
+                        className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-950/40 transition"
+                        title="Delete note (Swipe 3 fingers left to undo)"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-xs text-[#e8e6f2] whitespace-pre-line leading-relaxed text-[11px]">
                     {note.body}

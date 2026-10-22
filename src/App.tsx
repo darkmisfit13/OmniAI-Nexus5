@@ -183,6 +183,88 @@ export default function App() {
   // Phone frame simulation toggle for desktop screens
   const [phoneFrameMode, setPhoneFrameMode] = useState(true);
 
+  // 3-Finger Swipe Left Undo Toast Feedback
+  const [undoToast, setUndoToast] = useState<{ message: string; timestamp: number } | null>(null);
+
+  // Global three-finger swipe left gesture handler for Workspace Undo
+  const triggerWorkspaceUndo = useCallback(() => {
+    // 1. Native Vibration API for tactile haptic feedback click
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([20, 40, 20]);
+      } catch {
+        try {
+          navigator.vibrate(25);
+        } catch {}
+      }
+    }
+
+    // 2. Dispatch custom event to notify WorkspaceHub and active editors
+    window.dispatchEvent(
+      new CustomEvent('omni_workspace_undo', {
+        detail: { timestamp: Date.now() },
+      })
+    );
+
+    // 3. Fallback native document undo
+    try {
+      document.execCommand('undo');
+    } catch {}
+
+    // 4. Visual confirmation toast
+    setUndoToast({
+      message: '↩️ 3-Finger Gesture: Undid last action in workspace',
+      timestamp: Date.now(),
+    });
+    setTimeout(() => {
+      setUndoToast((prev) => (prev && Date.now() - prev.timestamp >= 2400 ? null : prev));
+    }, 2500);
+  }, []);
+
+  // Global window listener for 3-finger swipe left gesture
+  useEffect(() => {
+    let threeStartX = 0;
+    let threeStartY = 0;
+    let threeStartTime = 0;
+    let isTrackingThreeFingers = false;
+
+    const handleGlobalTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 3) {
+        threeStartX = (e.touches[0].clientX + e.touches[1].clientX + e.touches[2].clientX) / 3;
+        threeStartY = (e.touches[0].clientY + e.touches[1].clientY + e.touches[2].clientY) / 3;
+        threeStartTime = Date.now();
+        isTrackingThreeFingers = true;
+      } else {
+        isTrackingThreeFingers = false;
+      }
+    };
+
+    const handleGlobalTouchEnd = (e: TouchEvent) => {
+      if (isTrackingThreeFingers) {
+        isTrackingThreeFingers = false;
+        // Check changedTouches
+        if (e.changedTouches.length > 0) {
+          const endX = e.changedTouches[0].clientX;
+          const endY = e.changedTouches[0].clientY;
+          const deltaX = endX - threeStartX;
+          const deltaY = endY - threeStartY;
+          const elapsed = Date.now() - threeStartTime;
+
+          if (deltaX < -35 && Math.abs(deltaY) <= 120 && elapsed <= 1000) {
+            triggerWorkspaceUndo();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
+    window.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', handleGlobalTouchStart);
+      window.removeEventListener('touchend', handleGlobalTouchEnd);
+    };
+  }, [triggerWorkspaceUndo]);
+
   // Swipe-to-switch navigation between primary mobile views (Keyboard <-> Vision <-> Workspace)
   const { swipeHandlers, isPrimaryTab, canSwipeLeft, canSwipeRight, nextTabName, prevTabName } = useSwipeTabs({
     activeTab,
@@ -192,6 +274,7 @@ export default function App() {
         setIsKeyboardCollapsed(false);
       }
     },
+    onThreeFingerSwipeLeft: triggerWorkspaceUndo,
     enabled: activeTab === 'keyboard' || activeTab === 'vision' || activeTab === 'workspace',
   });
 
@@ -1245,6 +1328,16 @@ export default function App() {
           currentStudioName={activeTab === 'studios' ? (studioMeta[selectedStudio]?.name || 'Studio') : undefined}
           currentStudioTag={activeTab === 'studios' ? (studioMeta[selectedStudio]?.tag || '') : undefined}
         />
+
+        {/* 3-Finger Gesture Undo Confirmation Toast */}
+        {undoToast && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/90 border border-[#00ffcc] text-[#00ffcc] text-[11px] font-mono shadow-[0_0_20px_rgba(0,255,204,0.35)] backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-[#00ffcc] animate-ping" />
+              <span>{undoToast.message}</span>
+            </div>
+          </div>
+        )}
 
         {/* 5. NATIVE MOBILE HOME INDICATOR BAR */}
         <div className={`w-full flex justify-center shrink-0 ${

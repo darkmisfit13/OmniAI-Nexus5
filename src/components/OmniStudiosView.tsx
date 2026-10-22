@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   Sparkles,
   Layers,
-  Shapes
+  Shapes,
+  Clapperboard
 } from 'lucide-react';
 
 // Import all dedicated studios
@@ -36,11 +37,13 @@ import { OmniArchitectStudio } from './studios/OmniArchitectStudio';
 import { OmniAutomationsStudio } from './studios/OmniAutomationsStudio';
 import { OmniConnectCatalog } from './studios/OmniConnectCatalog';
 import { OmniVectorBrandLab } from './studios/OmniVectorBrandLab';
+import { OmniStoryboardStudio } from './studios/OmniStoryboardStudio';
 
 export type StudioId = 
   | 'motion' 
   | 'beat' 
   | 'wave' 
+  | 'storyboard'
   | 'code' 
   | 'forge' 
   | 'vector'
@@ -69,6 +72,7 @@ export const studioMeta: Record<StudioId, { name: string; tag: string; icon: any
   motion: { name: 'OmniMotion', tag: 'CapCut Video Editor', icon: Video },
   beat: { name: 'OmniBeat', tag: 'Freebeat Music Video', icon: Film },
   wave: { name: 'OmniWave', tag: 'Suno Song Creator', icon: Music },
+  storyboard: { name: 'Omni Storyboard', tag: 'Scene & Face Anchor', icon: Clapperboard },
   forge: { name: 'OmniForge', tag: 'Three-State Fluid Mobile Builder', icon: Hammer },
   vector: { name: 'Vector and Brand Lab', tag: 'VTracer & Infinite SVG', icon: Shapes },
   code: { name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code },
@@ -163,6 +167,12 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
         )}
         {selectedStudio === 'beat' && <OmniBeatStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'wave' && <OmniWaveStudio onSaveToVault={onSaveToVault} />}
+        {selectedStudio === 'storyboard' && (
+          <OmniStoryboardStudio 
+            onSelectStudio={onSelectStudio} 
+            onSaveToVault={onSaveToVault} 
+          />
+        )}
         {selectedStudio === 'code' && <OmniCodeStudio />}
         {selectedStudio === 'forge' && <OmniForgeStudio />}
         {selectedStudio === 'vector' && <OmniVectorBrandLab onSaveToVault={onSaveToVault} />}
