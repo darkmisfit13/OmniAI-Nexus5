@@ -99,9 +99,12 @@ export const OmniForgeStudio: React.FC = () => {
     { label: '🛡️ Add Auth Guard', prompt: 'Wrap profile routes with biometric authentication state.' },
   ];
 
-  // Dragging logic for fluid divider handle
+  // Dragging logic for fluid divider handle (supporting pointer and touch events)
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
     setIsDragging(true);
   };
 
@@ -118,6 +121,24 @@ export const OmniForgeStudio: React.FC = () => {
       setIsDragging(false);
     }
   }, [isDragging]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const relativeY = touch.clientY - rect.top;
+    const newRatio = Math.max(0.15, Math.min(0.95, relativeY / rect.height));
+    setCanvasRatio(newRatio);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   useEffect(() => {
     if (isDragging) {
@@ -353,10 +374,8 @@ export const OmniForgeStudio: React.FC = () => {
       */}
       <div 
         ref={containerRef}
-        className={`w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative text-zinc-100 flex flex-col rounded-[2.5rem] border shadow-2xl transition-colors duration-200 ${
-          isLightMode 
-            ? 'bg-[#ffffff] text-[#1e1b4b] border-slate-300' 
-            : 'bg-[#090a0f] text-[#e8e6f2] border-[#211d34]'
+        className={`w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative bg-[#090a0f] text-zinc-100 flex flex-col rounded-3xl border border-zinc-800 shadow-2xl transition-colors duration-200 ${
+          isLightMode ? 'bg-[#ffffff] text-zinc-900 border-zinc-300' : 'bg-[#090a0f] text-zinc-100 border-zinc-800'
         }`}
         style={{
           boxShadow: isLightMode 
@@ -366,18 +385,18 @@ export const OmniForgeStudio: React.FC = () => {
       >
 
         {/* 1. TOP HEADER & MODE CONTROLLER BAR */}
-        <div className={`h-11 px-3 border-b flex items-center justify-between shrink-0 z-30 transition-colors ${
+        <div className={`h-10 px-3 border-b border-zinc-800 flex items-center justify-between shrink-0 z-30 transition-colors ${
           isLightMode 
-            ? 'bg-[#f8f9fc] border-slate-200' 
-            : 'bg-[#14121f] border-[#211d34]'
+            ? 'bg-zinc-100 border-zinc-200' 
+            : 'bg-[#121318] border-zinc-800'
         }`}>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#6c63ff] flex items-center justify-center text-white shadow-sm font-black">
-              <Hammer className="w-3.5 h-3.5" />
+            <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center text-white shadow-sm font-black">
+              <Hammer className="w-3 h-3" />
             </div>
             <div>
               <span className="text-xs font-black tracking-wider font-mono">OMNIFORGE</span>
-              <span className="text-[9px] font-mono text-[#9490ac] ml-1.5 hidden xs:inline">
+              <span className="text-[9px] font-mono text-zinc-400 ml-1.5 hidden xs:inline">
                 FLUID WORKSPACE
               </span>
             </div>
@@ -385,14 +404,14 @@ export const OmniForgeStudio: React.FC = () => {
 
           <div className="flex items-center gap-1">
             {/* Quick State Buttons for convenience */}
-            <div className={`flex items-center rounded-md p-0.5 border ${isLightMode ? 'bg-slate-200/80 border-slate-300' : 'bg-[#0b0a14] border-[#211d34]'}`}>
+            <div className={`flex items-center rounded-md p-0.5 border border-zinc-800 ${isLightMode ? 'bg-zinc-200 border-zinc-300' : 'bg-[#090a0f]'}`}>
               <button
                 type="button"
                 onClick={setToPromptFocus}
                 className={`p-1 rounded text-[10px] font-mono transition ${
                   isPromptFocus 
-                    ? 'bg-[#6c63ff] text-white font-bold' 
-                    : isLightMode ? 'text-slate-600 hover:text-black' : 'text-[#9490ac] hover:text-white'
+                    ? 'bg-indigo-600 text-white font-bold' 
+                    : isLightMode ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'
                 }`}
                 title="Prompt Focus (70% Chat, 30% Canvas Thumbnail)"
               >
@@ -403,8 +422,8 @@ export const OmniForgeStudio: React.FC = () => {
                 onClick={setToSplitView}
                 className={`p-1 rounded text-[10px] font-mono transition ${
                   isSplitView 
-                    ? 'bg-[#6c63ff] text-white font-bold' 
-                    : isLightMode ? 'text-slate-600 hover:text-black' : 'text-[#9490ac] hover:text-white'
+                    ? 'bg-indigo-600 text-white font-bold' 
+                    : isLightMode ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'
                 }`}
                 title="Balanced Split View (50% Canvas, 50% Chat)"
               >
@@ -415,8 +434,8 @@ export const OmniForgeStudio: React.FC = () => {
                 onClick={setToCanvasFocus}
                 className={`p-1 rounded text-[10px] font-mono transition ${
                   isCanvasFocus 
-                    ? 'bg-[#6c63ff] text-white font-bold' 
-                    : isLightMode ? 'text-slate-600 hover:text-black' : 'text-[#9490ac] hover:text-white'
+                    ? 'bg-indigo-600 text-white font-bold' 
+                    : isLightMode ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'
                 }`}
                 title="Canvas Focus (100% Canvas, Minimized Chat Pill)"
               >
@@ -428,14 +447,10 @@ export const OmniForgeStudio: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsLightMode(!isLightMode)}
-              className={`p-1.5 rounded-md border text-xs transition ${
-                isLightMode 
-                  ? 'bg-amber-100 border-amber-300 text-amber-700' 
-                  : 'bg-[#0b0a14] border-[#211d34] text-[#8b7fff] hover:border-[#6c63ff]'
-              }`}
+              className="p-1.5 rounded-md border border-zinc-800 text-xs transition text-zinc-400 hover:text-white"
               title="Toggle Light / Dark theme"
             >
-              {isLightMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              {isLightMode ? <Sun className="w-3.5 h-3.5 text-amber-500" /> : <Moon className="w-3.5 h-3.5 text-indigo-400" />}
             </button>
           </div>
         </div>
@@ -489,16 +504,17 @@ export const OmniForgeStudio: React.FC = () => {
         {!isCanvasFocus && (
           <div
             onPointerDown={handlePointerDown}
-            className={`h-2.5 w-full flex items-center justify-center cursor-row-resize shrink-0 z-30 transition-colors ${
-              isDragging 
-                ? 'bg-[#6c63ff]' 
-                : isLightMode ? 'bg-slate-300 hover:bg-[#6c63ff]' : 'bg-[#211d34] hover:bg-[#6c63ff]'
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className={`h-2 w-full bg-zinc-800 flex items-center justify-center cursor-row-resize touch-none shrink-0 z-30 select-none transition-colors ${
+              isDragging ? 'bg-indigo-600' : 'hover:bg-zinc-700'
             }`}
             title="Drag vertically to fluidly adjust canvas and AI chat ratio"
           >
             {/* Tiny rounded slider notch indicator: w-12 h-1 bg-zinc-600 rounded-full */}
-            <div className={`w-12 h-1 rounded-full transition-colors ${
-              isDragging ? 'bg-white' : isLightMode ? 'bg-slate-500' : 'bg-[#9490ac]'
+            <div className={`w-12 h-1 bg-zinc-600 rounded-full transition-colors ${
+              isDragging ? 'bg-white' : ''
             }`} />
           </div>
         )}
@@ -506,12 +522,10 @@ export const OmniForgeStudio: React.FC = () => {
         {/* 4. LOWER PANEL: [AI Chat Workspace & Token Code Tracker] */}
         {/* Enforce flex-1 flex flex-col justify-between overflow-hidden */}
         {!isCanvasFocus ? (
-          <div className={`flex-1 flex flex-col justify-between overflow-hidden relative transition-colors ${
-            isLightMode ? 'bg-[#ffffff]' : 'bg-[#0b0a14]'
-          }`}>
+          <div className="flex-1 flex flex-col justify-between overflow-hidden relative bg-[#090a0f]">
 
             {/* ONGOING PROMPT STREAM: scrolls vertically (overflow-y-auto text-xs p-3 space-y-2) */}
-            <div className="flex-1 overflow-y-auto text-xs p-3 space-y-2.5 font-sans">
+            <div className="flex-1 overflow-y-auto text-xs p-3 space-y-2 font-sans">
               {messages.map((msg) => {
                 const isUser = msg.sender === 'user';
                 return (
@@ -519,17 +533,15 @@ export const OmniForgeStudio: React.FC = () => {
                     key={msg.id}
                     className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1 px-1">
+                    <div className="flex items-center gap-1.5 mb-0.5 px-1">
                       <span className={`text-[10px] font-mono font-bold ${
-                        isUser 
-                          ? 'text-[#8b7fff]' 
-                          : isLightMode ? 'text-slate-500' : 'text-[#9490ac]'
+                        isUser ? 'text-indigo-400' : 'text-zinc-400'
                       }`}>
                         {isUser ? 'YOU' : 'OMNI AI'}
                       </span>
-                      <span className="text-[9px] text-[#9490ac] font-mono">{msg.timestamp}</span>
+                      <span className="text-[9px] text-zinc-500 font-mono">{msg.timestamp}</span>
                       {msg.tokens && (
-                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-[#6c63ff]/20 text-[#8b7fff]">
+                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300">
                           {msg.tokens} tokens
                         </span>
                       )}
@@ -537,10 +549,8 @@ export const OmniForgeStudio: React.FC = () => {
 
                     <div className={`p-2.5 rounded-xl max-w-[88%] text-xs leading-relaxed shadow-sm ${
                       isUser
-                        ? 'bg-[#6c63ff] text-white font-medium rounded-tr-none'
-                        : isLightMode
-                        ? 'bg-slate-100 text-slate-900 border border-slate-200 rounded-tl-none'
-                        : 'bg-[#14121f] text-[#e8e6f2] border border-[#211d34] rounded-tl-none'
+                        ? 'bg-indigo-600 text-white font-medium rounded-tr-none'
+                        : 'bg-[#121318] text-zinc-200 border border-zinc-800 rounded-tl-none'
                     }`}>
                       {msg.text}
                     </div>
@@ -549,7 +559,7 @@ export const OmniForgeStudio: React.FC = () => {
               })}
 
               {isGenerating && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-[#6c63ff]/10 border border-[#6c63ff]/30 text-xs font-mono text-[#8b7fff]">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-indigo-950/40 border border-indigo-500/30 text-xs font-mono text-indigo-300">
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                   <span>Synthesizing AST & compiling file stream...</span>
                 </div>
@@ -562,14 +572,10 @@ export const OmniForgeStudio: React.FC = () => {
               Shows compact list of files being edited side-by-side using text-xs font sizes,
               spinning loaders (🔄, ✅, ⚠️).
             */}
-            <div className={`w-full px-2 py-1.5 border-t border-b flex items-center justify-between text-xs overflow-x-auto gap-2 shrink-0 ${
-              isLightMode 
-                ? 'bg-slate-100 border-slate-200' 
-                : 'bg-[#14121f] border-[#211d34]'
-            }`}>
+            <div className="w-full px-2 py-1.5 border-t border-b border-zinc-800 bg-[#121318] flex items-center justify-between text-xs overflow-x-auto gap-2 shrink-0">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-                <span className="text-[10px] font-mono text-[#9490ac] uppercase tracking-wider flex items-center gap-1 shrink-0 font-bold">
-                  <FileCode className="w-3 h-3 text-[#6c63ff]" />
+                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1 shrink-0 font-bold">
+                  <FileCode className="w-3 h-3 text-indigo-400" />
                   Files:
                 </span>
 
@@ -585,10 +591,8 @@ export const OmniForgeStudio: React.FC = () => {
                         isError
                           ? 'bg-red-950/60 border-red-500 text-red-300 animate-pulse'
                           : isEditing
-                          ? 'bg-[#6c63ff]/20 border-[#6c63ff] text-white'
-                          : isLightMode
-                          ? 'bg-white border-slate-200 text-slate-700'
-                          : 'bg-[#0b0a14] border-[#211d34] text-[#e8e6f2]'
+                          ? 'bg-indigo-950/60 border-indigo-500 text-indigo-200'
+                          : 'bg-[#090a0f] border-zinc-800 text-zinc-300'
                       }`}
                     >
                       <span className="font-semibold">{file.name}</span>
@@ -598,20 +602,20 @@ export const OmniForgeStudio: React.FC = () => {
                         {isError && '⚠️'}
                         {file.status === 'pending' && '⏳'}
                       </span>
-                      <span className="text-[9px] text-[#9490ac] font-mono">{file.changes}</span>
+                      <span className="text-[9px] text-zinc-500 font-mono">{file.changes}</span>
                     </div>
                   );
                 })}
               </div>
 
-              <span className="text-[10px] font-mono text-[#9490ac] shrink-0 hidden xs:inline">
-                Zero-pill metrics
+              <span className="text-[10px] font-mono text-zinc-500 shrink-0 hidden xs:inline">
+                r-metrics
               </span>
             </div>
 
             {/* COMPILATION ERROR EXPANDABLE TOAST NOTIFICATION */}
             {errorToast && (
-              <div className="px-3 py-1.5 bg-red-950/90 border-t border-b border-red-600/50 text-red-200 text-xs font-mono flex items-center justify-between animate-in slide-in-from-bottom-2">
+              <div className="px-3 py-1.5 bg-red-950/90 border-t border-b border-red-800 text-red-200 text-xs font-mono flex items-center justify-between animate-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-1.5 truncate">
                   <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
                   <span className="truncate">{errorToast.message}</span>
@@ -650,24 +654,16 @@ export const OmniForgeStudio: React.FC = () => {
               Glowing right-anchored 'Arrow Up' submit button.
               Directly above input box: single-row horizontal scrolling slider showing contextual smart actions.
             */}
-            <div className={`p-2 border-t flex flex-col justify-end shrink-0 z-20 ${
-              isLightMode 
-                ? 'bg-slate-100 border-slate-200' 
-                : 'bg-[#121318] border-zinc-800'
-            }`}>
+            <div className="p-2 bg-[#121318] border-t border-zinc-800 flex flex-col justify-end shrink-0 z-20">
               
               {/* Single-row horizontal scrolling slider showing contextual smart actions */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1.5 mb-1.5 border-b border-white/5">
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1.5 mb-1.5 border-b border-zinc-800/80">
                 {smartActions.map((action) => (
                   <button
                     key={action.label}
                     type="button"
                     onClick={() => handleSendPrompt(action.prompt)}
-                    className={`px-2 py-1 rounded-md text-xs font-mono font-medium shrink-0 border transition-all ${
-                      isLightMode
-                        ? 'bg-white border-slate-300 text-slate-700 hover:border-[#6c63ff] hover:text-[#6c63ff]'
-                        : 'bg-[#14121f] border-[#211d34] text-[#9490ac] hover:text-white hover:border-[#6c63ff]'
-                    }`}
+                    className="p-1.5 rounded-md text-xs font-mono font-medium shrink-0 border border-zinc-800 bg-[#090a0f] text-zinc-300 hover:text-white hover:border-zinc-700 transition-all"
                   >
                     {action.label}
                   </button>
@@ -687,11 +683,7 @@ export const OmniForgeStudio: React.FC = () => {
                   }}
                   rows={1}
                   placeholder="Ask OmniForge to build or edit anything..."
-                  className={`flex-1 rounded-md p-2 text-xs font-sans leading-relaxed resize-none max-h-[120px] overflow-y-auto border transition focus:outline-none focus:ring-1 focus:ring-[#6c63ff] ${
-                    isLightMode
-                      ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
-                      : 'bg-[#0b0a14] border-[#211d34] text-[#e8e6f2] placeholder-[#9490ac]'
-                  }`}
+                  className="flex-1 rounded-md p-1.5 text-xs font-sans leading-relaxed resize-none max-h-[120px] overflow-y-auto border border-zinc-800 bg-[#090a0f] text-zinc-100 placeholder-zinc-500 transition focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   style={{ minHeight: '38px' }}
                 />
 
@@ -699,7 +691,7 @@ export const OmniForgeStudio: React.FC = () => {
                   type="button"
                   onClick={() => handleSendPrompt()}
                   disabled={!promptInput.trim() && !isGenerating}
-                  className="w-9 h-9 rounded-md bg-[#6c63ff] hover:bg-[#8b7fff] text-white flex items-center justify-center shrink-0 transition-all shadow-[0_0_12px_rgba(108,99,255,0.6)] active:scale-95 disabled:opacity-40 disabled:shadow-none"
+                  className="p-1.5 rounded-md text-xs w-9 h-9 bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shrink-0 transition-all shadow-[0_0_12px_rgba(99,102,241,0.6)] active:scale-95 disabled:opacity-40 disabled:shadow-none"
                   title="Submit Prompt to OmniForge"
                 >
                   <ArrowUp className="w-4 h-4 stroke-[2.5]" />
@@ -718,9 +710,9 @@ export const OmniForgeStudio: React.FC = () => {
             <button
               type="button"
               onClick={setToSplitView}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#14121f]/95 border border-[#6c63ff] text-white text-xs font-mono font-bold shadow-[0_0_20px_rgba(108,99,255,0.6)] hover:scale-105 active:scale-95 transition-all backdrop-blur-md"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#121318]/95 border border-zinc-800 text-white text-xs font-mono font-bold shadow-[0_0_20px_rgba(99,102,241,0.6)] hover:scale-105 active:scale-95 transition-all backdrop-blur-md"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#8b7fff] animate-spin" />
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
               <span>💬 Prompt OmniAI Console</span>
             </button>
           </div>
