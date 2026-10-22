@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Sparkles, 
   Bot, 
@@ -96,6 +96,30 @@ export const CALIBRATION_QUESTIONS: CalibrationQuestion[] = [
   }
 ];
 
+export type ScheduleTimeSlot = 'morning' | 'afternoon' | 'evening';
+
+export const TIME_SLOT_DEFS: Array<{
+  id: ScheduleTimeSlot;
+  label: string;
+  subLabel: string;
+  hours: string;
+  icon: string;
+}> = [
+  { id: 'morning', label: 'Morning', subLabel: '8am - 12pm', hours: '08:00 - 12:00', icon: '🌅' },
+  { id: 'afternoon', label: 'Afternoon', subLabel: '12pm - 5pm', hours: '12:00 - 17:00', icon: '☀️' },
+  { id: 'evening', label: 'Evening', subLabel: '5pm - 10pm', hours: '17:00 - 22:00', icon: '🌙' },
+];
+
+export const DEFAULT_QUICK_GRID: Record<string, ScheduleTimeSlot[]> = {
+  Mon: ['morning', 'afternoon'],
+  Tue: ['morning', 'afternoon'],
+  Wed: ['morning', 'afternoon'],
+  Thu: ['morning', 'afternoon'],
+  Fri: ['morning', 'afternoon'],
+  Sat: ['afternoon'],
+  Sun: ['afternoon'],
+};
+
 export interface AutoModeScheduleConfig {
   enabled: boolean;
   preset: 'office_hours' | 'deep_work' | 'night_watch' | 'weekend' | 'always_on' | 'custom';
@@ -105,6 +129,7 @@ export interface AutoModeScheduleConfig {
   days: string[];    // ["Mon", "Tue", "Wed", "Thu", "Fri"]
   takeoverCalls: boolean;
   takeoverMessages: boolean;
+  quickGrid?: Record<string, ScheduleTimeSlot[]>;
 }
 
 export const SCHEDULE_PRESETS: Array<{
@@ -185,24 +210,29 @@ export interface AutoModeScheduleSubComponentProps {
   schedule: AutoModeScheduleConfig;
   onChangeSchedule: (updated: AutoModeScheduleConfig) => void;
   isCurrentlyActive: boolean;
+  isFlickering?: boolean;
 }
 
 export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponentProps> = ({
   schedule,
   onChangeSchedule,
-  isCurrentlyActive
+  isCurrentlyActive,
+  isFlickering = false,
 }) => {
+  const currentGrid = schedule.quickGrid || DEFAULT_QUICK_GRID;
+
   const handleSelectPreset = (presetId: AutoModeScheduleConfig['preset']) => {
     const found = SCHEDULE_PRESETS.find((p) => p.id === presetId);
     if (!found) return;
-    onChangeSchedule({
+    const nextConfig: AutoModeScheduleConfig = {
       ...schedule,
       preset: presetId,
       presetLabel: found.label,
       startTime: found.startTime,
       endTime: found.endTime,
-      days: found.days
-    });
+      days: found.days,
+    };
+    onChangeSchedule(nextConfig);
   };
 
   const handleToggleDay = (day: string) => {
@@ -217,24 +247,107 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
     });
   };
 
+  // Toggle slot in the 7-day visual Quick Schedule grid
+  const handleToggleQuickSlot = (day: string, slotId: ScheduleTimeSlot) => {
+    const daySlots = currentGrid[day] || [];
+    const isSlotActive = daySlots.includes(slotId);
+    const updatedDaySlots = isSlotActive
+      ? daySlots.filter((s) => s !== slotId)
+      : [...daySlots, slotId];
+
+    const updatedGrid: Record<string, ScheduleTimeSlot[]> = {
+      ...currentGrid,
+      [day]: updatedDaySlots,
+    };
+
+    // Calculate active days from quick grid
+    const updatedDays = DAYS_OF_WEEK.filter((d) => (updatedGrid[d] && updatedGrid[d].length > 0));
+
+    const updatedSchedule: AutoModeScheduleConfig = {
+      ...schedule,
+      preset: 'custom',
+      presetLabel: 'Custom Quick Schedule Grid',
+      days: updatedDays.length > 0 ? updatedDays : schedule.days,
+      quickGrid: updatedGrid,
+    };
+
+    onChangeSchedule(updatedSchedule);
+  };
+
+  const handleApplyAllWorkdays = () => {
+    const updatedGrid: Record<string, ScheduleTimeSlot[]> = {
+      ...currentGrid,
+      Mon: ['morning', 'afternoon'],
+      Tue: ['morning', 'afternoon'],
+      Wed: ['morning', 'afternoon'],
+      Thu: ['morning', 'afternoon'],
+      Fri: ['morning', 'afternoon'],
+      Sat: [],
+      Sun: [],
+    };
+    onChangeSchedule({
+      ...schedule,
+      preset: 'office_hours',
+      presetLabel: 'Office Hours (9am-5pm)',
+      startTime: '09:00',
+      endTime: '17:00',
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      quickGrid: updatedGrid,
+    });
+  };
+
+  const handleApply247Shield = () => {
+    const updatedGrid: Record<string, ScheduleTimeSlot[]> = {};
+    DAYS_OF_WEEK.forEach((d) => {
+      updatedGrid[d] = ['morning', 'afternoon', 'evening'];
+    });
+    onChangeSchedule({
+      ...schedule,
+      preset: 'always_on',
+      presetLabel: 'Always On (24/7)',
+      startTime: '00:00',
+      endTime: '23:59',
+      days: [...DAYS_OF_WEEK],
+      quickGrid: updatedGrid,
+    });
+  };
+
+  const handleClearAllSlots = () => {
+    const updatedGrid: Record<string, ScheduleTimeSlot[]> = {};
+    DAYS_OF_WEEK.forEach((d) => {
+      updatedGrid[d] = [];
+    });
+    onChangeSchedule({
+      ...schedule,
+      preset: 'custom',
+      presetLabel: 'Custom (All Cleared)',
+      days: [],
+      quickGrid: updatedGrid,
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
-      {/* MASTER TOGGLE & LIVE STATUS BANNER */}
+      {/* MASTER TOGGLE & LIVE STATUS BANNER WITH SUBTLE FLICKER-ON ANIMATION */}
       <div className={`p-4 rounded-2xl border transition-all ${
+        isFlickering ? 'animate-flicker-on ring-2 ring-[#00ffcc]/70' : ''
+      } ${
         schedule.enabled 
           ? isCurrentlyActive 
-            ? 'bg-emerald-950/30 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-            : 'bg-[#14121f] border-[#6c63ff]/40 shadow-[0_0_15px_rgba(108,99,255,0.15)]'
+            ? 'bg-emerald-950/30 border-emerald-500/50 shadow-[0_0_18px_rgba(16,185,129,0.2)]'
+            : 'bg-[#14121f] border-[#00ffcc]/50 shadow-[0_0_15px_rgba(0,255,204,0.15)]'
           : 'bg-[#14121f]/60 border-[#211d34]'
       }`}>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition ${
+              isFlickering ? 'animate-flicker-on' : ''
+            } ${
               schedule.enabled
                 ? isCurrentlyActive
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-[#6c63ff]/20 text-[#8b7fff] border border-[#6c63ff]/40'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                  : 'bg-[#00ffcc]/15 text-[#00ffcc] border border-[#00ffcc]/40'
                 : 'bg-[#211d34] text-[#9490ac]'
             }`}>
               <Calendar className="w-5 h-5" />
@@ -243,12 +356,14 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
               <div className="flex items-center gap-2">
                 <h4 className="text-sm font-bold text-[#e8e6f2]">Autonomous Schedule Mode</h4>
                 {schedule.enabled && (
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold flex items-center gap-1 transition-all ${
+                    isFlickering ? 'animate-flicker-on ring-1 ring-[#00ffcc]' : ''
+                  } ${
                     isCurrentlyActive
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse'
-                      : 'bg-[#6c63ff]/20 text-[#8b7fff] border border-[#6c63ff]/40'
+                      : 'bg-[#00ffcc]/20 text-[#00ffcc] border border-[#00ffcc]/40'
                   }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isCurrentlyActive ? 'bg-emerald-400 animate-ping' : 'bg-[#8b7fff]'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${isCurrentlyActive ? 'bg-emerald-400 animate-ping' : 'bg-[#00ffcc]'}`} />
                     {isCurrentlyActive ? 'SCHEDULE ACTIVE NOW' : 'STANDBY (SCHEDULED)'}
                   </span>
                 )}
@@ -264,13 +379,13 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
             onClick={() => onChangeSchedule({ ...schedule, enabled: !schedule.enabled })}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 ${
               schedule.enabled
-                ? 'bg-[#6c63ff] hover:bg-[#8b7fff] text-white shadow-md shadow-[#6c63ff]/30'
+                ? 'bg-[#00ffcc] hover:bg-[#00ffcc]/90 text-black shadow-md shadow-[#00ffcc]/30'
                 : 'bg-[#211d34] hover:bg-[#211d34]/80 text-[#9490ac]'
             }`}
           >
             {schedule.enabled ? (
               <>
-                <ToggleRight className="w-4 h-4 text-white" /> Enabled
+                <ToggleRight className="w-4 h-4 text-black" /> Enabled
               </>
             ) : (
               <>
@@ -282,25 +397,136 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
 
         {/* Real-time status sub-note */}
         {schedule.enabled && (
-          <div className="mt-3 pt-3 border-t border-[#211d34] flex flex-wrap items-center justify-between text-[11px] text-[#e8e6f2] gap-2">
+          <div className={`mt-3 pt-3 border-t border-[#211d34] flex flex-wrap items-center justify-between text-[11px] text-[#e8e6f2] gap-2 ${
+            isFlickering ? 'animate-flicker-on' : ''
+          }`}>
             <span className="flex items-center gap-1.5 font-mono">
-              <Clock className="w-3.5 h-3.5 text-[#9490ac]" />
-              Active Window: <strong className="text-[#e8e6f2]">{schedule.startTime} – {schedule.endTime}</strong> ({schedule.days.join(', ')})
+              <Clock className="w-3.5 h-3.5 text-[#00ffcc]" />
+              Active Window: <strong className="text-[#00ffcc]">{schedule.startTime} – {schedule.endTime}</strong> ({schedule.days.join(', ') || 'None'})
             </span>
-            <span className="text-[10px] text-[#9490ac] font-mono">
-              Current Mode: {isCurrentlyActive ? '⚡ Autonomous Takeover Engaged' : '💤 Manual / Standby Mode'}
+            <span className="text-[10px] text-[#9490ac] font-mono flex items-center gap-1">
+              <span className={`w-1.5 h-1.5 rounded-full ${isCurrentlyActive ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+              Mode: {isCurrentlyActive ? '⚡ Autonomous Takeover Engaged' : '💤 Manual / Standby Mode'}
             </span>
           </div>
         )}
+      </div>
+
+      {/* QUICK SCHEDULE 7-DAY VISUAL WIDGET (MORNING, AFTERNOON, EVENING TIME-SLOTS) */}
+      <div className="p-4 rounded-2xl bg-[#14121f] border border-[#211d34] space-y-3 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="text-xs font-mono text-[#00ffcc] uppercase tracking-wider font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#00ffcc]" /> Quick Schedule (7-Day Time Slot Matrix)
+            </label>
+            <p className="text-[10.5px] text-[#9490ac] mt-0.5">
+              Tap any cell to toggle Autopilot for that time slot. Syncs directly to device storage.
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleApplyAllWorkdays}
+              className="px-2 py-1 rounded-lg text-[10px] font-mono bg-[#0b0a14] border border-[#211d34] hover:border-[#00ffcc]/50 text-[#00ffcc] transition"
+              title="Activate Mon-Fri Morning & Afternoon"
+            >
+              Workdays
+            </button>
+            <button
+              type="button"
+              onClick={handleApply247Shield}
+              className="px-2 py-1 rounded-lg text-[10px] font-mono bg-[#0b0a14] border border-[#211d34] hover:border-[#00ffcc]/50 text-[#00ffcc] transition"
+              title="Activate All 7 Days All Slots"
+            >
+              24/7 All
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAllSlots}
+              className="px-2 py-1 rounded-lg text-[10px] font-mono bg-[#0b0a14] border border-[#211d34] hover:border-red-500/50 text-[#9490ac] hover:text-red-400 transition"
+              title="Clear All Slots"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        {/* 7-DAY MATRIX GRID */}
+        <div className="overflow-x-auto pb-1">
+          <div className="min-w-[420px] space-y-1.5">
+            {/* Days Header */}
+            <div className="grid grid-cols-8 gap-1.5 items-center text-center font-mono text-[10.5px]">
+              <div className="text-left text-[#9490ac] text-[9.5px] font-bold uppercase pl-1">Slot</div>
+              {DAYS_OF_WEEK.map((day) => {
+                const hasAnySlot = (currentGrid[day] && currentGrid[day].length > 0);
+                return (
+                  <div
+                    key={day}
+                    className={`py-1 rounded-md font-bold transition-all ${
+                      hasAnySlot
+                        ? 'text-[#00ffcc] bg-[#00ffcc]/10 border border-[#00ffcc]/30'
+                        : 'text-[#9490ac] bg-[#0b0a14] border border-[#211d34]'
+                    }`}
+                  >
+                    {day}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Time Slot Rows */}
+            {TIME_SLOT_DEFS.map((slot) => (
+              <div key={slot.id} className="grid grid-cols-8 gap-1.5 items-center">
+                {/* Row Header */}
+                <div className="flex flex-col pr-1">
+                  <span className="text-[11px] font-bold text-[#e8e6f2] flex items-center gap-1">
+                    <span>{slot.icon}</span>
+                    <span className="truncate">{slot.label}</span>
+                  </span>
+                  <span className="text-[9px] font-mono text-[#9490ac]">{slot.subLabel}</span>
+                </div>
+
+                {/* Day Cells */}
+                {DAYS_OF_WEEK.map((day) => {
+                  const daySlots = currentGrid[day] || [];
+                  const isActive = daySlots.includes(slot.id);
+
+                  return (
+                    <button
+                      key={`${day}-${slot.id}`}
+                      type="button"
+                      onClick={() => handleToggleQuickSlot(day, slot.id)}
+                      className={`h-9 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-90 relative ${
+                        isActive
+                          ? 'bg-[#00ffcc]/20 border-[#00ffcc] text-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.25)]'
+                          : 'bg-[#0b0a14] border-[#211d34] text-[#9490ac] hover:border-[#00ffcc]/40 hover:text-[#e8e6f2]'
+                      }`}
+                      title={`${day} ${slot.label} (${slot.hours}): ${isActive ? 'Active (Tap to disable)' : 'Inactive (Tap to activate)'}`}
+                    >
+                      {isActive ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          <span className="text-[7.5px] font-mono font-bold leading-none">ON</span>
+                        </>
+                      ) : (
+                        <span className="text-[8px] font-mono text-[#9490ac]/60 leading-none">off</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* PRESET CALENDAR BLOCKS */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-xs font-mono text-[#8b7fff] uppercase tracking-wider font-bold flex items-center gap-1.5">
-            <Briefcase className="w-3.5 h-3.5" /> 1. Select Operating Calendar Hours
+            <Briefcase className="w-3.5 h-3.5" /> 2. Operating Calendar Presets
           </label>
-          <span className="text-[11px] text-[#9490ac] font-mono">1-Tap Fast Presets</span>
+          <span className="text-[11px] text-[#9490ac] font-mono">1-Tap Fast Setup</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -499,8 +725,9 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
   });
   const [isTestingVoice, setIsTestingVoice] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isFlickering, setIsFlickering] = useState(false);
 
-  // Auto-Mode Schedule State
+  // Auto-Mode Schedule State with Quick Schedule Grid support
   const [schedule, setSchedule] = useState<AutoModeScheduleConfig>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('omni_autopilot_schedule');
@@ -518,21 +745,48 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
       endTime: '17:00',
       days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
       takeoverCalls: true,
-      takeoverMessages: true
+      takeoverMessages: true,
+      quickGrid: DEFAULT_QUICK_GRID
     };
   });
 
-  // Check if current time falls within schedule
+  // Schedule change handler syncing to localStorage and triggering subtle flicker-on animation
+  const handleScheduleChange = useCallback((updated: AutoModeScheduleConfig) => {
+    setSchedule(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('omni_autopilot_schedule', JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('omni_schedule_changed', { detail: updated }));
+    }
+    // Trigger subtle flicker-on CSS animation for immediate visual confirmation
+    setIsFlickering(true);
+    setTimeout(() => {
+      setIsFlickering(false);
+    }, 550);
+  }, []);
+
+  // Check if current time falls within schedule (supporting both 7-day quickGrid and hour spans)
   const isCurrentlyActive = useMemo(() => {
     if (!schedule.enabled) return false;
     const now = new Date();
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const currentDay = dayNames[now.getDay()];
-    if (!schedule.days.includes(currentDay)) return false;
+
+    // Check Quick Schedule 7-day slot matrix first if configured
+    if (schedule.quickGrid && schedule.quickGrid[currentDay]) {
+      const activeSlots = schedule.quickGrid[currentDay];
+      if (activeSlots.length === 0) return false;
+      const currentHour = now.getHours();
+      const inMorning = currentHour >= 8 && currentHour < 12 && activeSlots.includes('morning');
+      const inAfternoon = currentHour >= 12 && currentHour < 17 && activeSlots.includes('afternoon');
+      const inEvening = currentHour >= 17 && currentHour < 22 && activeSlots.includes('evening');
+      if (inMorning || inAfternoon || inEvening) return true;
+    }
+
+    if (!schedule.days || !schedule.days.includes(currentDay)) return false;
 
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const [startH, startM] = schedule.startTime.split(':').map(Number);
-    const [endH, endM] = schedule.endTime.split(':').map(Number);
+    const [startH, startM] = (schedule.startTime || '09:00').split(':').map(Number);
+    const [endH, endM] = (schedule.endTime || '17:00').split(':').map(Number);
     const startTotal = (startH || 0) * 60 + (startM || 0);
     const endTotal = (endH || 0) * 60 + (endM || 0);
 
@@ -886,8 +1140,9 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
           {activeStep === 'schedule' && (
             <AutoModeScheduleSubComponent
               schedule={schedule}
-              onChangeSchedule={setSchedule}
+              onChangeSchedule={handleScheduleChange}
               isCurrentlyActive={isCurrentlyActive}
+              isFlickering={isFlickering}
             />
           )}
 
