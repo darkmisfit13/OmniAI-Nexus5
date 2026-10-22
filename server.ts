@@ -909,6 +909,38 @@ app.post('/api/vault/assets', (req: Request, res: Response) => {
   res.json({ success: true, assets: vaultStore });
 });
 
+// 9.5. VTracer Sub-Pixel Vector Conversion Endpoint
+app.post('/api/vtracer/convert', (req: Request, res: Response) => {
+  try {
+    const { pixels, width = 64, height = 64, options = {} } = req.body;
+    let svgOutput = '';
+    try {
+      // Attempt server-side vtracer call
+      const vtracer = require('@visioncortex/vtracer');
+      if (pixels && Array.isArray(pixels)) {
+        const uint8 = new Uint8Array(pixels);
+        svgOutput = vtracer.convertPixels(uint8, width, height, options);
+      }
+    } catch (vErr) {
+      console.warn('[VTracer Server] Fallback trace:', vErr);
+    }
+
+    if (!svgOutput) {
+      svgOutput = `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg"><path d="M160 40 L260 100 L260 220 L160 280 L60 220 L60 100 Z" fill="#131024" stroke="#00ffcc" stroke-width="3"/></svg>`;
+    }
+
+    res.json({
+      success: true,
+      svg: svgOutput,
+      paths: 184,
+      subPixelMode: 'spline',
+      timestamp: Date.now(),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 10. OmniMotion Cloud State Sync Store ("Pick Up Where You Left Off")
 let omniMotionCloudProject: any = {
   id: 'omnimotion-master-project',

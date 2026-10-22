@@ -98,11 +98,27 @@ interface SettingOption {
 
 interface AdminHubProps {
   onClose?: () => void;
+  initialSubPage?: SettingOption['id'] | null;
 }
 
-export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
+export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage = null }) => {
   // Navigation: null = Main Landing Page; string = Selected Sub-Menu Page
-  const [selectedSubPage, setSelectedSubPage] = useState<SettingOption['id'] | null>(null);
+  const [selectedSubPage, setSelectedSubPage] = useState<SettingOption['id'] | null>(initialSubPage);
+
+  useEffect(() => {
+    if (initialSubPage) {
+      setSelectedSubPage(initialSubPage);
+    }
+  }, [initialSubPage]);
+
+  useEffect(() => {
+    const handleOpenHaptics = () => {
+      setSelectedSubPage('companion');
+    };
+    window.addEventListener('omni_open_admin_haptics', handleOpenHaptics);
+    return () => window.removeEventListener('omni_open_admin_haptics', handleOpenHaptics);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'banned'>('all');

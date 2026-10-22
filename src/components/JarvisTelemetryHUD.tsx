@@ -64,15 +64,40 @@ export const JarvisTelemetryHUD: React.FC<JarvisTelemetryHUDProps> = ({
 
   const [activeTab, setActiveTab] = useState<'ledger' | 'trends'>('ledger');
 
-  // Compute 7-day usage trends
+  // Compute 7-day usage trends from localStorage
   const trendData = useMemo(() => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date();
-    const result = [];
     
-    // Baseline activity profile
+    // 1. Read existing recorded history from localStorage
+    let storedTrends: any[] | null = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('omni_daily_usage_trends');
+        if (raw) storedTrends = JSON.parse(raw);
+      } catch {}
+    }
+
+    if (Array.isArray(storedTrends) && storedTrends.length === 7) {
+      // Modulate today's data with live session notes
+      const extraInteractions = Math.max(0, telemetryNotes.length * 2);
+      const extraAutopilot = telemetryNotes.filter(n => n.category === 'Auto-Pilot').length * 2;
+      return storedTrends.map((item, idx) => {
+        if (idx === 6) {
+          return {
+            ...item,
+            aiInteractions: item.aiInteractions + extraInteractions,
+            autopilotTriggers: item.autopilotTriggers + extraAutopilot,
+          };
+        }
+        return item;
+      });
+    }
+
+    // 2. Initialize default 7-day profile recorded in localStorage
     const baseInteractions = [52, 68, 89, 97, 84, 118, 142];
     const baseAutopilot = [14, 19, 26, 33, 24, 30, 42];
+    const result = [];
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -91,6 +116,13 @@ export const JarvisTelemetryHUD: React.FC<JarvisTelemetryHUDProps> = ({
         autopilotTriggers: baseAutopilot[idx % 7] + extraAutopilot,
       });
     }
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('omni_daily_usage_trends', JSON.stringify(result));
+      } catch {}
+    }
+
     return result;
   }, [telemetryNotes]);
 
@@ -347,10 +379,10 @@ export const JarvisTelemetryHUD: React.FC<JarvisTelemetryHUDProps> = ({
                     type="monotone" 
                     dataKey="aiInteractions" 
                     name="AI Interactions" 
-                    stroke="#00ffcc" 
-                    strokeWidth={2}
-                    dot={{ r: 2.5, fill: '#00ffcc', strokeWidth: 0 }}
-                    activeDot={{ r: 4.5, fill: '#00ffcc', stroke: '#ffffff', strokeWidth: 1.5 }}
+                    stroke="#00f0ff" 
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: '#00f0ff', strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: '#00f0ff', stroke: '#ffffff', strokeWidth: 1.5 }}
                   />
                   <Line 
                     type="monotone" 
