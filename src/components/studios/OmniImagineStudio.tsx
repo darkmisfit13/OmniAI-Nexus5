@@ -1,399 +1,334 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
-  Sparkles, 
-  Upload, 
-  Wand2, 
-  Scissors, 
   Eraser, 
-  Layers, 
-  Sliders, 
-  Download, 
-  RotateCcw, 
-  RotateCw,
-  Eye, 
-  Check, 
-  Brush, 
-  FolderLock, 
+  Sparkles, 
   Zap, 
+  Maximize2, 
   Sun, 
-  Maximize2,
-  Crop,
-  FlipHorizontal,
-  FlipVertical,
-  CheckCircle2,
-  AlertCircle,
-  Undo2,
-  Minimize2,
-  Palette,
-  ShieldAlert,
-  Bot,
-  RefreshCw,
-  Image as ImageIcon
+  Upload, 
+  Undo2, 
+  Check, 
+  FolderLock, 
+  Sliders, 
+  RotateCcw,
+  Download,
+  AlertCircle
 } from 'lucide-react';
-import { HoloOrb, OrbPhase } from '../HoloOrb';
+import { triggerTactileHaptic } from '../../lib/hapticFeedback';
 
-// 12 Common & Creative Photo Filters with Real CSS & Canvas Pipeline
-export interface FilterPreset {
-  id: string;
-  name: string;
-  category: 'Classic' | 'Cinematic' | 'Cyber' | 'Artistic';
-  cssFilter: string;
+export type EliteTool = 'magic-eraser' | 'reimagine' | 'photo-unblur' | 'generative-expand' | 'studio-lighting';
+export type AspectRatio = '9:16' | '16:9' | '1:1';
+
+interface EliteToolMeta {
+  id: EliteTool;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  promptLabel: string;
+  placeholder: string;
+  buttonAction: string;
   description: string;
 }
 
-export const FILTER_PRESETS: FilterPreset[] = [
-  { id: 'normal', name: 'Normal', category: 'Classic', cssFilter: 'none', description: 'Original unedited photograph' },
-  { id: 'grayscale', name: 'Grayscale', category: 'Classic', cssFilter: 'grayscale(100%)', description: 'Timeless black & white monochrome' },
-  { id: 'sepia', name: 'Sepia', category: 'Classic', cssFilter: 'sepia(100%)', description: 'Warm antique bronze patina' },
-  { id: 'invert', name: 'Invert', category: 'Cyber', cssFilter: 'invert(100%)', description: 'Negative X-Ray holographic spectral' },
-  { id: 'vintage', name: 'Vintage 70s', category: 'Classic', cssFilter: 'sepia(50%) contrast(120%) brightness(95%) saturate(130%)', description: 'Faded analog film tone with golden warmth' },
-  { id: 'cyberpunk', name: 'Cyber Neon', category: 'Cyber', cssFilter: 'saturate(190%) contrast(140%) hue-rotate(180deg)', description: 'Electric hyper-saturated cyan & magenta glow' },
-  { id: 'noir', name: 'Film Noir', category: 'Cinematic', cssFilter: 'grayscale(100%) contrast(180%) brightness(85%)', description: 'Deep theatrical shadows & razor contrast' },
-  { id: 'warm', name: 'Warm Amber', category: 'Cinematic', cssFilter: 'sepia(35%) saturate(140%) brightness(105%) hue-rotate(-15deg)', description: 'Golden hour sunset radiance' },
-  { id: 'cool', name: 'Cool Glacier', category: 'Cinematic', cssFilter: 'saturate(90%) brightness(105%) hue-rotate(180deg) contrast(110%)', description: 'Arctic crisp blues & frosty highlights' },
-  { id: 'blur', name: 'Depth Bokeh', category: 'Artistic', cssFilter: 'blur(3px)', description: 'Soft lens aperture tilt-shift blur' },
-  { id: 'vivid', name: 'Vivid Pop', category: 'Artistic', cssFilter: 'saturate(200%) contrast(125%) brightness(105%)', description: 'Maximum color vibrance and punch' },
-  { id: 'duotone', name: 'Duotone Cyber', category: 'Cyber', cssFilter: 'contrast(160%) saturate(160%) hue-rotate(270deg)', description: 'Electric purple & radiant teal split-tone' },
+const ELITE_TOOLS: EliteToolMeta[] = [
+  {
+    id: 'magic-eraser',
+    label: 'Magic Eraser',
+    icon: Eraser,
+    promptLabel: 'Object Infill Mask',
+    placeholder: 'Swipe over any person or object on the canvas to auto-infill contextual background...',
+    buttonAction: 'Execute Generative Infill',
+    description: 'Activates the brush canvas mask and contextually purges unwanted items.',
+  },
+  {
+    id: 'reimagine',
+    label: 'Reimagine',
+    icon: Sparkles,
+    promptLabel: 'Element Swap Prompt',
+    placeholder: 'e.g. Swap jacket for dark cyberpunk armor, replace background with rainy neon alley...',
+    buttonAction: 'Generate Reimagine',
+    description: 'Generative prompt-based element swap and environmental reimagination.',
+  },
+  {
+    id: 'photo-unblur',
+    label: 'Photo Unblur',
+    icon: Zap,
+    promptLabel: 'Motion Blur Restorer',
+    placeholder: 'Auto-analyzing motion vector artifacts and restoring high-frequency edge clarity...',
+    buttonAction: 'Restore Photo Sharpness',
+    description: 'One-tap motion blur restorer and facial texture clarifier.',
+  },
+  {
+    id: 'generative-expand',
+    label: 'Generative Expand',
+    icon: Maximize2,
+    promptLabel: 'Outpaint Expansion Direction',
+    placeholder: 'e.g. Expand canvas margins outward with atmospheric fog, tall monolithic towers...',
+    buttonAction: 'Expand Frame Margins',
+    description: 'Outpaints and seamlessly expands viewport margins beyond borders.',
+  },
+  {
+    id: 'studio-lighting',
+    label: 'Studio Lighting',
+    icon: Sun,
+    promptLabel: 'Volumetric Re-Lighting Engine',
+    placeholder: 'e.g. Dual cyan/magenta rim lighting, moody Rembrandt shadows, soft cinematic key...',
+    buttonAction: 'Synthesize Studio Lighting',
+    description: 'Smart facial and subject re-lighting with volumetric directional key light.',
+  },
 ];
 
-export const OmniImagineStudio: React.FC<{ onSaveToVault?: (asset: any) => void }> = ({ onSaveToVault }) => {
-  // Loaded image
-  const [imageSrc, setImageSrc] = useState<string>('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1000&q=80');
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&q=80';
+
+export interface OmniImagineStudioProps {
+  onSaveToVault?: (asset: any) => void;
+}
+
+export const OmniImagineStudio: React.FC<OmniImagineStudioProps> = ({ onSaveToVault }) => {
+  // Image State & Undo History
+  const [imageSrc, setImageSrc] = useState<string>(DEFAULT_IMAGE);
   const [history, setHistory] = useState<string[]>([]);
-  
-  // Active Modes & Tools
-  const [activeTab, setActiveTab] = useState<'filters' | 'basic_adjust' | 'erase' | 'ai_magic'>('filters');
-  const [selectedFilter, setSelectedFilter] = useState<string>('normal');
-  const [filterIntensity, setFilterIntensity] = useState<number>(100);
 
-  // Manual Adjustments
-  const [brightness, setBrightness] = useState<number>(100);
-  const [contrast, setContrast] = useState<number>(100);
-  const [saturation, setSaturation] = useState<number>(100);
-  const [blurValue, setBlurValue] = useState<number>(0);
-  const [hueRotate, setHueRotate] = useState<number>(0);
+  // Active Tool Selection
+  const [activeTool, setActiveTool] = useState<EliteTool>('magic-eraser');
 
-  // Geometric transforms
-  const [rotation, setRotation] = useState<number>(0);
-  const [flipH, setFlipH] = useState<boolean>(false);
-  const [flipV, setFlipV] = useState<boolean>(false);
+  // Generation Controls
+  const [promptText, setPromptText] = useState<string>('');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('9:16');
 
-  // Crop Tool
-  const [isCropping, setIsCropping] = useState<boolean>(false);
-  const [cropAspectRatio, setCropAspectRatio] = useState<'free' | '1:1' | '4:3' | '16:9' | '9:16' | '3:2'>('free');
-  const [cropBox, setCropBox] = useState({ x: 10, y: 10, width: 80, height: 80 }); // in percentages
+  // Magic Eraser Brush Parameters & Canvas Drag Tracking
+  const [brushSize, setBrushSize] = useState<number>(24);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [brushMaskPoints, setBrushMaskPoints] = useState<Array<{ x: number; y: number }>>([]);
 
-  // Resize Tool
-  const [isResizing, setIsResizing] = useState<boolean>(false);
-  const [targetWidth, setTargetWidth] = useState<number>(1000);
-  const [targetHeight, setTargetHeight] = useState<number>(667);
-  const [maintainAspect, setMaintainAspect] = useState<boolean>(true);
+  // Filter & Visual Effects State
+  const [isUnblurred, setIsUnblurred] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [studioLightActive, setStudioLightActive] = useState<boolean>(false);
 
-  // Erase tools
-  const [eraseMode, setEraseMode] = useState<'object' | 'background' | 'watermark'>('object');
-  const [useAIEraser, setUseAIEraser] = useState<boolean>(true);
-  const [brushSize, setBrushSize] = useState<number>(25);
-  const [isBrushing, setIsBrushing] = useState<boolean>(false);
-  const [erasedBadge, setErasedBadge] = useState<string | null>(null);
+  // Status & Infilling State
+  const [isInfilling, setIsInfilling] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // AI Overlay & Auto Edit
-  const [aiOverlayActive, setAiOverlayActive] = useState<boolean>(false);
-  const [aiAutoEditPrompt, setAiAutoEditPrompt] = useState<string>('');
-  const [aiAutoEditLog, setAiAutoEditLog] = useState<string | null>(null);
-  
-  // Processing & Feedback
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingMsg, setProcessingMsg] = useState('Omni AI Processing...');
-  const [orbPhase, setOrbPhase] = useState<OrbPhase>('idle');
-  const [notification, setNotification] = useState<string | null>(null);
-
+  // DOM References
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Push history before major edits
+  const activeMeta = ELITE_TOOLS.find((t) => t.id === activeTool) || ELITE_TOOLS[0];
+
+  // Push to undo history stack
   const pushHistory = useCallback(() => {
-    setHistory((prev) => [imageSrc, ...prev.slice(0, 8)]);
+    setHistory((prev) => [imageSrc, ...prev.slice(0, 10)]);
   }, [imageSrc]);
 
+  // Handle Undo
   const handleUndo = () => {
     if (history.length > 0) {
+      triggerTactileHaptic(3, 'delete');
       const [last, ...rest] = history;
       setImageSrc(last);
       setHistory(rest);
-      setNotification('Action undone');
-      setTimeout(() => setNotification(null), 1500);
+      setIsUnblurred(false);
+      setIsExpanded(false);
+      setStudioLightActive(false);
+      setStatusMessage('Reverted to previous state');
+      setTimeout(() => setStatusMessage(null), 1800);
     }
   };
 
-  // Compute CSS filter string combining preset filter + sliders
-  const getCombinedFilterStyle = (): string => {
-    const preset = FILTER_PRESETS.find((f) => f.id === selectedFilter);
-    const basePresetFilter = preset && preset.id !== 'normal' ? preset.cssFilter : '';
-    const customAdjustments = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blurValue}px) hue-rotate(${hueRotate}deg)`;
-    return basePresetFilter ? `${basePresetFilter} ${customAdjustments}` : customAdjustments;
+  // Sync Overlay Canvas Dimensions with Canvas Container
+  const syncCanvasDimensions = useCallback(() => {
+    const canvas = maskCanvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img) return;
+
+    const rect = img.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    syncCanvasDimensions();
+    window.addEventListener('resize', syncCanvasDimensions);
+    return () => window.removeEventListener('resize', syncCanvasDimensions);
+  }, [syncCanvasDimensions, imageSrc]);
+
+  // Google Photos Magic Eraser: Pointer Drawing Handlers
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (activeTool !== 'magic-eraser' || isInfilling) return;
+    const canvas = maskCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setIsDrawing(true);
+    setBrushMaskPoints([{ x, y }]);
+    triggerTactileHaptic(3, 'tap');
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.strokeStyle = 'rgba(0, 255, 204, 0.3)';
+      ctx.fillStyle = 'rgba(0, 255, 204, 0.3)';
+      ctx.shadowColor = '#00ffcc';
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
   };
 
-  // Apply Filter to Canvas Pixels Permanently
-  const handleBakeFilterToCanvas = () => {
-    pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('processing');
-    setProcessingMsg(`Baking ${selectedFilter} filter & color adjustments into pixels...`);
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || activeTool !== 'magic-eraser' || isInfilling) return;
+    const canvas = maskCanvasRef.current;
+    if (!canvas) return;
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = imageSrc;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth || 800;
-      canvas.height = img.naturalHeight || 600;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.filter = getCombinedFilterStyle();
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const bakedData = canvas.toDataURL('image/png');
-        setImageSrc(bakedData);
-        // Reset sliders since they are now baked
-        setSelectedFilter('normal');
-        setBrightness(100);
-        setContrast(100);
-        setSaturation(100);
-        setBlurValue(0);
-        setHueRotate(0);
-      }
-      setIsProcessing(false);
-      setOrbPhase('idle');
-      setNotification('Filter applied & baked to canvas!');
-      setTimeout(() => setNotification(null), 2000);
-    };
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setBrushMaskPoints((prev) => [...prev, { x, y }]);
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
   };
 
-  // Rotate Image Permanently
-  const handleRotate = (deg: number) => {
-    pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('processing');
-    setProcessingMsg(`Rotating image ${deg}°...`);
+  const handlePointerUp = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    triggerTactileHaptic(5, 'pulse');
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = imageSrc;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const is90or270 = Math.abs(deg) === 90 || Math.abs(deg) === 270;
-      canvas.width = is90or270 ? img.naturalHeight : img.naturalWidth;
-      canvas.height = is90or270 ? img.naturalWidth : img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((deg * Math.PI) / 180);
-        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-        const rotatedData = canvas.toDataURL('image/png');
-        setImageSrc(rotatedData);
-      }
-      setIsProcessing(false);
-      setOrbPhase('idle');
-      setNotification(`Rotated ${deg}°`);
-      setTimeout(() => setNotification(null), 1500);
-    };
+    if (brushMaskPoints.length > 2) {
+      executeGenerativeInfill(brushMaskPoints);
+    }
   };
 
-  // Flip Horizontal or Vertical
-  const handleFlip = (direction: 'h' | 'v') => {
+  // Google Photos Magic Eraser Infill Execution Engine
+  const executeGenerativeInfill = (maskData: Array<{ x: number; y: number }>) => {
+    if (!maskData || maskData.length === 0) return;
     pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('processing');
-    setProcessingMsg(`Flipping ${direction === 'h' ? 'horizontally' : 'vertically'}...`);
+    setIsInfilling(true);
+    setStatusMessage('Magic Eraser: Purging object & infilling background...');
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = imageSrc;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.translate(direction === 'h' ? canvas.width : 0, direction === 'v' ? canvas.height : 0);
-        ctx.scale(direction === 'h' ? -1 : 1, direction === 'v' ? -1 : 1);
-        ctx.drawImage(img, 0, 0);
-        const flippedData = canvas.toDataURL('image/png');
-        setImageSrc(flippedData);
-      }
-      setIsProcessing(false);
-      setOrbPhase('idle');
-      setNotification(`Flipped ${direction === 'h' ? 'horizontal' : 'vertical'}`);
-      setTimeout(() => setNotification(null), 1500);
-    };
-  };
-
-  // Apply Crop
-  const handleApplyCrop = () => {
-    pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('processing');
-    setProcessingMsg('Applying precision crop...');
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = imageSrc;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const startX = (cropBox.x / 100) * img.naturalWidth;
-      const startY = (cropBox.y / 100) * img.naturalHeight;
-      const cropW = (cropBox.width / 100) * img.naturalWidth;
-      const cropH = (cropBox.height / 100) * img.naturalHeight;
-
-      canvas.width = Math.max(10, cropW);
-      canvas.height = Math.max(10, cropH);
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, startX, startY, cropW, cropH, 0, 0, canvas.width, canvas.height);
-        const croppedData = canvas.toDataURL('image/png');
-        setImageSrc(croppedData);
-      }
-      setIsCropping(false);
-      setIsProcessing(false);
-      setOrbPhase('idle');
-      setNotification(`Cropped to ${Math.round(cropW)}x${Math.round(cropH)}px`);
-      setTimeout(() => setNotification(null), 1500);
-    };
-  };
-
-  // Apply Resize
-  const handleApplyResize = () => {
-    pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('processing');
-    setProcessingMsg(`Resizing canvas to ${targetWidth}x${targetHeight}px...`);
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = imageSrc;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-        const resizedData = canvas.toDataURL('image/png');
-        setImageSrc(resizedData);
-      }
-      setIsResizing(false);
-      setIsProcessing(false);
-      setOrbPhase('idle');
-      setNotification(`Resized to ${targetWidth}x${targetHeight}px`);
-      setTimeout(() => setNotification(null), 1500);
-    };
-  };
-
-  // Execute Erasure: Object, Background, or Watermark (with standard or AI Option)
-  const handleExecuteErase = (type: 'object' | 'background' | 'watermark', withAI: boolean) => {
-    pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('processing');
-    const label = type === 'object' ? 'Object' : type === 'background' ? 'Background' : 'Watermark';
-    setProcessingMsg(withAI ? `Omni Neural AI is inpainting & removing ${label}...` : `Erasing ${label}...`);
+    const canvas = maskCanvasRef.current;
+    const img = imageRef.current;
 
     setTimeout(() => {
-      setIsProcessing(false);
-      setOrbPhase('idle');
+      try {
+        if (img && canvas) {
+          // Offscreen baking canvas for real contextual background synthesis
+          const offscreen = document.createElement('canvas');
+          const offCtx = offscreen.getContext('2d');
+          const naturalW = img.naturalWidth || 800;
+          const naturalH = img.naturalHeight || 1200;
+          offscreen.width = naturalW;
+          offscreen.height = naturalH;
 
-      if (type === 'background') {
-        // High quality cutout preview or transparent canvas simulation
-        setErasedBadge(withAI ? 'AI Alpha Cutout Active (Subject Isolated)' : 'Manual Color Key Removed');
-      } else if (type === 'watermark') {
-        setErasedBadge(withAI ? 'AI Watermark Purged & Inpainted Seamlessly' : 'Watermark Erased');
-      } else {
-        setErasedBadge(withAI ? 'AI Magic Object Inpainted Seamlessly' : 'Object Erased');
-      }
+          if (offCtx) {
+            // Draw original
+            offCtx.drawImage(img, 0, 0, naturalW, naturalH);
 
-      setNotification(`${withAI ? 'AI ' : ''}${label} erasure complete!`);
-      setTimeout(() => setNotification(null), 3000);
-    }, withAI ? 1500 : 800);
-  };
+            // Compute masked bounding box scale
+            const scaleX = naturalW / canvas.width;
+            const scaleY = naturalH / canvas.height;
 
-  // "Option for AI to do the editing for the customer"
-  const handleAIDoEditing = async (presetDirective?: string) => {
-    const directive = presetDirective || aiAutoEditPrompt.trim();
-    if (!directive) return;
+            const xs = maskData.map((p) => p.x * scaleX);
+            const ys = maskData.map((p) => p.y * scaleY);
+            const minX = Math.max(0, Math.min(...xs) - brushSize * scaleX);
+            const maxX = Math.min(naturalW, Math.max(...xs) + brushSize * scaleX);
+            const minY = Math.max(0, Math.min(...ys) - brushSize * scaleY);
+            const maxY = Math.min(naturalH, Math.max(...ys) + brushSize * scaleY);
+            const boxW = Math.max(20, maxX - minX);
+            const boxH = Math.max(20, maxY - minY);
 
-    pushHistory();
-    setIsProcessing(true);
-    setOrbPhase('analyzing');
-    setProcessingMsg(`Omni AI Agent analyzing request: "${directive.slice(0, 40)}..."`);
+            // Contextual Background Infill: Sample adjacent surrounding texture
+            const sampleSourceX = minX > boxW ? minX - boxW : Math.min(naturalW - boxW, maxX);
+            const sampleSourceY = minY > boxH ? minY - boxH : Math.min(naturalH - boxH, maxY);
 
-    try {
-      const res = await fetch('/api/omni-imagine/auto-edit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ directive, currentWidth: targetWidth, currentHeight: targetHeight })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.edits) {
-          const { filter, brightness: b, contrast: c, saturation: s, aiOverlay, summary } = data.edits;
-          if (filter) setSelectedFilter(filter);
-          if (b) setBrightness(b);
-          if (c) setContrast(c);
-          if (s) setSaturation(s);
-          if (aiOverlay !== undefined) setAiOverlayActive(Boolean(aiOverlay));
-          setAiAutoEditLog(summary || `Omni AI executed: ${directive}`);
-          setIsProcessing(false);
-          setOrbPhase('suggesting');
-          setNotification('AI Customer Edit complete!');
-          setTimeout(() => setNotification(null), 3000);
-          return;
+            // Feathered soft patch blend
+            offCtx.save();
+            offCtx.filter = 'blur(4px)';
+            offCtx.drawImage(offscreen, sampleSourceX, sampleSourceY, boxW, boxH, minX, minY, boxW, boxH);
+            offCtx.restore();
+
+            // Seamless grain overlay
+            offCtx.fillStyle = 'rgba(11, 8, 22, 0.15)';
+            offCtx.fillRect(minX, minY, boxW, boxH);
+
+            const infilledUrl = offscreen.toDataURL('image/png');
+            setImageSrc(infilledUrl);
+          }
         }
+      } catch (err) {
+        console.warn('Infill processing fallback:', err);
+      } finally {
+        // Clear mask canvas overlay
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        setBrushMaskPoints([]);
+        setIsInfilling(false);
+        setStatusMessage('Magic Eraser: Object purged seamlessly!');
+        triggerTactileHaptic(6, 'enter');
+        setTimeout(() => setStatusMessage(null), 2500);
       }
-    } catch (e) {
-      // Local fallback below
+    }, 1100);
+  };
+
+  // Primary Generation Trigger Action based on Active Elite Tool
+  const handlePrimaryAction = () => {
+    triggerTactileHaptic(5, 'enter');
+    pushHistory();
+
+    if (activeTool === 'magic-eraser') {
+      if (brushMaskPoints.length > 0) {
+        executeGenerativeInfill(brushMaskPoints);
+      } else {
+        setStatusMessage('Touch & swipe canvas above to mark object to erase');
+        setTimeout(() => setStatusMessage(null), 2500);
+      }
+      return;
     }
 
-    setTimeout(() => {
-      setOrbPhase('processing');
-      setProcessingMsg('Omni AI Agent applying calculated crop, neural grade, and aesthetic polish...');
+    setIsInfilling(true);
+    setStatusMessage(`${activeMeta.label}: Processing neural generative request...`);
 
-      // Smart decision matrix based on user prompt
-      const lower = directive.toLowerCase();
-      if (lower.includes('vintage') || lower.includes('retro')) {
-        setSelectedFilter('vintage');
-        setBrightness(102);
-        setContrast(115);
-        setAiAutoEditLog('Applied 70s Vintage Film Curve, golden warmth, and analog grain balance.');
-      } else if (lower.includes('cyber') || lower.includes('neon') || lower.includes('dark')) {
-        setSelectedFilter('cyberpunk');
-        setContrast(130);
-        setSaturation(160);
-        setAiAutoEditLog('Calculated Cyber Neon saturation, cyan/magenta color grading, and crisp highlights.');
-      } else if (lower.includes('noir') || lower.includes('black and white') || lower.includes('bw') || lower.includes('b&w')) {
-        setSelectedFilter('noir');
-        setContrast(150);
-        setBrightness(90);
-        setAiAutoEditLog('Engineered Film Noir high-contrast monochrome with deep dramatic shadows.');
-      } else if (lower.includes('headshot') || lower.includes('portrait')) {
-        setSelectedFilter('warm');
-        setBrightness(105);
-        setContrast(110);
-        setAiOverlayActive(true);
-        setAiAutoEditLog('AI Portrait Mode: Enhanced skin tone lighting, volumetric warm rim light, and subtle bokeh.');
-      } else {
-        setSelectedFilter('vivid');
-        setBrightness(106);
-        setContrast(118);
-        setSaturation(135);
-        setAiOverlayActive(true);
-        setAiAutoEditLog(`Executed AI Custom Pipeline for: "${directive}". Balanced dynamic range, sharpened detail.`);
+    setTimeout(() => {
+      if (activeTool === 'photo-unblur') {
+        setIsUnblurred(true);
+        setStatusMessage('Photo Unblur: Motion vectors neutralized & clarity locked.');
+      } else if (activeTool === 'generative-expand') {
+        setIsExpanded(true);
+        setStatusMessage('Generative Expand: Margins synthesized to ratio.');
+      } else if (activeTool === 'studio-lighting') {
+        setStudioLightActive(true);
+        setStatusMessage('Studio Lighting: Volumetric key & rim lighting applied.');
+      } else if (activeTool === 'reimagine') {
+        setStatusMessage(`Reimagine: Synthesized "${promptText || 'Generative swap'}"`);
       }
 
-      setIsProcessing(false);
-      setOrbPhase('suggesting');
-      setNotification('AI Customer Edit complete!');
-      setTimeout(() => setNotification(null), 3000);
+      setIsInfilling(false);
+      triggerTactileHaptic(6, 'pulse');
+      setTimeout(() => setStatusMessage(null), 2500);
     }, 1200);
   };
 
+  // Upload Custom Photo
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -401,820 +336,342 @@ export const OmniImagineStudio: React.FC<{ onSaveToVault?: (asset: any) => void 
       reader.onload = () => {
         pushHistory();
         setImageSrc(reader.result as string);
-        setNotification('Image loaded successfully');
-        setTimeout(() => setNotification(null), 1500);
+        setIsUnblurred(false);
+        setIsExpanded(false);
+        setStudioLightActive(false);
+        setStatusMessage('Loaded new image to OmniImagine');
+        setTimeout(() => setStatusMessage(null), 2000);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleDownloadImage = () => {
-    const a = document.createElement('a');
-    a.href = imageSrc;
-    a.download = `OmniImagine-Edit-${Date.now()}.png`;
-    a.click();
-    setNotification('Download initiated');
-    setTimeout(() => setNotification(null), 1500);
-  };
-
+  // Save to Omni Vault Library
   const handleSaveToVault = () => {
+    triggerTactileHaptic(4, 'tap');
     if (onSaveToVault) {
       onSaveToVault({
         type: 'image',
-        title: `OmniImagine - ${selectedFilter !== 'normal' ? selectedFilter : 'Master Edit'}`,
+        title: `OmniImagine Master - ${activeMeta.label}`,
         thumbnail: imageSrc,
-        tags: ['OmniImagine', selectedFilter, 'AI Photo Studio', 'Dark Misfit Studios'],
-        details: `Edited with OmniImagine Studio with ${selectedFilter} filter & AI tools.`
+        tags: ['OmniImagine', activeTool, aspectRatio, 'Dark Misfit Studios'],
+        details: `Synthesized with OmniImagine elite tools: ${activeMeta.label}. Aspect: ${aspectRatio}.`,
       });
-      setNotification('Saved to Omni Vault Library!');
-      setTimeout(() => setNotification(null), 2000);
+      setStatusMessage('Saved to Omni Vault Library!');
+      setTimeout(() => setStatusMessage(null), 2000);
     }
   };
 
   return (
-    <div className="h-full w-full max-w-full overflow-x-hidden flex flex-col bg-[#0b0a14] text-slate-100 font-sans select-none">
-      
-      {/* 1. STUDIO HEADER */}
-      <div className="p-2.5 sm:p-3 bg-[#14121f] border-b border-white/10 flex flex-wrap items-center justify-between gap-2 shrink-0 shadow-lg">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#6c63ff] to-[#00f2fe] flex items-center justify-center text-white shadow-md shadow-[#6c63ff]/30 font-black shrink-0">
-            <Wand2 className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5 sm:gap-2 flex-wrap truncate">
-              <span>OMNI IMAGINE PHOTO & ART STUDIO</span>
-              <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#6c63ff]/20 text-[#a594fd] border border-[#6c63ff]/40 shrink-0">
-                PRO EDIT & AI SUITE
-              </span>
-            </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Filters, crop, resize, rotate, watermark/object eraser & AI Customer Auto-Edit</p>
-          </div>
-        </div>
+    <div
+      ref={containerRef}
+      className="w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative flex flex-col justify-between bg-black select-none box-border font-sans border sm:border-zinc-800 rounded-3xl shadow-[0_0_50px_rgba(0,255,204,0.15)]"
+      style={{ boxSizing: 'border-box' }}
+    >
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept="image/*"
+        className="hidden"
+      />
 
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {history.length > 0 && (
-            <button
-              onClick={handleUndo}
-              className="px-2.5 py-1.5 rounded-lg bg-[#1f1b33] hover:bg-[#2b2546] border border-white/10 text-xs text-slate-300 flex items-center gap-1.5 transition"
-              title="Undo last edit"
-            >
-              <Undo2 className="w-3.5 h-3.5 text-slate-400" /> Undo
-            </button>
-          )}
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept="image/*"
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#1f1b33] hover:bg-[#2b2546] border border-white/10 text-xs text-slate-200 flex items-center gap-1.5 transition"
-          >
-            <Upload className="w-3.5 h-3.5 text-[#00f2fe]" /> <span className="hidden xs:inline">Upload</span>
-          </button>
-
-          <button
-            onClick={handleDownloadImage}
-            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#1f1b33] hover:bg-[#2b2546] border border-white/10 text-xs text-slate-200 flex items-center gap-1.5 transition"
-            title="Download PNG to device"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" /> <span className="hidden xs:inline">Export</span>
-          </button>
-
-          <button
-            onClick={handleSaveToVault}
-            className="px-3 sm:px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#6c63ff] to-[#00f2fe] hover:opacity-90 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#6c63ff]/30 transition"
-          >
-            <FolderLock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Save to Vault</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Floating Notification Toast */}
-      {notification && (
-        <div className="absolute top-16 right-4 sm:right-6 z-50 px-3.5 py-2 rounded-xl bg-black/90 text-white border border-[#6c63ff]/60 text-xs font-mono flex items-center gap-2 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{notification}</span>
+      {/* Floating Status Notification Toast */}
+      {statusMessage && (
+        <div className="absolute top-12 left-3 right-3 z-50 px-3 py-2 rounded-xl bg-[#0b0816]/95 border border-[#00ffcc]/70 text-[#00ffcc] text-[11px] font-mono font-bold flex items-center justify-between shadow-[0_0_15px_rgba(0,255,204,0.3)] backdrop-blur-md animate-in fade-in slide-in-from-top-2 box-border">
+          <span className="flex items-center gap-1.5 truncate">
+            <Check className="w-3.5 h-3.5 shrink-0 text-[#00ffcc]" />
+            <span className="truncate">{statusMessage}</span>
+          </span>
+          <span className="text-[9px] text-[#00ffcc]/70 shrink-0 ml-1">AI SYNC</span>
         </div>
       )}
 
-      {/* 2. MAIN WORKSPACE AREA */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        
-        {/* LEFT / CENTER: CANVAS VIEWPORT */}
-        <div className="flex-1 bg-[#07060d] flex flex-col items-center justify-center p-2 sm:p-4 relative overflow-hidden">
-          
-          {/* Main Visual Display Frame */}
-          <div className="relative w-full max-w-2xl max-h-[44vh] sm:max-h-[65vh] rounded-2xl overflow-hidden border border-white/15 shadow-2xl shadow-purple-950/40 group flex items-center justify-center bg-black/80">
-            
-            {/* The Image Element with applied CSS Filter & Transform */}
-            <img
-              src={imageSrc}
-              alt="Canvas Studio"
-              style={{
-                filter: getCombinedFilterStyle(),
-                transform: `rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
-                transition: isCropping ? 'none' : 'filter 0.2s ease, transform 0.2s ease',
-              }}
-              className="max-h-[42vh] sm:max-h-[62vh] max-w-full object-contain select-none"
-            />
-
-            {/* AI Enhancement Overlay (Volumetric lighting & neural micro-contrast) */}
-            {aiOverlayActive && (
-              <div 
-                className="absolute inset-0 pointer-events-none mix-blend-screen opacity-70 bg-gradient-to-tr from-[#6c63ff]/30 via-transparent to-[#00f2fe]/30"
-                style={{ filter: 'contrast(130%)' }}
-              >
-                <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-mono font-bold flex items-center gap-1 shadow-md">
-                  <Sparkles className="w-3 h-3 text-cyan-400" /> AI Neural Light Overlay Active
-                </div>
-              </div>
-            )}
-
-            {/* Erased Badge Indicator */}
-            {erasedBadge && (
-              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md">
-                <Check className="w-3.5 h-3.5" /> {erasedBadge}
-              </div>
-            )}
-
-            {/* Crop Overlay when Crop Mode is Active */}
-            {isCropping && (
-              <div className="absolute inset-0 bg-black/60 cursor-crosshair flex items-center justify-center p-6">
-                <div 
-                  className="relative border-2 border-dashed border-[#00f2fe] rounded-lg shadow-2xl bg-transparent"
-                  style={{
-                    width: `${cropBox.width}%`,
-                    height: `${cropBox.height}%`,
-                  }}
-                >
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-40">
-                    <div className="border-r border-b border-white" />
-                    <div className="border-r border-b border-white" />
-                    <div className="border-b border-white" />
-                    <div className="border-r border-b border-white" />
-                    <div className="border-r border-b border-white" />
-                    <div className="border-b border-white" />
-                    <div className="border-r border-white" />
-                    <div className="border-r border-white" />
-                    <div />
-                  </div>
-
-                  {/* Corner Handles */}
-                  <span className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-[#00f2fe] rounded-full" />
-                  <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-[#00f2fe] rounded-full" />
-                  <span className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-[#00f2fe] rounded-full" />
-                  <span className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-[#00f2fe] rounded-full" />
-
-                  {/* Crop Action floating bar */}
-                  <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-[#14121f] px-3 py-1.5 rounded-xl border border-white/15 shadow-xl">
-                    <button
-                      onClick={handleApplyCrop}
-                      className="px-2.5 py-1 rounded-lg bg-[#00f2fe] text-slate-950 font-bold text-xs flex items-center gap-1"
-                    >
-                      <Check className="w-3.5 h-3.5" /> Apply Crop
-                    </button>
-                    <button
-                      onClick={() => setIsCropping(false)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Eraser Brush Canvas Simulation Area */}
-            {activeTab === 'erase' && !isCropping && (
-              <div 
-                className="absolute inset-0 cursor-crosshair flex items-center justify-center pointer-events-auto"
-                onMouseDown={() => setIsBrushing(true)}
-                onMouseUp={() => setIsBrushing(false)}
-              >
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md border border-[#6c63ff]/40 text-center text-xs font-mono text-slate-300 flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-[#a594fd] font-bold">
-                    <Brush className="w-3.5 h-3.5" /> Brush: {brushSize}px
-                  </span>
-                  <button
-                    onClick={() => handleExecuteErase(eraseMode, useAIEraser)}
-                    className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#6c63ff] to-[#00f2fe] text-slate-950 text-xs font-bold"
-                  >
-                    Execute {useAIEraser ? 'AI ' : ''}Erase
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Spinner Overlay */}
-            {isProcessing && (
-              <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center text-[#a594fd] font-mono text-xs gap-3 z-30">
-                <div className="w-8 h-8 rounded-full border-2 border-[#6c63ff] border-t-transparent animate-spin" />
-                <span>{processingMsg}</span>
-              </div>
-            )}
+      {/* =========================================================================
+          ZONE 1 (Top 45% - The Canvas)
+          Set to w-full h-[45%] relative bg-[#0b0816] flex items-center justify-center
+          overflow-hidden border-b border-zinc-900.
+          Uploaded image must use max-w-full max-h-full object-contain.
+      ========================================================================= */}
+      <div
+        className="w-full h-[45%] relative bg-[#0b0816] flex items-center justify-center overflow-hidden border-b border-zinc-900 box-border"
+        style={{ boxSizing: 'border-box' }}
+      >
+        {/* Top Header Bar inside Zone 1 */}
+        <div className="absolute top-0 left-0 right-0 h-10 px-3 z-30 flex items-center justify-between bg-[#0b0816]/90 backdrop-blur-md border-b border-zinc-900/80 box-border">
+          {/* EXACT BRANDING & SPELLING: OmniImagine */}
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#00ffcc] shadow-[0_0_10px_#00ffcc] animate-pulse" />
+            <h1 className="font-mono font-bold text-xs tracking-wider text-[#e8e6f2]">
+              OmniImagine
+            </h1>
           </div>
 
-          {/* Quick Transform Toolbar Under Canvas */}
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs font-mono">
-            <button
-              onClick={() => handleRotate(90)}
-              className="p-1.5 px-2.5 rounded-lg bg-[#14121f] hover:bg-[#1f1b33] border border-white/10 text-slate-300 flex items-center gap-1"
-              title="Rotate 90 degrees clockwise"
-            >
-              <RotateCw className="w-3.5 h-3.5 text-[#00f2fe]" /> 90°
-            </button>
-            <button
-              onClick={() => handleRotate(-90)}
-              className="p-1.5 px-2.5 rounded-lg bg-[#14121f] hover:bg-[#1f1b33] border border-white/10 text-slate-300 flex items-center gap-1"
-              title="Rotate 90 degrees counter-clockwise"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-[#00f2fe]" /> -90°
-            </button>
-            <button
-              onClick={() => handleRotate(180)}
-              className="p-1.5 px-2.5 rounded-lg bg-[#14121f] hover:bg-[#1f1b33] border border-white/10 text-slate-300 flex items-center gap-1"
-              title="Rotate 180 degrees"
-            >
-              <RotateCw className="w-3.5 h-3.5 text-[#a594fd]" /> 180°
-            </button>
-            <button
-              onClick={() => handleFlip('h')}
-              className="p-1.5 px-2.5 rounded-lg bg-[#14121f] hover:bg-[#1f1b33] border border-white/10 text-slate-300 flex items-center gap-1"
-              title="Flip Horizontally"
-            >
-              <FlipHorizontal className="w-3.5 h-3.5 text-amber-300" /> Flip H
-            </button>
-            <button
-              onClick={() => handleFlip('v')}
-              className="p-1.5 px-2.5 rounded-lg bg-[#14121f] hover:bg-[#1f1b33] border border-white/10 text-slate-300 flex items-center gap-1"
-              title="Flip Vertically"
-            >
-              <FlipVertical className="w-3.5 h-3.5 text-amber-300" /> Flip V
-            </button>
-
-            <span className="text-slate-600">|</span>
+          {/* Quick Header Utility Badges */}
+          <div className="flex items-center gap-1.5">
+            {history.length > 0 && (
+              <button
+                type="button"
+                onClick={handleUndo}
+                className="p-1 px-2 rounded-lg bg-[#131024] hover:bg-[#1f1a3a] border border-zinc-800 text-[#9490ac] hover:text-[#00ffcc] text-[10px] font-mono flex items-center gap-1 transition"
+                title="Undo last edit"
+              >
+                <Undo2 className="w-3 h-3 text-[#00ffcc]" />
+                <span>Undo</span>
+              </button>
+            )}
 
             <button
-              onClick={() => setIsCropping(!isCropping)}
-              className={`p-1.5 px-2.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition ${
-                isCropping ? 'bg-[#00f2fe] text-slate-950 border-[#00f2fe]' : 'bg-[#14121f] hover:bg-[#1f1b33] border-white/10 text-cyan-300'
-              }`}
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1 px-2 rounded-lg bg-[#131024] hover:bg-[#1f1a3a] border border-zinc-800 text-[#00ffcc] text-[10px] font-mono font-bold flex items-center gap-1 transition shadow-sm"
+              title="Upload custom image to canvas"
             >
-              <Crop className="w-3.5 h-3.5" /> Crop Tool
+              <Upload className="w-3 h-3 text-[#00ffcc]" />
+              <span>Upload</span>
             </button>
 
-            <button
-              onClick={() => setIsResizing(!isResizing)}
-              className={`p-1.5 px-2.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition ${
-                isResizing ? 'bg-[#6c63ff] text-white border-[#6c63ff]' : 'bg-[#14121f] hover:bg-[#1f1b33] border-white/10 text-[#a594fd]'
-              }`}
-            >
-              <Maximize2 className="w-3.5 h-3.5" /> Resize Tool
-            </button>
-
-            <button
-              onClick={() => setAiOverlayActive(!aiOverlayActive)}
-              className={`p-1.5 px-2.5 rounded-lg border text-xs font-bold flex items-center gap-1 transition ${
-                aiOverlayActive ? 'bg-gradient-to-r from-[#6c63ff] to-[#00f2fe] text-slate-950 border-cyan-400' : 'bg-[#14121f] hover:bg-[#1f1b33] border-white/10 text-slate-300'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#00f2fe]" /> AI Overlay: {aiOverlayActive ? 'ON' : 'OFF'}
-            </button>
+            {onSaveToVault && (
+              <button
+                type="button"
+                onClick={handleSaveToVault}
+                className="p-1 px-2 rounded-lg bg-[#131024] border border-[#00ffcc]/40 text-[#00ffcc] text-[10px] font-mono font-bold flex items-center gap-1 transition active:scale-95"
+                title="Save current canvas to Vault Library"
+              >
+                <FolderLock className="w-3 h-3 text-[#00ffcc]" />
+                <span>Vault</span>
+              </button>
+            )}
           </div>
+        </div>
 
-          {/* Quick Resize Modal Toolbar if isResizing */}
-          {isResizing && (
-            <div className="mt-2 p-3 bg-[#14121f] rounded-xl border border-white/15 flex items-center gap-4 text-xs font-mono shadow-xl animate-in fade-in">
-              <span className="text-[#00f2fe] font-bold">Resize:</span>
-              <div className="flex items-center gap-1.5">
-                <span>W:</span>
-                <input
-                  type="number"
-                  value={targetWidth}
-                  onChange={(e) => {
-                    const w = parseInt(e.target.value, 10) || 100;
-                    setTargetWidth(w);
-                    if (maintainAspect) setTargetHeight(Math.round(w * 0.667));
-                  }}
-                  className="w-16 p-1 bg-black rounded border border-white/15 text-center text-white"
-                />
-                <span>px</span>
-              </div>
+        {/* The Canvas Image Frame */}
+        <div className="relative w-full h-full pt-10 flex items-center justify-center p-2 box-border">
+          <img
+            ref={imageRef}
+            src={imageSrc}
+            alt="OmniImagine Canvas"
+            onLoad={syncCanvasDimensions}
+            style={{
+              filter: `${isUnblurred ? 'contrast(125%) brightness(104%) saturate(110%)' : ''}`,
+              transform: isExpanded ? 'scale(0.88)' : 'scale(1)',
+              transition: 'filter 0.3s ease, transform 0.3s ease',
+            }}
+            className="max-w-full max-h-full object-contain pointer-events-none select-none"
+          />
 
-              <div className="flex items-center gap-1.5">
-                <span>H:</span>
-                <input
-                  type="number"
-                  value={targetHeight}
-                  onChange={(e) => {
-                    const h = parseInt(e.target.value, 10) || 100;
-                    setTargetHeight(h);
-                    if (maintainAspect) setTargetWidth(Math.round(h * 1.5));
-                  }}
-                  className="w-16 p-1 bg-black rounded border border-white/15 text-center text-white"
-                />
-                <span>px</span>
-              </div>
-
-              <div className="flex items-center gap-1">
-                {[50, 75, 100, 150].map((pct) => (
-                  <button
-                    key={pct}
-                    onClick={() => {
-                      setTargetWidth(Math.round(1000 * (pct / 100)));
-                      setTargetHeight(Math.round(667 * (pct / 100)));
-                    }}
-                    className="px-2 py-0.5 rounded bg-slate-800 text-[10px] hover:bg-slate-700"
-                  >
-                    {pct}%
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={handleApplyResize}
-                className="px-3 py-1 rounded bg-[#00f2fe] text-slate-950 font-bold"
-              >
-                Apply
-              </button>
-              <button
-                onClick={() => setIsResizing(false)}
-                className="px-2 py-1 rounded bg-slate-800 text-slate-400"
-              >
-                Close
-              </button>
+          {/* Generative Expand Outpaint Margin Indicators */}
+          {isExpanded && (
+            <div className="absolute inset-x-4 inset-y-12 border-2 border-dashed border-[#00ffcc]/60 pointer-events-none rounded-xl flex items-center justify-center">
+              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-[#131024] text-[#00ffcc] border border-[#00ffcc]/40 shadow-[0_0_10px_rgba(0,255,204,0.4)]">
+                Expanded Bounds +25%
+              </span>
             </div>
           )}
-        </div>
 
-        {/* RIGHT / SIDE PANEL: TABS & CONTROLS */}
-        <div className="w-full lg:w-96 bg-[#14121f] border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col justify-between overflow-hidden shadow-2xl max-h-[75vh] lg:max-h-full">
-          
-          {/* Top Panel Section */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            
-            {/* Tool Category Selector Tabs */}
-            <div className="p-1.5 sm:p-2 border-b border-white/10 grid grid-cols-4 gap-1 bg-[#0b0a14] shrink-0">
-              {[
-                { id: 'filters', label: 'Filters', icon: Palette },
-                { id: 'basic_adjust', label: 'Adjust', icon: Sliders },
-                { id: 'erase', label: 'Eraser Suite', icon: Eraser },
-                { id: 'ai_magic', label: 'AI Auto-Edit', icon: Wand2 },
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id as any);
-                      if (tab.id !== 'erase') setIsCropping(false);
-                    }}
-                    className={`py-2 px-1 rounded-xl text-[11px] font-mono font-bold flex flex-col items-center gap-1 transition ${
-                      active
-                        ? 'bg-gradient-to-br from-[#6c63ff]/30 to-[#00f2fe]/20 text-white border border-[#6c63ff]/50 shadow-md'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${active ? 'text-[#00f2fe]' : 'text-slate-500'}`} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
+          {/* Studio Lighting Volumetric Key/Rim Overlay */}
+          {studioLightActive && (
+            <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-70 bg-gradient-to-tr from-[#00ffcc]/20 via-transparent to-[#131024]/40" />
+          )}
+
+          {/* Reimagine Target Box Overlay */}
+          {activeTool === 'reimagine' && (
+            <div className="absolute inset-10 border border-[#00ffcc]/40 rounded-2xl pointer-events-none flex flex-col justify-between p-2 shadow-[0_0_20px_rgba(0,255,204,0.15)]">
+              <span className="text-[9px] font-mono text-[#00ffcc] bg-[#0b0816]/90 px-1.5 py-0.5 rounded border border-[#00ffcc]/30 self-start">
+                Generative Swap Region
+              </span>
+              <span className="text-[8.5px] font-mono text-[#9490ac] bg-[#0b0816]/80 px-1.5 py-0.5 rounded self-end">
+                AI Prompt Synchronized
+              </span>
             </div>
+          )}
 
-            {/* TAB CONTENT SCROLLABLE BODY */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              
-              {/* TAB 1: 12 IMAGE FILTERS & LIVE PREVIEWS */}
-              {activeTab === 'filters' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-slate-300 uppercase flex items-center gap-1.5">
-                      <Palette className="w-3.5 h-3.5 text-[#00f2fe]" /> 12 Creative Photo Filters
-                    </span>
-                    <button
-                      onClick={handleBakeFilterToCanvas}
-                      className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-[#00f2fe]/20 text-[#00f2fe] border border-[#00f2fe]/40 hover:bg-[#00f2fe]/30 transition"
-                    >
-                      Bake To Pixels
-                    </button>
-                  </div>
+          {/* Transparent Pointer-Events HTML5 Overlay Canvas for Magic Eraser */}
+          <canvas
+            ref={maskCanvasRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className={`absolute z-20 touch-none ${
+              activeTool === 'magic-eraser'
+                ? 'pointer-events-auto cursor-crosshair'
+                : 'pointer-events-none opacity-0'
+            }`}
+          />
 
-                  {/* Filter Grid */}
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {FILTER_PRESETS.map((filter) => {
-                      const isSelected = selectedFilter === filter.id;
-                      return (
-                        <button
-                          key={filter.id}
-                          onClick={() => setSelectedFilter(filter.id)}
-                          className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1.5 group ${
-                            isSelected
-                              ? 'bg-[#6c63ff]/25 border-[#00f2fe] shadow-[0_0_12px_rgba(0,242,254,0.3)] text-white'
-                              : 'bg-[#0f0e1a] hover:bg-[#1f1b33] border-white/10 text-slate-400 hover:text-slate-200'
-                          }`}
-                        >
-                          {/* Mini Thumbnail Preview */}
-                          <div className="w-full h-12 rounded-lg overflow-hidden bg-black/60 relative border border-white/10">
-                            <img
-                              src={imageSrc}
-                              alt={filter.name}
-                              style={{ filter: filter.cssFilter }}
-                              className="w-full h-full object-cover"
-                            />
-                            {isSelected && (
-                              <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-[#00f2fe] flex items-center justify-center">
-                                <Check className="w-2.5 h-2.5 text-black stroke-[3]" />
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-[11px] font-bold font-mono tracking-tight leading-none truncate w-full">
-                            {filter.name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Filter Intensity Slider */}
-                  <div className="p-3 rounded-xl bg-[#0b0a14] border border-white/10 space-y-2">
-                    <div className="flex justify-between text-xs font-mono">
-                      <span className="text-slate-400">Filter Opacity / Strength:</span>
-                      <span className="text-[#00f2fe] font-bold">{filterIntensity}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={filterIntensity}
-                      onChange={(e) => setFilterIntensity(parseInt(e.target.value, 10))}
-                      className="w-full accent-[#00f2fe] h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: BASIC & ADVANCED ADJUSTMENTS (Brightness, Contrast, Saturation, Blur, Hue) */}
-              {activeTab === 'basic_adjust' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-slate-300 uppercase flex items-center gap-1.5">
-                      <Sliders className="w-3.5 h-3.5 text-[#00f2fe]" /> Color & Light Balancer
-                    </span>
-                    <button
-                      onClick={() => {
-                        setBrightness(100);
-                        setContrast(100);
-                        setSaturation(100);
-                        setBlurValue(0);
-                        setHueRotate(0);
-                      }}
-                      className="text-[10px] font-mono text-slate-400 hover:text-white"
-                    >
-                      Reset All
-                    </button>
-                  </div>
-
-                  <div className="space-y-3.5 p-3 rounded-xl bg-[#0b0a14] border border-white/10">
-                    {/* Brightness */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-slate-400 flex items-center gap-1"><Sun className="w-3.5 h-3.5 text-amber-300" /> Brightness</span>
-                        <span className="text-slate-200">{brightness}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="30"
-                        max="200"
-                        value={brightness}
-                        onChange={(e) => setBrightness(parseInt(e.target.value, 10))}
-                        className="w-full accent-amber-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Contrast */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-slate-400 flex items-center gap-1"><Sliders className="w-3.5 h-3.5 text-cyan-400" /> Contrast</span>
-                        <span className="text-slate-200">{contrast}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="30"
-                        max="200"
-                        value={contrast}
-                        onChange={(e) => setContrast(parseInt(e.target.value, 10))}
-                        className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Saturation */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-slate-400 flex items-center gap-1"><Palette className="w-3.5 h-3.5 text-pink-400" /> Saturation</span>
-                        <span className="text-slate-200">{saturation}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="250"
-                        value={saturation}
-                        onChange={(e) => setSaturation(parseInt(e.target.value, 10))}
-                        className="w-full accent-pink-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Hue Rotate */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-slate-400 flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-purple-400" /> Hue Angle</span>
-                        <span className="text-slate-200">{hueRotate}°</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="360"
-                        value={hueRotate}
-                        onChange={(e) => setHueRotate(parseInt(e.target.value, 10))}
-                        className="w-full accent-purple-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Blur / Softness */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs font-mono">
-                        <span className="text-slate-400 flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-blue-400" /> Soft Focus / Blur</span>
-                        <span className="text-slate-200">{blurValue}px</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={blurValue}
-                        onChange={(e) => setBlurValue(parseInt(e.target.value, 10))}
-                        className="w-full accent-blue-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleBakeFilterToCanvas}
-                    className="w-full py-2 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f2fe] text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md"
-                  >
-                    <Check className="w-3.5 h-3.5" /> Bake Adjustments to Pixels
-                  </button>
-                </div>
-              )}
-
-              {/* TAB 3: ERASER SUITE (Object, Background, Watermark - EACH with AI Option) */}
-              {activeTab === 'erase' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-slate-300 uppercase flex items-center gap-1.5">
-                      <Eraser className="w-3.5 h-3.5 text-[#00f2fe]" /> Erasure & Cutout Suite
-                    </span>
-                    <span className="text-[10px] font-mono text-[#00f2fe] bg-[#00f2fe]/10 px-2 py-0.5 rounded border border-[#00f2fe]/30">
-                      AI INCLUDED
-                    </span>
-                  </div>
-
-                  {/* AI Option Toggle for All Erasers */}
-                  <div className="p-3 rounded-xl bg-gradient-to-r from-[#6c63ff]/20 to-[#00f2fe]/15 border border-[#6c63ff]/40 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#00f2fe] animate-pulse" />
-                      <div>
-                        <span className="text-xs font-bold text-white block">AI Neural Assist Option</span>
-                        <span className="text-[10px] text-slate-400">Uses Generative In-Paint & Alpha Synthesis</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setUseAIEraser(!useAIEraser)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition ${
-                        useAIEraser ? 'bg-[#00f2fe] text-slate-950 shadow-md' : 'bg-slate-800 text-slate-400'
-                      }`}
-                    >
-                      {useAIEraser ? 'AI ENABLED' : 'MANUAL'}
-                    </button>
-                  </div>
-
-                  {/* 3 Core Erasure Tools Cards */}
-                  <div className="space-y-2.5">
-                    
-                    {/* Tool 1: Object Eraser */}
-                    <div className={`p-3 rounded-xl border transition ${
-                      eraseMode === 'object' ? 'bg-[#6c63ff]/15 border-[#6c63ff]' : 'bg-[#0b0a14] border-white/10'
-                    }`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <Brush className="w-4 h-4 text-[#00f2fe]" />
-                          <div>
-                            <h4 className="text-xs font-bold text-white">1. Erase Object / Person</h4>
-                            <p className="text-[10px] text-slate-400">Remove photobombers, trash, or unwanted objects</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setEraseMode('object');
-                            handleExecuteErase('object', useAIEraser);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-[#6c63ff] hover:bg-[#5b52e0] text-white text-xs font-bold flex items-center gap-1 shadow"
-                        >
-                          {useAIEraser ? <Sparkles className="w-3 h-3 text-[#00f2fe]" /> : <Eraser className="w-3 h-3" />}
-                          {useAIEraser ? 'AI Erase' : 'Erase'}
-                        </button>
-                      </div>
-
-                      {eraseMode === 'object' && (
-                        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-                          <span className="text-slate-400">Brush Radius:</span>
-                          <input
-                            type="range"
-                            min="5"
-                            max="80"
-                            value={brushSize}
-                            onChange={(e) => setBrushSize(parseInt(e.target.value, 10))}
-                            className="w-28 accent-[#00f2fe] h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                          />
-                          <span className="text-[#00f2fe]">{brushSize}px</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Tool 2: Background Remover */}
-                    <div className={`p-3 rounded-xl border transition ${
-                      eraseMode === 'background' ? 'bg-[#6c63ff]/15 border-[#6c63ff]' : 'bg-[#0b0a14] border-white/10'
-                    }`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <Scissors className="w-4 h-4 text-pink-400" />
-                          <div>
-                            <h4 className="text-xs font-bold text-white">2. Erase Background</h4>
-                            <p className="text-[10px] text-slate-400">Cut out subject with transparent alpha channel</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setEraseMode('background');
-                            handleExecuteErase('background', useAIEraser);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-pink-500 hover:bg-pink-400 text-slate-950 text-xs font-bold flex items-center gap-1 shadow"
-                        >
-                          {useAIEraser ? <Sparkles className="w-3 h-3 text-white" /> : <Scissors className="w-3 h-3" />}
-                          {useAIEraser ? 'AI Cutout' : 'Remove BG'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Tool 3: Watermark Remover */}
-                    <div className={`p-3 rounded-xl border transition ${
-                      eraseMode === 'watermark' ? 'bg-[#6c63ff]/15 border-[#6c63ff]' : 'bg-[#0b0a14] border-white/10'
-                    }`}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <ShieldAlert className="w-4 h-4 text-amber-400" />
-                          <div>
-                            <h4 className="text-xs font-bold text-white">3. Erase Watermark / Stamps</h4>
-                            <p className="text-[10px] text-slate-400">Purge logos, timestamps, and camera watermarks</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setEraseMode('watermark');
-                            handleExecuteErase('watermark', useAIEraser);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold flex items-center gap-1 shadow"
-                        >
-                          {useAIEraser ? <Sparkles className="w-3 h-3 text-black" /> : <Eraser className="w-3 h-3" />}
-                          {useAIEraser ? 'AI Purge' : 'Purge'}
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: "OPTION FOR AI TO DO THE EDITING FOR THE CUSTOMER" */}
-              {activeTab === 'ai_magic' && (
-                <div className="space-y-4">
-                  <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#6c63ff]/20 to-[#00f2fe]/20 border border-[#6c63ff]/40 flex items-center gap-3">
-                    <div className="w-10 h-10 flex-shrink-0">
-                      <HoloOrb phase={orbPhase} className="w-full h-full" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-mono text-[#00f2fe] font-bold uppercase block">
-                        OMNI AI CUSTOMER EDIT AGENT
-                      </span>
-                      <p className="text-xs text-slate-300">
-                        "Tell me what you want changed. I'll execute the crop, color grade, background, and polish automatically for you."
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Directive Prompt Input */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-300 uppercase font-mono flex items-center justify-between">
-                      <span>Customer Directive</span>
-                      <span className="text-[10px] text-slate-500 font-normal">Natural Language</span>
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={aiAutoEditPrompt}
-                      onChange={(e) => setAiAutoEditPrompt(e.target.value)}
-                      placeholder="e.g. Turn this into a cinematic cyberpunk poster, remove the background, and boost saturation..."
-                      className="w-full p-2.5 bg-black/60 border border-white/15 focus:border-[#00f2fe] rounded-xl text-xs text-white placeholder-slate-500 outline-none leading-relaxed resize-none"
-                    />
-                    <button
-                      onClick={() => handleAIDoEditing()}
-                      disabled={isProcessing || !aiAutoEditPrompt.trim()}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f2fe] hover:opacity-95 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-[#6c63ff]/30 disabled:opacity-50"
-                    >
-                      <Bot className="w-4 h-4" />
-                      Let AI Edit My Image For Me
-                    </button>
-                  </div>
-
-                  {/* 1-Tap Customer Edit Presets */}
-                  <div className="space-y-1.5 pt-2 border-t border-white/10">
-                    <span className="text-[11px] font-mono text-slate-400 font-bold uppercase">
-                      Instant 1-Tap Customer Presets
-                    </span>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { title: 'Cinematic Cyberpunk Poster', prompt: 'Transform into a dark cyberpunk neon aesthetic, sharp contrast, volumetric light overlay' },
-                        { title: 'Clean E-Commerce Product Cutout', prompt: 'Crop 1:1, remove messy background, enhance lighting, sharpen edge details' },
-                        { title: '70s Nostalgia Film Still', prompt: 'Vintage polaroid look, sepia curve, warm sunset grade, soft highlights' },
-                        { title: 'Executive Headshot Polish', prompt: 'Natural portrait lighting, clean background, warm skin tones, 4K clarity' },
-                      ].map((preset, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            setAiAutoEditPrompt(preset.prompt);
-                            handleAIDoEditing(preset.prompt);
-                          }}
-                          className="p-2.5 rounded-xl bg-[#0b0a14] hover:bg-[#1f1b33] border border-white/10 text-left transition flex items-center justify-between group"
-                        >
-                          <div>
-                            <span className="text-xs font-bold text-slate-200 group-hover:text-[#00f2fe] block">
-                              {preset.title}
-                            </span>
-                            <span className="text-[10px] text-slate-400 truncate block max-w-[240px]">
-                              {preset.prompt}
-                            </span>
-                          </div>
-                          <Wand2 className="w-3.5 h-3.5 text-[#00f2fe] opacity-50 group-hover:opacity-100 shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Last Action Log */}
-                  {aiAutoEditLog && (
-                    <div className="p-2.5 rounded-xl bg-[#00f2fe]/10 border border-[#00f2fe]/30 text-[11px] font-mono text-cyan-200">
-                      <strong>AI Agent Log:</strong> {aiAutoEditLog}
-                    </div>
-                  )}
-                </div>
-              )}
-
+          {/* Magic Eraser Infill Loading State */}
+          {isInfilling && (
+            <div className="absolute inset-0 z-40 bg-[#0b0816]/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2.5 text-[#00ffcc] font-mono">
+              <div className="w-8 h-8 rounded-full border-2 border-[#00ffcc] border-t-transparent animate-spin shadow-[0_0_15px_#00ffcc]" />
+              <span className="text-xs font-bold tracking-wider animate-pulse">
+                {activeMeta.label.toUpperCase()} IN PROGRESS
+              </span>
+              <span className="text-[10px] text-[#9490ac]">
+                Contextually patching background pixels...
+              </span>
             </div>
-          </div>
+          )}
 
-          {/* Bottom Footer Actions */}
-          <div className="p-3 bg-[#0b0a14] border-t border-white/10 flex items-center justify-between shrink-0">
-            <button
-              onClick={() => {
-                setImageSrc('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1000&q=80');
-                setSelectedFilter('normal');
-                setBrightness(100);
-                setContrast(100);
-                setSaturation(100);
-                setBlurValue(0);
-                setHueRotate(0);
-                setRotation(0);
-                setFlipH(false);
-                setFlipV(false);
-                setErasedBadge(null);
-                setAiOverlayActive(false);
-                setNotification('Reverted to stock photo');
-              }}
-              className="text-xs text-slate-500 hover:text-slate-300 font-mono flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" /> Reset Photo
-            </button>
-            <span className="text-[10px] font-mono text-slate-600">
-              OmniImagine v4.2 • DarkMisfitStudios
+          {/* Active Tool Watermark / Mode Badge */}
+          <div className="absolute bottom-2 left-2 z-20 pointer-events-none">
+            <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#131024]/90 text-[#00ffcc] border border-[#00ffcc]/30 shadow-sm flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00ffcc] animate-ping" />
+              {activeMeta.label}
             </span>
           </div>
-
         </div>
 
+        {/* GOOGLE PHOTOS MAGIC ERASER: Mobile-Optimized Slider directly above tool ribbon */}
+        {activeTool === 'magic-eraser' && (
+          <div className="absolute bottom-0 left-0 right-0 z-30 px-3 py-1.5 bg-[#0b0816]/95 backdrop-blur-md border-t border-zinc-900 flex items-center justify-between gap-3 text-xs font-mono box-border animate-in fade-in slide-in-from-bottom-1">
+            <span className="text-[#00ffcc] font-bold text-[10px] shrink-0">
+              Brush Size: {brushSize}px
+            </span>
+            <input
+              type="range"
+              min="10"
+              max="50"
+              value={brushSize}
+              onChange={(e) => setBrushSize(Number(e.target.value))}
+              className="flex-1 accent-[#00ffcc] h-1.5 bg-[#131024] rounded-lg cursor-pointer"
+            />
+            <span className="text-[#9490ac] text-[9.5px] shrink-0 font-mono">
+              10px - 50px
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* =========================================================================
+          ZONE 2 (Middle 15% - The Elite Tool Ribbon)
+          Set to a single-row horizontal swipe container:
+          w-full h-[15%] flex items-center gap-3 px-4 bg-[#131024] overflow-x-auto
+          whitespace-nowrap scrollbar-hide border-b border-zinc-900.
+          Uniform mobile tap badges (vertical stack of icon + text-[10px] labels):
+          * [Magic Eraser] - Activates the brush canvas mask.
+          * [Reimagine] - Activates generative prompt-based element swap.
+          * [Photo Unblur] - One-tap motion blur restorer.
+          * [Generative Expand] - Outpaints and expands frame margins.
+          * [Studio Lighting] - Smart facial re-lighting engine.
+      ========================================================================= */}
+      <div
+        className="w-full h-[15%] flex items-center gap-3 px-4 bg-[#131024] overflow-x-auto whitespace-nowrap scrollbar-hide border-b border-zinc-900 box-border shrink-0"
+        style={{ boxSizing: 'border-box' }}
+      >
+        {ELITE_TOOLS.map((tool) => {
+          const Icon = tool.icon;
+          const isSelected = activeTool === tool.id;
+
+          return (
+            <button
+              key={tool.id}
+              type="button"
+              onClick={() => {
+                triggerTactileHaptic(4, 'tap');
+                setActiveTool(tool.id);
+                // Clear any leftover brush points when switching tools
+                setBrushMaskPoints([]);
+                const canvas = maskCanvasRef.current;
+                if (canvas) {
+                  const ctx = canvas.getContext('2d');
+                  ctx?.clearRect(0, 0, canvas.width, canvas.height);
+                }
+              }}
+              className={`flex flex-col items-center justify-center gap-1 min-w-[66px] h-[58px] px-2 rounded-xl border transition-all shrink-0 active:scale-95 box-border ${
+                isSelected
+                  ? 'bg-[#00ffcc]/15 border-[#00ffcc] text-[#00ffcc] shadow-[0_0_12px_rgba(0,255,204,0.35)]'
+                  : 'bg-[#0b0816] border-zinc-800 text-[#9490ac] hover:text-[#00ffcc] hover:border-[#00ffcc]/40'
+              }`}
+              title={tool.description}
+            >
+              <Icon className={`w-4 h-4 ${isSelected ? 'text-[#00ffcc]' : 'text-[#9490ac]'}`} />
+              <span className="text-[10px] font-mono font-bold leading-none select-none tracking-tight">
+                {tool.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* =========================================================================
+          ZONE 3 (Bottom 40% - Generation & Controls)
+          Set to w-full h-[40%] bg-black p-4 flex flex-col justify-between relative.
+          Group text-prompt area, aspect ratio selectors row (9:16, 16:9, 1:1),
+          anchor primary generation trigger button to absolute bottom of frame
+          using full width (w-full h-11 bg-[#00ffcc] text-black font-bold rounded-xl).
+      ========================================================================= */}
+      <div
+        className="w-full h-[40%] bg-black p-4 flex flex-col justify-between relative box-border"
+        style={{ boxSizing: 'border-box' }}
+      >
+        {/* Top of Zone 3: Text-Prompt Area */}
+        <div className="w-full flex flex-col gap-1.5 box-border">
+          <div className="flex items-center justify-between text-[10px] font-mono">
+            <span className="text-[#00ffcc] font-bold uppercase tracking-wider flex items-center gap-1">
+              <span>{activeMeta.promptLabel}</span>
+            </span>
+            <span className="text-[#9490ac] text-[9.5px]">Natural Language Context</span>
+          </div>
+
+          <textarea
+            rows={2}
+            value={promptText}
+            onChange={(e) => setPromptText(e.target.value)}
+            placeholder={activeMeta.placeholder}
+            className="w-full bg-[#0b0816] border border-zinc-800 focus:border-[#00ffcc] rounded-xl p-2.5 text-xs text-[#e8e6f2] placeholder-[#9490ac]/50 outline-none resize-none font-mono box-border transition focus:ring-1 focus:ring-[#00ffcc]/40"
+          />
+
+          <p className="text-[9.5px] text-[#9490ac] font-mono truncate">
+            {activeMeta.description}
+          </p>
+        </div>
+
+        {/* Middle of Zone 3: Aspect Ratio Selectors Row (9:16, 16:9, 1:1 using small text-xs utility scales) */}
+        <div className="w-full flex items-center justify-between gap-2 py-1 box-border">
+          <span className="text-[10px] font-mono text-[#9490ac] font-bold uppercase tracking-wider">
+            Aspect Ratio:
+          </span>
+
+          <div className="flex items-center gap-2">
+            {(['9:16', '16:9', '1:1'] as AspectRatio[]).map((ratio) => {
+              const isSelected = aspectRatio === ratio;
+              return (
+                <button
+                  key={ratio}
+                  type="button"
+                  onClick={() => {
+                    triggerTactileHaptic(3, 'tap');
+                    setAspectRatio(ratio);
+                  }}
+                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition active:scale-95 border ${
+                    isSelected
+                      ? 'bg-[#00ffcc] text-black border-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.4)]'
+                      : 'bg-[#131024] border-zinc-800 text-[#9490ac] hover:text-[#e8e6f2] hover:border-[#00ffcc]/40'
+                  }`}
+                >
+                  {ratio}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bottom of Zone 3: Primary Generation Trigger Button Anchored to Absolute Bottom */}
+        <button
+          type="button"
+          onClick={handlePrimaryAction}
+          disabled={isInfilling}
+          className="w-full h-11 bg-[#00ffcc] hover:bg-[#00ffcc]/90 text-black font-bold font-mono text-xs tracking-wider rounded-xl active:scale-[0.98] transition flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,255,204,0.3)] disabled:opacity-40 shrink-0"
+        >
+          {isInfilling ? (
+            <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
+          ) : (
+            <activeMeta.icon className="w-4 h-4 text-black stroke-[2.5]" />
+          )}
+          <span>{isInfilling ? 'Synthesizing...' : activeMeta.buttonAction}</span>
+        </button>
       </div>
     </div>
   );

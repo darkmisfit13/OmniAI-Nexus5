@@ -68,7 +68,7 @@ export const studioMeta: Record<StudioId, { name: string; tag: string; icon: any
   wave: { name: 'OmniWave', tag: 'Suno Song Creator', icon: Music },
   forge: { name: 'OmniForge', tag: 'Three-State Fluid Mobile Builder', icon: Hammer },
   code: { name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code },
-  imagine: { name: 'Omni Image Studio', tag: '12 Filters, Crop, Erasers & AI', icon: Wand2 },
+  imagine: { name: 'OmniImagine', tag: 'Mobile Canvas & Magic Eraser Suite', icon: Wand2 },
   analyzer: { name: 'OmniAnalyzer', tag: 'Site & Social Auditor', icon: Search },
   style: { name: 'OmniStyle', tag: 'Wardrobe & Aesthetic', icon: Shirt },
   spatial: { name: 'Spatial 3D', tag: 'Three.js Spatial Canvas', icon: Rotate3d },

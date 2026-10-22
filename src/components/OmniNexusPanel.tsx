@@ -19,7 +19,12 @@ import {
   AlertCircle,
   Clock,
   Zap,
-  Activity
+  Activity,
+  Wifi,
+  WifiOff,
+  Sun,
+  ClipboardX,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HoloOrb } from './HoloOrb';
@@ -106,6 +111,10 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [executingId, setExecutingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'commands'>('chat');
+  const [wifiActive, setWifiActive] = useState<boolean>(true);
+  const [brightnessLevel, setBrightnessLevel] = useState<number>(100);
+  const [quickActionToast, setQuickActionToast] = useState<string | null>(null);
+  const [isLogExported, setIsLogExported] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load persistent Voice Command Log
@@ -245,6 +254,80 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
   const handleClearVoiceLog = () => {
     triggerTactileHaptic(3, 'delete');
     saveVoiceLog([]);
+  };
+
+  // Quick Action: Toggle Wi-Fi
+  const handleToggleWifi = () => {
+    triggerTactileHaptic(4, 'tap');
+    const nextWifi = !wifiActive;
+    setWifiActive(nextWifi);
+    const msg = `System Task: Wi-Fi ${nextWifi ? 'Enabled & Connected' : 'Disconnected'}`;
+    setQuickActionToast(msg);
+    addVoiceCommand(`Toggle Wi-Fi (${nextWifi ? 'ON' : 'OFF'})`);
+    setTimeout(() => setQuickActionToast(null), 2500);
+  };
+
+  // Quick Action: Brightness Down (step down by 20%, wraps to 100%)
+  const handleBrightnessDown = () => {
+    triggerTactileHaptic(4, 'tap');
+    const nextBrightness = brightnessLevel <= 20 ? 100 : brightnessLevel - 20;
+    setBrightnessLevel(nextBrightness);
+    const msg = `System Task: Display Brightness lowered to ${nextBrightness}%`;
+    setQuickActionToast(msg);
+    addVoiceCommand(`Brightness Down (${nextBrightness}%)`);
+    setTimeout(() => setQuickActionToast(null), 2500);
+  };
+
+  // Quick Action: Clipboard Clear
+  const handleClipboardClear = async () => {
+    triggerTactileHaptic(4, 'delete');
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText('');
+      }
+    } catch {}
+    const msg = 'System Task: Clipboard Cleared';
+    setQuickActionToast(msg);
+    addVoiceCommand('Clipboard Clear');
+    setTimeout(() => setQuickActionToast(null), 2500);
+  };
+
+  // Export Voice Command Log to Clipboard
+  const handleExportVoiceLog = async () => {
+    triggerTactileHaptic(4, 'tap');
+    if (voiceLog.length === 0) {
+      setQuickActionToast('Voice log is currently empty');
+      setTimeout(() => setQuickActionToast(null), 2000);
+      return;
+    }
+
+    const logText = voiceLog.map((item, idx) => 
+      `${idx + 1}. [${item.timestamp}] [${item.studioContext || 'General'}] "${item.command}" (Executions: ${item.executionCount})`
+    ).join('\n');
+
+    const formattedLog = `=== OmniNexus Voice Command Log Export ===\nExported: ${new Date().toLocaleString()}\nTotal Interactions: ${voiceLog.length}\n\n${logText}\n===========================================`;
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(formattedLog);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = formattedLog;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setIsLogExported(true);
+      setQuickActionToast('Voice Command Log copied to clipboard!');
+      setTimeout(() => {
+        setIsLogExported(false);
+        setQuickActionToast(null);
+      }, 2500);
+    } catch (err) {
+      setQuickActionToast('Failed to export log to clipboard');
+      setTimeout(() => setQuickActionToast(null), 2000);
+    }
   };
 
   // Web Speech recognition dictation toggle
@@ -419,6 +502,66 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
           </button>
         </div>
 
+        {/* Quick Actions System Tasks Ribbon */}
+        <div className="px-3.5 py-2 bg-[#14121f] border-b border-[#211d34] flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0 shrink-0">
+            <Zap className="w-3.5 h-3.5 text-[#00f0ff]" />
+            <span className="text-[10px] font-mono font-bold text-[#e8e6f2] uppercase tracking-wider hidden xs:inline">
+              Quick Actions
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {/* Toggle Wi-Fi */}
+            <button
+              type="button"
+              onClick={handleToggleWifi}
+              className={`px-2.5 py-1 rounded-lg border text-[10px] font-mono font-bold flex items-center gap-1.5 transition active:scale-95 shrink-0 ${
+                wifiActive
+                  ? 'bg-[#00f0ff]/10 text-[#00f0ff] border-[#00f0ff]/40 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
+                  : 'bg-[#0b0a14] text-[#9490ac] border-[#211d34]'
+              }`}
+              title="Toggle Wi-Fi (Single Tap System Action)"
+            >
+              {wifiActive ? <Wifi className="w-3 h-3 text-[#00f0ff]" /> : <WifiOff className="w-3 h-3 text-[#9490ac]" />}
+              <span>Toggle Wi-Fi ({wifiActive ? 'ON' : 'OFF'})</span>
+            </button>
+
+            {/* Brightness Down */}
+            <button
+              type="button"
+              onClick={handleBrightnessDown}
+              className="px-2.5 py-1 rounded-lg bg-[#0b0a14] hover:bg-[#14121f] border border-[#211d34] hover:border-[#00f0ff]/50 text-[#e8e6f2] hover:text-[#00f0ff] text-[10px] font-mono font-bold flex items-center gap-1.5 transition active:scale-95 shrink-0"
+              title="Reduce system display brightness"
+            >
+              <Sun className="w-3 h-3 text-[#00f0ff]" />
+              <span>Brightness Down ({brightnessLevel}%)</span>
+            </button>
+
+            {/* Clipboard Clear */}
+            <button
+              type="button"
+              onClick={handleClipboardClear}
+              className="px-2.5 py-1 rounded-lg bg-[#0b0a14] hover:bg-[#14121f] border border-[#211d34] hover:border-[#00f0ff]/50 text-[#e8e6f2] hover:text-[#00f0ff] text-[10px] font-mono font-bold flex items-center gap-1.5 transition active:scale-95 shrink-0"
+              title="Clear system clipboard with single tap"
+            >
+              <ClipboardX className="w-3 h-3 text-[#00f0ff]" />
+              <span>Clipboard Clear</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Action Toast Indicator */}
+        {quickActionToast && (
+          <div className="px-3 py-1.5 bg-[#00f0ff]/15 border-b border-[#00f0ff]/40 text-[#00f0ff] text-[10.5px] font-mono font-bold flex items-center justify-between animate-in fade-in shrink-0">
+            <span className="flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-[#00f0ff]" />
+              {quickActionToast}
+            </span>
+            <span className="text-[9px] text-[#00f0ff]/80">System Executed</span>
+          </div>
+        )}
+
         {/* Studio Quick Context Chips */}
         {activeTab === 'chat' && (
           <div className="px-3 py-1.5 bg-[#0b0a14] border-b border-[#211d34] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
@@ -463,15 +606,28 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
             </button>
           </div>
 
-          {activeTab === 'commands' && voiceLog.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearVoiceLog}
-              className="text-[10px] font-mono text-[#9490ac] hover:text-[#00f0ff] flex items-center gap-1 transition"
-              title="Clear voice history"
-            >
-              <Trash2 className="w-3 h-3" /> Clear
-            </button>
+          {activeTab === 'commands' && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportVoiceLog}
+                className="text-[10px] font-mono text-[#00f0ff] hover:text-[#00f0ff]/80 flex items-center gap-1 px-2 py-0.5 rounded bg-[#0b0a14] border border-[#00f0ff]/40 transition active:scale-95"
+                title="Format and copy recent interaction history to clipboard"
+              >
+                {isLogExported ? <Check className="w-3 h-3 text-[#00f0ff]" /> : <FileText className="w-3 h-3 text-[#00f0ff]" />}
+                <span>{isLogExported ? 'Exported!' : 'Export Log'}</span>
+              </button>
+              {voiceLog.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearVoiceLog}
+                  className="text-[10px] font-mono text-[#9490ac] hover:text-[#00f0ff] flex items-center gap-1 transition"
+                  title="Clear voice history"
+                >
+                  <Trash2 className="w-3 h-3" /> Clear
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -554,9 +710,20 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
                   <p className="text-[10px] text-[#9490ac]">Tap any recent command to immediately re-dispatch</p>
                 </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#0b0a14] text-[#00f0ff] border border-[#00f0ff]/30">
-                1-Tap Run
-              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleExportVoiceLog}
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#0b0a14] text-[#00f0ff] border border-[#00f0ff]/40 hover:bg-[#00f0ff]/10 flex items-center gap-1 transition"
+                  title="Export Voice Command Log to Clipboard"
+                >
+                  <FileText className="w-2.5 h-2.5" />
+                  <span>{isLogExported ? 'Copied!' : 'Export'}</span>
+                </button>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#0b0a14] text-[#00f0ff] border border-[#00f0ff]/30">
+                  1-Tap Run
+                </span>
+              </div>
             </div>
 
             {voiceLog.length === 0 ? (

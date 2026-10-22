@@ -51,6 +51,7 @@ export interface VocalRealismSettings {
   stability: number;           // 0.40: Lower stability introduces natural human vocal inflection and drift
   similarity_boost: number;    // 0.75: Maintains clear speaker identity
   style_exaggeration: number;  // 0.50: Forces dramatic conversational energy variance
+  pacing_speed: number;        // 1.05: Natural pacing & speed variation (1.05x - 1.1x)
   speaker_boost: boolean;      // true: Enhances vocal projection and presence
 }
 
@@ -58,6 +59,7 @@ export const defaultVocalRealismSettings: VocalRealismSettings = {
   stability: 0.40,
   similarity_boost: 0.75,
   style_exaggeration: 0.50,
+  pacing_speed: 1.05,
   speaker_boost: true,
 };
 
@@ -120,6 +122,18 @@ export function prepareTextForSpeech(inputText: string): string {
   text = text.replace(/\bvs\b\.?/gi, 'versus');
   text = text.replace(/\bw\//gi, 'with');
   text = text.replace(/\bw\/o/gi, 'without');
+
+  // Conversational text normalization & abbreviations (e.g. "5 mins at 5th St." -> "five minutes at fifth street")
+  text = text.replace(/\b([0-9]+)\s*mins?\b/gi, '$1 minutes');
+  text = text.replace(/\b([0-9]+)\s*secs?\b/gi, '$1 seconds');
+  text = text.replace(/\b([0-9]+)\s*hrs?\b/gi, '$1 hours');
+  text = text.replace(/\b([0-9]+(?:st|nd|rd|th)?)\s+St\.?\b/gi, '$1 street');
+  text = text.replace(/\b([0-9]+(?:st|nd|rd|th)?)\s+Ave\.?\b/gi, '$1 avenue');
+  text = text.replace(/\b([0-9]+(?:st|nd|rd|th)?)\s+Blvd\.?\b/gi, '$1 boulevard');
+  text = text.replace(/\b([0-9]+(?:st|nd|rd|th)?)\s+Rd\.?\b/gi, '$1 road');
+  text = text.replace(/\be\.g\.?,?\s*/gi, 'for example, ');
+  text = text.replace(/\bi\.e\.?,?\s*/gi, 'that is, ');
+  text = text.replace(/\betc\.?\b/gi, 'etcetera');
 
   // Convert standalone integers (0 to 999) to spoken words
   text = text.replace(/\b([0-9]{1,3})\b/g, (match) => {
@@ -558,7 +572,7 @@ export class OmniVoiceEngine {
     }
 
     utterance.pitch = options?.pitch ?? calibratedPitch;
-    utterance.rate = options?.rate ?? calibratedRate;
+    utterance.rate = (options?.rate ?? calibratedRate) * (this.vocalRealism.pacing_speed || 1.05);
     utterance.volume = this.vocalRealism.speaker_boost ? 1.0 : (this.engineTunings.volume ?? 0.95);
 
     utterance.onstart = () => {

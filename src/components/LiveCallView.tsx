@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { HoloOrb } from './HoloOrb';
 import { omniVoice } from '../lib/omniVoice';
+import { handleSessionEnd, securityEngine } from '../lib/securityEngine';
 
 export interface LiveCallCaller {
   name: string;
@@ -238,6 +239,12 @@ export const LiveCallView: React.FC<LiveCallViewProps> = ({
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+
+    // Execute backend data shredder for call session
+    const sessionId = `call_${caller.name.replace(/\s+/g, '_')}_${Date.now()}`;
+    const privacySettings = securityEngine.getSettings();
+    handleSessionEnd(sessionId, { volatileModeEnabled: privacySettings.volatileCallMemory });
+
     setCallActive(false);
     setTimeout(() => {
       onClose();

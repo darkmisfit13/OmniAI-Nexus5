@@ -59,6 +59,7 @@ import {
   defaultClonedVoiceProfile 
 } from '../lib/omniVoice';
 import { OMNIAI_MANIFESTO, OMNI_PERSONA } from '../lib/omniPersona';
+import { DataVaultPrivacyView } from './DataVaultPrivacyView';
 
 interface ManagedUser {
   id: string;
@@ -85,7 +86,7 @@ interface LLMConnection {
 }
 
 interface SettingOption {
-  id: 'companion' | 'voice' | 'omnivoice' | 'users' | 'llms' | 'billing' | 'workspace' | 'sync' | 'install' | 'settings';
+  id: 'companion' | 'voice' | 'omnivoice' | 'users' | 'llms' | 'billing' | 'workspace' | 'sync' | 'install' | 'settings' | 'privacy';
   title: string;
   category: 'intelligence' | 'governance' | 'billing' | 'cloud' | 'devices' | 'personalization';
   categoryLabel: string;
@@ -636,6 +637,16 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
       icon: Users,
       statusBadge: `${users.filter((u) => u.status === 'active').length} Active Accounts`,
       keywords: ['users', 'bans', 'accounts', 'moderation', 'security', 'blacklist', 'profiles', 'roles'],
+    },
+    {
+      id: 'privacy',
+      title: 'Data Vault & Privacy Security',
+      category: 'governance',
+      categoryLabel: 'Governance & Access',
+      description: 'Volatility Status Engine: Ephemeral mode, session memory shredder, volatile call & text memory, and Emergency Purge.',
+      icon: ShieldCheck,
+      statusBadge: '0B (Secure Mode)',
+      keywords: ['privacy', 'security', 'vault', 'ephemeral', 'volatile', 'shredder', 'purge', 'panic', 'wipe', 'cache'],
     },
     {
       id: 'settings',
@@ -2269,6 +2280,13 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
                       <span>Save All Governance Settings</span>
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* SUB-MENU CONTENT: DATA VAULT & PRIVACY SECURITY */}
+              {selectedSubPage === 'privacy' && (
+                <div className="flex justify-center py-2">
+                  <DataVaultPrivacyView onBack={() => setSelectedSubPage(null)} />
                 </div>
               )}
 

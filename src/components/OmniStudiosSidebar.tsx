@@ -57,7 +57,7 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
     { id: 'wave', name: 'OmniWave', tag: 'Suno Song Generator', icon: Music, color: 'text-amber-400 bg-amber-500/20 border-amber-500/30' },
     { id: 'forge', name: 'OmniForge', tag: 'Three-State Fluid Mobile Builder', icon: Hammer, color: 'text-indigo-400 bg-indigo-500/20 border-indigo-500/30' },
     { id: 'code', name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code, color: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' },
-    { id: 'imagine', name: 'Omni Image Studio', tag: '12 Filters, Crop, Erasers & AI', icon: Wand2, color: 'text-pink-400 bg-pink-500/20 border-pink-500/30' },
+    { id: 'imagine', name: 'OmniImagine', tag: 'Mobile Canvas & Magic Eraser Suite', icon: Wand2, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
     { id: 'analyzer', name: 'OmniAnalyzer', tag: 'Site & Social Auditor', icon: Search, color: 'text-blue-400 bg-blue-500/20 border-blue-500/30' },
     { id: 'style', name: 'OmniStyle', tag: 'Wardrobe & Aesthetic', icon: Shirt, color: 'text-violet-400 bg-violet-500/20 border-violet-500/30' },
     { id: 'spatial', name: 'Spatial 3D', tag: 'Three.js Spatial Canvas', icon: Rotate3d, color: 'text-teal-400 bg-teal-500/20 border-teal-500/30' },

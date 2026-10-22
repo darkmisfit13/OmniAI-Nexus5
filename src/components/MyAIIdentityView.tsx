@@ -22,7 +22,8 @@ import {
   Info,
   CheckCircle2,
   Settings2,
-  RefreshCw
+  RefreshCw,
+  Lock
 } from 'lucide-react';
 import { 
   omniVoice, 
@@ -30,8 +31,10 @@ import {
   defaultVocalRealismSettings, 
   prepareTextForSpeech 
 } from '../lib/omniVoice';
+import { DataVaultPrivacyView } from './DataVaultPrivacyView';
+import { securityEngine } from '../lib/securityEngine';
 
-export type IdentitySubView = 'hub' | 'voice' | 'persona';
+export type IdentitySubView = 'hub' | 'voice' | 'persona' | 'privacy';
 
 interface MyAIIdentityViewProps {
   onBack?: () => void;
@@ -104,6 +107,8 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
         setCurrentView('voice');
       } else if (hash === '#/settings/identity/persona' || hash === '#persona') {
         setCurrentView('persona');
+      } else if (hash === '#/settings/identity/privacy' || hash === '#privacy') {
+        setCurrentView('privacy');
       }
     }
   }, []);
@@ -394,6 +399,10 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
   const voiceProgressPercent = Math.min(100, Math.round((completedRecordings / 25) * 100));
   const personaProgressPercent = Math.min(100, Math.round((personaAnswersCount / 50) * 100));
 
+  if (currentView === 'privacy') {
+    return <DataVaultPrivacyView onBack={() => setCurrentView('hub')} />;
+  }
+
   return (
     <div className="w-full max-w-[400px] h-[850px] mx-auto overflow-hidden bg-black text-white relative flex flex-col font-mono select-none border-x border-zinc-900 shadow-2xl">
       
@@ -536,6 +545,37 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
                   className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-500"
                   style={{ width: `${personaProgressPercent}%` }}
                 />
+              </div>
+            </button>
+
+            {/* CARD 3: DATA VAULT & PRIVACY SECURITY */}
+            <button
+              onClick={() => setCurrentView('privacy')}
+              className="w-full text-left p-4 rounded-xl bg-zinc-950 hover:bg-zinc-900/90 border border-zinc-800 hover:border-emerald-500/50 transition-all duration-200 group active:scale-[0.98] shadow-lg flex flex-col space-y-3"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-white group-hover:text-emerald-300 transition">
+                      Data Vault & Privacy Security
+                    </h2>
+                    <p className="text-[11px] text-zinc-400 font-sans mt-0.5">
+                      Session Volatility Engine, Ephemeral Mode & Emergency Purge
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-emerald-400 transition transform group-hover:translate-x-1" />
+              </div>
+
+              {/* Status footer */}
+              <div className="pt-2 border-t border-zinc-900/80 flex items-center justify-between text-[11px]">
+                <span className="text-zinc-500">Session Memory Shredder</span>
+                <span className="font-semibold text-emerald-400">
+                  {securityEngine.getDataFootprint()}
+                </span>
               </div>
             </button>
           </div>
@@ -748,7 +788,25 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
                 <span className="text-[9.5px] text-zinc-500 block">Forces dramatic conversational energy variance.</span>
               </div>
 
-              {/* 4. Speaker Boost Toggle */}
+              {/* 4. Pacing & Speed Variation */}
+              <div>
+                <div className="flex items-center justify-between text-zinc-300">
+                  <span>Pacing & Speed Variation</span>
+                  <span className="font-bold text-red-400">{(vocalSettings.pacing_speed || 1.05).toFixed(2)}x</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.85"
+                  max="1.30"
+                  step="0.05"
+                  value={vocalSettings.pacing_speed || 1.05}
+                  onChange={(e) => handleUpdateVocalSetting('pacing_speed', parseFloat(e.target.value))}
+                  className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                />
+                <span className="text-[9.5px] text-zinc-500 block">Breaks robotic monotony with natural speech cadence acceleration (~1.05x - 1.1x).</span>
+              </div>
+
+              {/* 5. Speaker Boost Toggle */}
               <div className="flex items-center justify-between pt-1">
                 <div>
                   <span className="text-zinc-300 block">Speaker Boost</span>

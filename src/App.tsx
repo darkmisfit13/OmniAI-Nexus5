@@ -1140,6 +1140,13 @@ export default function App() {
               <AdminHub />
             </div>
           )}
+
+          {/* TAB 10: MY AI IDENTITY & DATA VAULT */}
+          {activeTab === 'identity' && (
+            <div className="h-full overflow-y-auto">
+              <MyAIIdentityView onBack={() => setActiveTab('keyboard')} />
+            </div>
+          )}
         </main>
 
         {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR (Hidden during OmniMotion studio editing for authentic CapCut full-height experience) */}
@@ -1272,6 +1279,10 @@ export default function App() {
         }}
         onOpenOmniAIChat={() => {
           setActiveTab('chat');
+          setIsStudiosSidebarOpen(false);
+        }}
+        onOpenIdentity={() => {
+          setActiveTab('identity');
           setIsStudiosSidebarOpen(false);
         }}
         onOpenSettings={() => {
