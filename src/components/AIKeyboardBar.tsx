@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HoloOrb, OrbPhase } from './HoloOrb';
 import { 
   Sparkles, 
@@ -60,16 +60,16 @@ export const personaToneMeta: Record<PersonaTone, { label: string; shortLabel: s
     shortLabel: 'Action',
     desc: 'Clear, decisive, milestone-driven responses with zero fluff and immediate next steps.',
     icon: Zap,
-    color: 'text-red-400',
-    badge: 'border-red-600/40 bg-red-600/10 text-red-400',
+    color: 'text-[#00f0ff]',
+    badge: 'border-[#00f0ff]/40 bg-[#00f0ff]/10 text-[#00f0ff]',
   },
   rawHonest: {
     label: 'Raw & Honest',
     shortLabel: 'Raw',
     desc: 'Unvarnished truth and authentic transparency. Speaks reality without corporate spin.',
     icon: Flame,
-    color: 'text-amber-400',
-    badge: 'border-amber-500/40 bg-amber-500/10 text-amber-400',
+    color: 'text-[#e8e6f2]',
+    badge: 'border-[#6c63ff]/40 bg-[#6c63ff]/10 text-[#e8e6f2]',
   },
   witty: {
     label: 'Witty & Fast',
@@ -210,6 +210,19 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
   // Jargon Quick-Explain Modal State
   const [explainedTerm, setExplainedTerm] = useState<{ term: string; plainMeaning: string; tacticalAdvice: string } | null>(null);
 
+  // MediaRecorder Voice Memo with live animated visual waveform state
+  const [isRecordingVoiceMemo, setIsRecordingVoiceMemo] = useState(false);
+  const [voiceMemoDuration, setVoiceMemoDuration] = useState(0);
+  const [audioWaveformBars, setAudioWaveformBars] = useState<number[]>(new Array(22).fill(12));
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const memoTimerRef = useRef<any>(null);
+  const memoChunksRef = useRef<Blob[]>([]);
+  const memoTranscriptRef = useRef<string>('');
+  const speechRecognitionRef = useRef<any>(null);
+
   const triggerHaptic = (overrideDuration?: number | number[]) => {
     try {
       if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -219,9 +232,144 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
           navigator.vibrate(overrideDuration);
           return;
         }
-        navigator.vibrate(10);
+        const level = parseInt(localStorage.getItem('omni_haptic_level') || '6', 10);
+        navigator.vibrate(Math.round(6 + level * 2));
       }
     } catch {}
+  };
+
+  const startVoiceMemoRecording = async () => {
+    triggerHaptic(18);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      memoChunksRef.current = [];
+      memoTranscriptRef.current = '';
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          memoChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      recorder.start(100);
+
+      // Web Audio API Live Waveform Spectrum
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioContextClass();
+      audioContextRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const updateWaveform = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const bars: number[] = [];
+        const step = Math.max(1, Math.floor(dataArray.length / 22));
+        for (let i = 0; i < 22; i++) {
+          const val = dataArray[i * step] || 0;
+          bars.push(Math.max(6, Math.min(28, Math.round((val / 255) * 28))));
+        }
+        setAudioWaveformBars(bars);
+        animFrameRef.current = requestAnimationFrame(updateWaveform);
+      };
+      animFrameRef.current = requestAnimationFrame(updateWaveform);
+
+      // Real-time parallel transcription if available
+      try {
+        const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRec) {
+          const recog = new SpeechRec();
+          recog.continuous = true;
+          recog.interimResults = true;
+          recog.lang = 'en-US';
+          recog.onresult = (ev: any) => {
+            let finalStr = '';
+            for (let i = 0; i < ev.results.length; i++) {
+              finalStr += ev.results[i][0].transcript;
+            }
+            memoTranscriptRef.current = finalStr;
+          };
+          recog.start();
+          speechRecognitionRef.current = recog;
+        }
+      } catch {}
+
+      setIsRecordingVoiceMemo(true);
+      setVoiceMemoDuration(0);
+      memoTimerRef.current = setInterval(() => {
+        setVoiceMemoDuration((s) => s + 1);
+      }, 1000);
+    } catch (err) {
+      console.warn('[AIKeyboardBar] Mic permission denied, using simulated live wave capture:', err);
+      // Simulated live audio wave fallback if mic is blocked in preview container
+      setIsRecordingVoiceMemo(true);
+      setVoiceMemoDuration(0);
+      memoTimerRef.current = setInterval(() => {
+        setVoiceMemoDuration((s) => s + 1);
+        setAudioWaveformBars(Array.from({ length: 22 }, () => Math.floor(6 + Math.random() * 22)));
+      }, 100);
+    }
+  };
+
+  const stopVoiceMemoRecording = () => {
+    triggerHaptic([15, 12, 20]);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (speechRecognitionRef.current) {
+      try { speechRecognitionRef.current.stop(); } catch {}
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try { audioContextRef.current.close(); } catch {}
+    }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+    }
+    if (memoTimerRef.current) {
+      clearInterval(memoTimerRef.current);
+    }
+
+    const durationStr = `00:${voiceMemoDuration.toString().padStart(2, '0')}`;
+    const transcript = memoTranscriptRef.current.trim();
+    const memoTag = transcript 
+      ? `[🎙️ Voice Memo (${durationStr}): "${transcript}"]` 
+      : `[🎙️ Voice Memo (${durationStr}) - ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]`;
+
+    onChangeText(currentText ? `${currentText} ${memoTag}` : memoTag);
+    setIsRecordingVoiceMemo(false);
+    setVoiceMemoDuration(0);
+  };
+
+  const cancelVoiceMemoRecording = () => {
+    triggerHaptic(10);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (speechRecognitionRef.current) {
+      try { speechRecognitionRef.current.stop(); } catch {}
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      try { audioContextRef.current.close(); } catch {}
+    }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+    }
+    if (memoTimerRef.current) {
+      clearInterval(memoTimerRef.current);
+    }
+    setIsRecordingVoiceMemo(false);
+    setVoiceMemoDuration(0);
   };
 
   const quickActions = [
@@ -369,25 +517,25 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
     <div className="flex flex-col bg-[#000000] border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] relative z-20">
       
       {/* 1. TOP INTELLIGENCE STATUS STRIP */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#0a0a0c] border-b border-zinc-800 text-xs">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#0b0a14] border-b border-[#211d34] text-xs">
         <div className="flex items-center gap-2 overflow-hidden flex-1">
           {/* OmniCore Telemetry HUD Trigger Button */}
           <button
             onClick={onOpenTelemetryHUD}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-950/40 border border-red-600/40 text-red-400 hover:bg-red-950/60 text-[10px] font-mono font-bold transition shadow-[0_0_10px_rgba(220,38,38,0.2)] shrink-0"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#14121f] border border-[#00f0ff]/40 text-[#00f0ff] hover:bg-[#14121f]/80 text-[10px] font-mono font-bold transition shadow-[0_0_10px_rgba(0,240,255,0.2)] shrink-0"
             title="OmniCore Telemetry"
           >
-            <Activity className="w-3 h-3 text-red-500 animate-pulse" />
+            <Activity className="w-3 h-3 text-[#00f0ff] animate-pulse" />
             <span>OmniCore ({telemetryNotesCount})</span>
           </button>
 
           {/* Real-time Advice Pill */}
           <div 
             onClick={onOpenTelemetryHUD}
-            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black border border-zinc-800 text-[11px] text-zinc-300 hover:text-white cursor-pointer truncate transition max-w-[65%]"
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#14121f] border border-[#211d34] text-[11px] text-[#9490ac] hover:text-[#e8e6f2] cursor-pointer truncate transition max-w-[65%]"
             title="Click to inspect real-time notes"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] shadow-[0_0_6px_#00f0ff] animate-ping shrink-0" />
             <span className="truncate font-mono text-[10px]">
               {liveAdvice[0] || 'Omni watching screen... tap for live coaching.'}
             </span>
@@ -406,16 +554,16 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
             }}
             className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-mono font-bold transition-all border shadow-sm ${
               showToneMenu
-                ? 'bg-red-950/60 text-white border-red-500'
-                : 'bg-[#121318] text-zinc-300 border-zinc-800 hover:border-red-500/40 hover:text-white'
+                ? 'bg-[#14121f] text-[#00f0ff] border-[#00f0ff]'
+                : 'bg-[#14121f] text-[#9490ac] border-[#211d34] hover:border-[#00f0ff]/40 hover:text-[#e8e6f2]'
             }`}
             title="Change Tone"
           >
-            <Wand2 className="w-3 h-3 text-red-400" />
-            <span className="text-[10px] font-bold text-white hidden sm:inline">
+            <Wand2 className="w-3 h-3 text-[#00f0ff]" />
+            <span className="text-[10px] font-bold text-[#e8e6f2] hidden sm:inline">
               {personaToneMeta[autoPilotTone]?.shortLabel || 'Action'}
             </span>
-            <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${showToneMenu ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3 h-3 text-[#9490ac] transition-transform ${showToneMenu ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Primary Open-Air Control: Auto-Pilot Toggle */}
@@ -424,12 +572,12 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
               onClick={onToggleAutoMode}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition shadow ${
                 isAutoMode 
-                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white font-bold shadow-[0_0_12px_rgba(220,38,38,0.4)] animate-pulse' 
-                  : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)] animate-pulse' 
+                  : 'bg-[#14121f] border border-[#211d34] text-[#9490ac] hover:text-[#e8e6f2]'
               }`}
               title="Toggle Auto-Pilot autonomous response"
             >
-              <Zap className={`w-3 h-3 ${isAutoMode ? 'text-white fill-current' : 'text-zinc-500'}`} />
+              <Zap className={`w-3 h-3 ${isAutoMode ? 'text-black fill-current' : 'text-[#9490ac]'}`} />
               <span className="text-[10px]">{isAutoMode ? 'AUTO: ON' : 'AUTO'}</span>
             </button>
           )}
@@ -442,12 +590,12 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
             }}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all border shadow ${
               isFolderOpen
-                ? 'bg-red-600 text-white border-red-500 shadow-[0_0_12px_rgba(220,38,38,0.4)]'
-                : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-red-500/40 hover:text-white'
+                ? 'bg-[#00f0ff] text-black border-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.4)]'
+                : 'bg-[#14121f] text-[#9490ac] border-[#211d34] hover:border-[#00f0ff]/40 hover:text-[#e8e6f2]'
             }`}
             title="Expand Command Center Folder (Grammar, Clipboard, GIFs/Emojis, Text Slider)"
           >
-            {isFolderOpen ? <FolderOpen className="w-3.5 h-3.5 text-white" /> : <Folder className="w-3.5 h-3.5 text-red-400" />}
+            {isFolderOpen ? <FolderOpen className="w-3.5 h-3.5 text-black" /> : <Folder className="w-3.5 h-3.5 text-[#00f0ff]" />}
             <span className="text-[10.5px]">📁</span>
           </button>
         </div>
@@ -503,12 +651,12 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
             </button>
           </div>
           
-          <div className="p-2.5 rounded-xl bg-black border border-zinc-800 space-y-1.5 text-[11px]">
-            <p className="text-zinc-200 leading-relaxed">
-              <strong className="text-zinc-400">Plain English:</strong> {explainedTerm.plainMeaning}
+          <div className="p-2.5 rounded-xl bg-[#0b0a14] border border-[#211d34] space-y-1.5 text-[11px]">
+            <p className="text-[#e8e6f2] leading-relaxed">
+              <strong className="text-[#9490ac]">Plain English:</strong> {explainedTerm.plainMeaning}
             </p>
-            <p className="text-red-300 leading-relaxed">
-              <strong className="text-red-400">Strategic Move:</strong> {explainedTerm.tacticalAdvice}
+            <p className="text-[#00f0ff] leading-relaxed">
+              <strong className="text-[#00f0ff]">Strategic Move:</strong> {explainedTerm.tacticalAdvice}
             </p>
           </div>
         </div>
@@ -516,10 +664,10 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
 
       {/* 3. COLLAPSIBLE FOLDER DRAWER TRAY (`📁`) */}
       {isFolderOpen && (
-        <div className="bg-[#0a0a0c] border-b border-zinc-800 shadow-2xl animate-in slide-in-from-top-2 duration-150 relative z-30">
+        <div className="bg-[#0b0a14] border-b border-[#211d34] shadow-2xl animate-in slide-in-from-top-2 duration-150 relative z-30">
           
           {/* Folder Drawer Tabs */}
-          <div className="flex items-center justify-between p-2 px-3 border-b border-zinc-800 bg-[#121318]">
+          <div className="flex items-center justify-between p-2 px-3 border-b border-[#211d34] bg-[#14121f]">
             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
               {[
                 { id: 'grammar', label: 'Grammar Suite', icon: CheckCircle2 },
@@ -535,8 +683,8 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                     onClick={() => setFolderTab(tab.id as any)}
                     className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono font-bold transition ${
                       active
-                        ? 'bg-red-600 text-white shadow-md shadow-red-950/40'
-                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                        ? 'bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black shadow-md shadow-[#00f0ff]/30'
+                        : 'text-[#9490ac] hover:text-[#e8e6f2] hover:bg-[#211d34]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -548,7 +696,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
 
             <button
               onClick={() => setIsFolderOpen(false)}
-              className="text-zinc-400 hover:text-white p-1"
+              className="text-[#9490ac] hover:text-[#e8e6f2] p-1"
               title="Close drawer"
             >
               <X className="w-4 h-4" />
@@ -556,26 +704,26 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
           </div>
 
           {/* Drawer Body Container */}
-          <div className="p-3.5 max-h-60 overflow-y-auto font-mono text-xs space-y-3">
+          <div className="p-3.5 max-h-60 overflow-y-auto font-mono text-xs space-y-3 bg-[#0b0a14]">
             
             {/* TAB 1: GRAMMAR & ENHANCEMENT SUITE */}
             {folderTab === 'grammar' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-300 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-red-400" /> Active Grammar & Formality Suite
+                  <span className="text-[#e8e6f2] font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#00f0ff]" /> Active Grammar & Formality Suite
                   </span>
                   <button
                     onClick={() => handleTriggerQuickAction('fix-grammar')}
-                    className="px-2.5 py-1 rounded-lg bg-red-950/40 text-red-300 border border-red-600/40 hover:bg-red-900/40 font-bold text-[10px]"
+                    className="px-2.5 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 hover:bg-[#00f0ff] hover:text-black font-bold text-[10px] transition"
                   >
                     1-Click Auto-Fix Punctuation
                   </button>
                 </div>
 
                 {/* Formality Level Selector */}
-                <div className="p-2.5 rounded-xl bg-black border border-zinc-800 space-y-2">
-                  <span className="text-[10px] text-zinc-400 uppercase font-bold">Formality Level:</span>
+                <div className="p-2.5 rounded-xl bg-[#14121f] border border-[#211d34] space-y-2">
+                  <span className="text-[10px] text-[#9490ac] uppercase font-bold">Formality Level:</span>
                   <div className="grid grid-cols-4 gap-1.5">
                     {(['casual', 'crisp', 'executive', 'magnetic'] as const).map((lvl) => (
                       <button
@@ -586,8 +734,8 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                         }}
                         className={`py-1 px-2 rounded-lg text-center text-[10.5px] font-bold capitalize transition ${
                           formalityLevel === lvl
-                            ? 'bg-red-600 text-white shadow-md'
-                            : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                            ? 'bg-[#00f0ff] text-black font-bold shadow-md shadow-[#00f0ff]/30'
+                            : 'bg-[#0b0a14] text-[#9490ac] hover:text-[#e8e6f2]'
                         }`}
                       >
                         {lvl}
@@ -599,16 +747,16 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   <button
                     onClick={() => handleTriggerQuickAction('bulletize')}
-                    className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-zinc-300 flex items-center gap-2"
+                    className="p-2 rounded-xl bg-[#14121f] hover:bg-[#14121f]/80 border border-[#211d34] text-left text-[#e8e6f2] flex items-center gap-2"
                   >
-                    <List className="w-3.5 h-3.5 text-red-400" />
+                    <List className="w-3.5 h-3.5 text-[#00f0ff]" />
                     <span>Bulletize Draft</span>
                   </button>
                   <button
                     onClick={() => handleTriggerQuickAction('expand')}
-                    className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-left text-zinc-300 flex items-center gap-2"
+                    className="p-2 rounded-xl bg-[#14121f] hover:bg-[#14121f]/80 border border-[#211d34] text-left text-[#e8e6f2] flex items-center gap-2"
                   >
-                    <Maximize2 className="w-3.5 h-3.5 text-red-400" />
+                    <Maximize2 className="w-3.5 h-3.5 text-[#00f0ff]" />
                     <span>Expand with Context</span>
                   </button>
                 </div>
@@ -620,19 +768,19 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <Search className="w-3.5 h-3.5 text-[#9490ac] absolute left-2.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={snippetSearch}
                       onChange={(e) => setSnippetSearch(e.target.value)}
                       placeholder="Search snippets & clipboard..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-black border border-zinc-800 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-red-500"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#0b0a14] border border-[#211d34] text-[#e8e6f2] placeholder-[#9490ac] text-xs focus:outline-none focus:border-[#00f0ff]"
                     />
                   </div>
                   <button
                     onClick={handleSaveCurrentToSnippets}
                     disabled={!currentText.trim()}
-                    className="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[10.5px] font-bold flex items-center gap-1 shrink-0 disabled:opacity-40"
+                    className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black text-[10.5px] font-bold flex items-center gap-1 shrink-0 disabled:opacity-40 shadow-sm"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>{newSnippetAdded ? 'Saved!' : 'Save Draft'}</span>
@@ -651,17 +799,17 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                           onChangeText(snippet.text);
                           setIsFolderOpen(false);
                         }}
-                        className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-red-500/40 cursor-pointer transition flex items-center justify-between group"
+                        className="p-2.5 rounded-xl bg-[#14121f] hover:bg-[#14121f]/80 border border-[#211d34] hover:border-[#00f0ff]/50 cursor-pointer transition flex items-center justify-between group"
                       >
                         <div className="min-w-0 pr-2">
-                          <span className="text-white font-bold text-xs group-hover:text-red-400 block truncate">
+                          <span className="text-[#e8e6f2] font-bold text-xs group-hover:text-[#00f0ff] block truncate">
                             {snippet.title}
                           </span>
-                          <span className="text-zinc-400 text-[10px] truncate block">
+                          <span className="text-[#9490ac] text-[10px] truncate block">
                             {snippet.text}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-red-400 shrink-0 opacity-60 group-hover:opacity-100">
+                        <span className="text-[10px] font-mono text-[#00f0ff] shrink-0 opacity-70 group-hover:opacity-100">
                           Insert →
                         </span>
                       </div>
@@ -677,7 +825,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                 <div className="space-y-2">
                   {EMOJI_CATEGORIES.map((cat, i) => (
                     <div key={i} className="space-y-1">
-                      <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-bold block">{cat.label}</span>
+                      <span className="text-[9px] uppercase tracking-wider text-[#9490ac] font-bold block">{cat.label}</span>
                       <div className="flex flex-wrap gap-1.5">
                         {cat.items.map((em, j) => (
                           <button
@@ -686,7 +834,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                               triggerHaptic(8);
                               onChangeText(currentText + em);
                             }}
-                            className="w-8 h-8 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-base flex items-center justify-center transition active:scale-90"
+                            className="w-8 h-8 rounded-xl bg-[#14121f] hover:bg-[#211d34] border border-[#211d34] text-base flex items-center justify-center transition active:scale-90"
                           >
                             {em}
                           </button>
@@ -697,8 +845,8 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                 </div>
 
                 {/* Holographic Stickers */}
-                <div className="pt-2 border-t border-zinc-800 space-y-1.5">
-                  <span className="text-[9px] uppercase tracking-wider text-red-400 font-bold block">Omni Holographic Stickers:</span>
+                <div className="pt-2 border-t border-[#211d34] space-y-1.5">
+                  <span className="text-[9px] uppercase tracking-wider text-[#00f0ff] font-bold block">Omni Holographic Stickers:</span>
                   <div className="grid grid-cols-2 gap-2">
                     {STICKERS.map((stk, idx) => (
                       <button
@@ -707,12 +855,12 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                           triggerHaptic(12);
                           onChangeText(`${currentText} [${stk.symbol} ${stk.name}]`);
                         }}
-                        className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-red-500/40 flex items-center gap-2 text-left transition"
+                        className="p-2 rounded-xl bg-[#14121f] hover:bg-[#14121f]/80 border border-[#211d34] hover:border-[#00f0ff]/40 flex items-center gap-2 text-left transition"
                       >
                         <span className="text-xl">{stk.symbol}</span>
                         <div>
-                          <div className="text-[10.5px] font-bold text-white leading-tight">{stk.name}</div>
-                          <div className="text-[8px] text-zinc-400 font-mono">{stk.tag}</div>
+                          <div className="text-[10.5px] font-bold text-[#e8e6f2] leading-tight">{stk.name}</div>
+                          <div className="text-[8px] text-[#9490ac] font-mono">{stk.tag}</div>
                         </div>
                       </button>
                     ))}
@@ -725,10 +873,10 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
             {folderTab === 'formatting' && (
               <div className="space-y-3.5">
                 {/* Text Size Scale Slider */}
-                <div className="p-3 rounded-xl bg-black border border-zinc-800 space-y-2">
+                <div className="p-3 rounded-xl bg-[#0b0a14] border border-[#211d34] space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-400">Keyboard Text Size Scale:</span>
-                    <span className="text-red-400 font-bold">{textScale}%</span>
+                    <span className="text-[#9490ac]">Keyboard Text Size Scale:</span>
+                    <span className="text-[#00f0ff] font-bold">{textScale}%</span>
                   </div>
                   <input
                     type="range"
@@ -737,7 +885,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                     step="5"
                     value={textScale}
                     onChange={(e) => setTextScale(parseInt(e.target.value, 10))}
-                    className="w-full accent-red-600 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                    className="w-full accent-[#00f0ff] h-1.5 bg-[#14121f] rounded-lg cursor-pointer"
                   />
                   <div className="flex justify-between text-[9px] text-zinc-500">
                     <span>Compact (80%)</span>
@@ -800,12 +948,12 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
 
       {/* 4. PERSISTENT PERSONA TONE SELECTION MODAL / DROPDOWN */}
       {showToneMenu && (
-        <div className="p-3 bg-[#121318] border-b border-zinc-800 animate-in slide-in-from-top-2 duration-150 space-y-2.5 shadow-2xl relative z-30">
+        <div className="p-3 bg-[#14121f] border-b border-[#211d34] animate-in slide-in-from-top-2 duration-150 space-y-2.5 shadow-2xl relative z-30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wand2 className="w-4 h-4 text-red-400" />
-              <span className="font-bold text-xs text-white font-mono">Persona Tone Selector</span>
-              <span className="text-[10px] text-zinc-400 font-mono">• Switch AI Response Style</span>
+              <Wand2 className="w-4 h-4 text-[#00f0ff]" />
+              <span className="font-bold text-xs text-[#e8e6f2] font-mono">Persona Tone Selector</span>
+              <span className="text-[10px] text-[#9490ac] font-mono">• Switch AI Response Style</span>
             </div>
             <div className="flex items-center gap-2">
               {onOpenAutoPilotSetup && (
@@ -815,7 +963,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                     setShowToneMenu(false);
                     onOpenAutoPilotSetup();
                   }}
-                  className="px-2 py-0.5 rounded-lg bg-red-600/20 text-red-300 border border-red-500/40 text-[10px] font-mono hover:bg-red-600/30 font-bold"
+                  className="px-2 py-0.5 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-[10px] font-mono hover:bg-[#00f0ff]/20 font-bold"
                 >
                   ⚡ Calibrate Persona / Voice Clone
                 </button>
@@ -823,7 +971,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
               <button
                 type="button"
                 onClick={() => setShowToneMenu(false)}
-                className="text-zinc-400 hover:text-white p-1 rounded hover:bg-zinc-800"
+                className="text-[#9490ac] hover:text-[#e8e6f2] p-1 rounded hover:bg-[#211d34]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -847,22 +995,22 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                   }}
                   className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? 'bg-red-950/40 border-red-500/60 shadow-[0_0_15px_rgba(220,38,38,0.25)]'
-                      : 'bg-black border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
+                      ? 'bg-[#00f0ff]/10 border-[#00f0ff] shadow-[0_0_15px_rgba(0,240,255,0.25)]'
+                      : 'bg-[#0b0a14] border-[#211d34] hover:border-[#6c63ff]/50 hover:bg-[#14121f]'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <div className="flex items-center gap-1.5">
                       <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
-                      <span className="font-bold text-xs text-white font-mono">{meta.label}</span>
+                      <span className="font-bold text-xs text-[#e8e6f2] font-mono">{meta.label}</span>
                     </div>
                     {isSelected && (
-                      <span className="flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-red-600/20 text-red-400 border border-red-600/40 font-bold">
+                      <span className="flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/50 font-bold">
                         <Check className="w-2.5 h-2.5" /> ACTIVE
                       </span>
                     )}
                   </div>
-                  <p className="text-[10.5px] text-zinc-400 leading-snug font-sans">
+                  <p className="text-[10.5px] text-[#9490ac] leading-snug font-sans">
                     {meta.desc}
                   </p>
                 </button>
@@ -873,9 +1021,9 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
       )}
 
       {/* 5. PRIMARY OPEN-AIR CONTROLS: QUICK ACTIONS ROW */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0a0a0c] border-b border-zinc-800 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1 text-[9.5px] font-mono text-red-400 shrink-0 font-bold uppercase tracking-wider pr-1.5 border-r border-zinc-800">
-          <Sparkles className="w-3 h-3 text-red-400" />
+      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0b0a14] border-b border-[#211d34] overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 text-[9.5px] font-mono text-[#00f0ff] shrink-0 font-bold uppercase tracking-wider pr-1.5 border-r border-[#211d34]">
+          <Sparkles className="w-3 h-3 text-[#00f0ff]" />
           <span>Quick:</span>
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
@@ -888,100 +1036,152 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                 key={action.id}
                 onClick={() => handleTriggerQuickAction(action.id)}
                 disabled={isProcessing}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[10.5px] font-mono font-medium transition-all shrink-0 active:scale-95 shadow-sm hover:border-red-500/40 hover:text-white ${
-                  isDone ? 'border-red-500 bg-red-950/40 text-red-400 shadow-[0_0_10px_rgba(220,38,38,0.3)]' : 'text-zinc-300'
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#14121f] border border-[#211d34] text-[10.5px] font-mono font-medium transition-all shrink-0 active:scale-95 shadow-sm hover:border-[#00f0ff]/50 hover:text-[#e8e6f2] ${
+                  isDone ? 'border-[#00f0ff] bg-[#00f0ff]/15 text-[#00f0ff] shadow-[0_0_10px_rgba(0,240,255,0.3)]' : 'text-[#9490ac]'
                 }`}
                 title={action.desc}
               >
-                <Icon className={`w-3 h-3 ${isProcessing ? 'animate-spin text-red-400' : isDone ? 'text-red-400' : ''}`} />
+                <Icon className={`w-3 h-3 ${isProcessing ? 'animate-spin text-[#00f0ff]' : isDone ? 'text-[#00f0ff]' : ''}`} />
                 <span>{action.label}</span>
-                {isDone && <Check className="w-2.5 h-2.5 text-red-400" />}
+                {isDone && <Check className="w-2.5 h-2.5 text-[#00f0ff]" />}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 6. ACTIVE TYPING DOCK */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-[#0a0a0c] border-t border-zinc-800">
-        <button
-          onClick={handleMicDictate}
-          className={`p-2 rounded-xl border transition ${
-            isListening
-              ? 'bg-red-600 text-white border-red-500 animate-pulse shadow-[0_0_14px_rgba(220,38,38,0.6)]'
-              : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'
-          }`}
-          title="Dictate raw thoughts"
-        >
-          <Mic className="w-4 h-4" />
-        </button>
+      {/* 6. ACTIVE TYPING DOCK OR ANIMATED VOICE MEMO WAVEFORM DOCK */}
+      {isRecordingVoiceMemo ? (
+        <div className="flex items-center justify-between gap-2.5 px-3 py-2 bg-[#14121f] border-t border-[#00f0ff]/60 shadow-[0_0_20px_rgba(0,240,255,0.2)] animate-in fade-in duration-150">
+          {/* Recording Badge & Timer */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#00f0ff] animate-ping" />
+            <div className="flex flex-col">
+              <span className="text-[9.5px] font-mono font-bold text-[#00f0ff] tracking-wider uppercase">
+                REC MEMO
+              </span>
+              <span className="text-xs font-mono font-bold text-[#e8e6f2]">
+                00:{voiceMemoDuration.toString().padStart(2, '0')}
+              </span>
+            </div>
+          </div>
 
-        {/* OmniVoice Speak Button */}
-        <button
-          onClick={() => {
-            if (currentText) {
-              omniVoice.speak(currentText);
-            } else {
-              omniVoice.speak('OmniAI shadow companion active. Standing by for screen cognition.');
-            }
-          }}
-          className="p-2 rounded-xl border bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-red-400 hover:border-red-600/40 transition"
-          title="Listen to OmniVoice"
-        >
-          <Volume2 className="w-4 h-4" />
-        </button>
+          {/* Animated Visual Waveform Display */}
+          <div className="flex-1 flex items-center justify-center gap-1 h-9 px-2 bg-[#0b0a14] border border-[#211d34] rounded-xl overflow-hidden">
+            {audioWaveformBars.map((height, i) => (
+              <div
+                key={i}
+                className="w-1.5 rounded-full bg-gradient-to-t from-[#6c63ff] to-[#00f0ff] transition-all duration-75 shadow-[0_0_8px_rgba(0,240,255,0.6)]"
+                style={{ height: `${height}px` }}
+              />
+            ))}
+          </div>
 
-        {/* Input buffer with dynamic text scale */}
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={currentText}
-            onChange={(e) => onChangeText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onSend(currentText);
+          {/* Actions: Cancel or Insert Voice Memo into draft */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={cancelVoiceMemoRecording}
+              className="p-2 rounded-xl border border-[#211d34] bg-[#0b0a14] hover:bg-[#211d34] hover:border-[#00f0ff]/40 text-[#9490ac] hover:text-[#00f0ff] transition"
+              title="Cancel Voice Memo"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={stopVoiceMemoRecording}
+              className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black font-mono text-xs font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 transition"
+              title="Insert Voice Memo into draft"
+            >
+              <Check className="w-4 h-4 stroke-[3]" />
+              <span className="hidden xs:inline">Insert</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-3 py-2 bg-[#0b0a14] border-t border-[#211d34]">
+          {/* Record Voice Memo with MediaRecorder */}
+          <button
+            type="button"
+            onClick={startVoiceMemoRecording}
+            className="p-2 rounded-xl border border-[#211d34] bg-[#14121f] text-[#00f0ff] hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 transition active:scale-95 shadow-sm"
+            title="Record Voice Memo with Live Waveform (MediaRecorder)"
+          >
+            <Mic className="w-4 h-4" />
+          </button>
+
+          {/* OmniVoice Speak Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (currentText) {
+                omniVoice.speak(currentText);
+              } else {
+                omniVoice.speak('OmniAI shadow companion active. Standing by for screen cognition.');
               }
             }}
-            style={{ fontSize: `${(12 * textScale) / 100}px` }}
-            placeholder="Type with Omni AI • Dark Misfit Studios..."
-            className="w-full rounded-xl bg-black border border-zinc-800 px-3.5 py-2 text-white placeholder-zinc-600 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/40 font-mono transition pr-8 shadow-inner"
-          />
-          {currentText && (
-            <button
-              onClick={() => onChangeText('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white p-0.5 font-bold"
-              title="Clear text"
-            >
-              ×
-            </button>
-          )}
+            className="p-2 rounded-xl border border-[#211d34] bg-[#14121f] text-[#9490ac] hover:text-[#00f0ff] hover:border-[#00f0ff]/50 transition"
+            title="Listen to OmniVoice"
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
+
+          {/* Input buffer with dynamic text scale */}
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={currentText}
+              onChange={(e) => onChangeText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSend(currentText);
+                }
+              }}
+              style={{ fontSize: `${(12 * textScale) / 100}px` }}
+              placeholder="Type with Omni AI • Dark Misfit Studios..."
+              className="w-full rounded-xl bg-[#14121f] border border-[#211d34] px-3.5 py-2 text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff] focus:ring-1 focus:ring-[#00f0ff]/40 font-mono transition pr-8 shadow-inner"
+            />
+            {currentText && (
+              <button
+                type="button"
+                onClick={() => onChangeText('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9490ac] hover:text-[#e8e6f2] p-0.5 font-bold"
+                title="Clear text"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Copy to system clipboard */}
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={!currentText}
+            className={`p-2 rounded-xl border transition disabled:opacity-30 ${
+              copied
+                ? 'bg-[#00f0ff]/15 text-[#00f0ff] border-[#00f0ff]/50 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                : 'bg-[#14121f] text-[#e8e6f2] border-[#211d34] hover:bg-[#211d34]'
+            }`}
+            title="Copy text to phone clipboard"
+          >
+            {copied ? <Check className="w-4 h-4 text-[#00f0ff]" /> : <Copy className="w-4 h-4" />}
+          </button>
+
+          {/* Send / Commit into input stream - Accent Glow Button */}
+          <button
+            type="button"
+            onClick={() => onSend(currentText)}
+            disabled={!currentText}
+            className="p-2 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black font-extrabold border border-[#00f0ff]/60 shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+            title="Send into conversation"
+          >
+            <Send className="w-4 h-4 text-black" />
+          </button>
         </div>
-
-        {/* Copy to system clipboard */}
-        <button
-          onClick={handleCopy}
-          disabled={!currentText}
-          className={`p-2 rounded-xl border transition disabled:opacity-30 ${
-            copied
-              ? 'bg-red-600/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
-              : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800'
-          }`}
-          title="Copy text to phone clipboard"
-        >
-          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-        </button>
-
-        {/* Send / Commit into input stream - High-Impact Deep Crimson Action */}
-        <button
-          onClick={() => onSend(currentText)}
-          disabled={!currentText}
-          className="p-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-bold border border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
-          title="Send into conversation"
-        >
-          <Send className="w-4 h-4" />
-        </button>
-      </div>
+      )}
     </div>
   );
 };
+

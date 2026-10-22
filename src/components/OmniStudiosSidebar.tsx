@@ -181,20 +181,20 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
                 onClose();
                 onOpenIdentity();
               }}
-              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-red-950/30 via-zinc-900 to-cyan-950/30 border border-zinc-700 hover:border-cyan-400 text-zinc-200 hover:text-white text-xs font-semibold flex items-center justify-between transition-all group active:scale-[0.98] shadow-sm"
+              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#6c63ff]/20 via-[#14121f] to-[#00f0ff]/20 border border-[#211d34] hover:border-[#00f0ff] text-[#e8e6f2] hover:text-white text-xs font-semibold flex items-center justify-between transition-all group active:scale-[0.98] shadow-sm"
             >
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-red-950/70 border border-red-500/40 text-red-400 group-hover:text-red-300">
+                <div className="p-1.5 rounded-lg bg-[#00f0ff]/10 border border-[#00f0ff]/40 text-[#00f0ff] group-hover:text-white">
                   <Bot className="w-4 h-4" />
                 </div>
                 <div className="text-left">
-                  <span className="block font-bold text-xs text-white">My AI Identity</span>
-                  <span className="text-[9.5px] text-zinc-400 block font-normal">
+                  <span className="block font-bold text-xs text-[#e8e6f2]">My AI Identity</span>
+                  <span className="text-[9.5px] text-[#9490ac] block font-normal">
                     Voice Cloning Matrix & Text Persona
                   </span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-cyan-400" />
+              <ChevronRight className="w-4 h-4 text-[#9490ac] group-hover:text-[#00f0ff]" />
             </button>
           )}
 

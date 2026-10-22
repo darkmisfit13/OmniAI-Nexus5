@@ -48,6 +48,7 @@ import {
   Wand2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { getHapticPattern, triggerTactileHaptic } from '../lib/hapticFeedback';
 import { WorkspaceHub } from './WorkspaceHub';
 import { DesktopSyncBridge } from './DesktopSyncBridge';
 import { MobileSetupGuide } from './MobileSetupGuide';
@@ -86,7 +87,7 @@ interface LLMConnection {
 interface SettingOption {
   id: 'companion' | 'voice' | 'omnivoice' | 'users' | 'llms' | 'billing' | 'workspace' | 'sync' | 'install' | 'settings';
   title: string;
-  category: 'intelligence' | 'governance' | 'billing' | 'cloud' | 'devices';
+  category: 'intelligence' | 'governance' | 'billing' | 'cloud' | 'devices' | 'personalization';
   categoryLabel: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -118,9 +119,16 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
   });
   const [hapticIntensity, setHapticIntensity] = useState<'subtle' | 'balanced' | 'firm'>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('omni_haptic_strength') as 'subtle' | 'balanced' | 'firm') || 'subtle';
+      return (localStorage.getItem('omni_haptic_strength') as 'subtle' | 'balanced' | 'firm') || 'balanced';
     }
-    return 'subtle';
+    return 'balanced';
+  });
+  const [hapticLevel, setHapticLevel] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('omni_haptic_level');
+      if (saved) return Math.max(1, Math.min(10, parseInt(saved, 10)));
+    }
+    return 6;
   });
   const [tactileSounds, setTactileSounds] = useState(false);
   const [telemetryInterval, setTelemetryInterval] = useState('5s');
@@ -132,6 +140,12 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
         setHapticFeedback(Boolean(e.detail.enabled));
       } else if (typeof window !== 'undefined') {
         setHapticFeedback(localStorage.getItem('omni_haptic_enabled') !== 'false');
+      }
+      if (e?.detail?.level !== undefined) {
+        setHapticLevel(Number(e.detail.level));
+      }
+      if (e?.detail?.intensity) {
+        setHapticIntensity(e.detail.intensity);
       }
     };
     window.addEventListener('omni_haptic_changed', handleHapticChange);
@@ -387,35 +401,57 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
     showNotification('Voice clone calibration reset. You can record fresh samples.');
   };
 
-  // Navigator Vibrate API tactile feedback (Respects user-configurable subtlety)
-  const triggerHaptic = (overridePattern?: number | number[]) => {
+  // Navigator Vibrate API tactile feedback using 1-10 intensity levels & patterns
+  const triggerHaptic = (overridePattern?: number | number[], explicitLevel?: number) => {
     try {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        if (!hapticFeedback) return;
+        const isEnabled = localStorage.getItem('omni_haptic_enabled') !== 'false';
+        if (!isEnabled) return;
         if (overridePattern !== undefined) {
           navigator.vibrate(overridePattern);
           return;
         }
-        const ms = hapticIntensity === 'firm' ? 24 : hapticIntensity === 'balanced' ? 14 : 8;
-        navigator.vibrate(ms);
+        const lvl = explicitLevel ?? hapticLevel;
+        const pattern = getHapticPattern(lvl, 'pulse');
+        navigator.vibrate(pattern);
       }
     } catch {
       // Suppressed
     }
   };
 
+  const handleUpdateHapticLevel = (newLevel: number) => {
+    const lvl = Math.max(1, Math.min(10, Math.round(newLevel)));
+    setHapticLevel(lvl);
+    const str = lvl <= 3 ? 'subtle' : lvl <= 7 ? 'balanced' : 'firm';
+    setHapticIntensity(str);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('omni_haptic_level', String(lvl));
+      localStorage.setItem('omni_haptic_strength', str);
+      window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled: hapticFeedback, level: lvl, intensity: str } }));
+    }
+    if (hapticFeedback) {
+      try {
+        const pattern = getHapticPattern(lvl, 'tap');
+        navigator.vibrate?.(pattern);
+      } catch {}
+    }
+  };
+
   const handleUpdateHapticConfig = (enabled: boolean, intensity: 'subtle' | 'balanced' | 'firm') => {
     setHapticFeedback(enabled);
     setHapticIntensity(intensity);
+    const mappedLevel = intensity === 'subtle' ? 3 : intensity === 'balanced' ? 6 : 9;
+    setHapticLevel(mappedLevel);
     if (typeof window !== 'undefined') {
       localStorage.setItem('omni_haptic_enabled', String(enabled));
       localStorage.setItem('omni_haptic_strength', intensity);
-      window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled, intensity } }));
+      localStorage.setItem('omni_haptic_level', String(mappedLevel));
+      window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled, intensity, level: mappedLevel } }));
     }
     if (enabled) {
-      const ms = intensity === 'firm' ? 24 : intensity === 'balanced' ? 14 : 8;
       try {
-        navigator.vibrate?.(ms);
+        navigator.vibrate?.(getHapticPattern(mappedLevel, 'tap'));
       } catch {}
     }
   };
@@ -553,13 +589,13 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
   const settingsOptions: SettingOption[] = [
     {
       id: 'companion',
-      title: 'Companion & Telemetry AI',
-      category: 'intelligence',
-      categoryLabel: 'Core Intelligence',
-      description: 'Dual-lane neural acceleration, screen vision cognition, haptic pulse & real-time telemetry.',
+      title: 'Personalization & 3D Haptic Settings',
+      category: 'personalization',
+      categoryLabel: 'Personalization Settings',
+      description: 'Adjust 3D keyboard tactile vibration intensity (1-10 slider) using the Navigator.vibrate pattern, live key tester, and NPU dual-lane neural acceleration.',
       icon: Sliders,
-      statusBadge: 'NPU Dual Lane Active',
-      keywords: ['companion', 'telemetry', 'haptic', 'vibrate', 'audio', 'sound', 'vision', 'neural', 'interval', 'speed'],
+      statusBadge: hapticFeedback ? `Vibration Level ${hapticLevel}/10` : 'Vibration Muted',
+      keywords: ['personalization', 'vibration', 'haptic', 'intensity', 'slider', 'tactile', '1-10', 'keyboard', 'navigator', 'telemetry'],
     },
     {
       id: 'voice',
@@ -656,6 +692,7 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
   // Categories Filter Pills
   const categories = [
     { id: 'all', label: 'All Settings', count: settingsOptions.length },
+    { id: 'personalization', label: 'Personalization & Haptics', count: settingsOptions.filter((o) => o.category === 'personalization').length },
     { id: 'intelligence', label: 'Intelligence & Models', count: settingsOptions.filter((o) => o.category === 'intelligence').length },
     { id: 'governance', label: 'Governance & Access', count: settingsOptions.filter((o) => o.category === 'governance').length },
     { id: 'billing', label: 'Wallet & Billing', count: settingsOptions.filter((o) => o.category === 'billing').length },
@@ -855,52 +892,30 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
                 </div>
               </div>
 
-              {/* Quick Controls: 3D Keyboard Haptic Feedback Switch */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-purple-950/30 border border-cyan-500/30 shadow-[0_0_15px_rgba(0,242,254,0.1)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shrink-0">
-                    <Zap className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-2">
-                      <span>3D Keyboard Haptic Feedback</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
-                        hapticFeedback 
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
-                          : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {hapticFeedback ? 'ENABLED' : 'DISABLED'}
-                      </span>
+              {/* Quick Controls: 3D Keyboard Haptic Feedback & Intensity Slider */}
+              <div className="p-4 rounded-2xl bg-[#14121f] border border-[#211d34] shadow-[0_0_20px_rgba(108,99,255,0.15)] flex flex-col gap-3.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-[#6c63ff]/15 border border-[#6c63ff]/30 text-[#8b7fff] shrink-0">
+                      <Zap className="w-5 h-5" />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Enable or disable vibration tactile responses for 3D keyboard interactions (keys, spacebar, backspace, and gestures).
-                    </p>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-2">
+                        <span>3D Keyboard Tactile Haptics</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                          hapticFeedback 
+                            ? 'bg-[#6c63ff]/20 text-[#8b7fff] border border-[#6c63ff]/40 shadow-[0_0_8px_rgba(108,99,255,0.3)]' 
+                            : 'bg-[#211d34] text-[#9490ac]'
+                        }`}>
+                          {hapticFeedback ? `ENABLED (LVL ${hapticLevel}/10)` : 'DISABLED'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#9490ac] mt-0.5">
+                        Adjust tactile vibration responses for 3D keyboard interactions (keys, spacebar, backspace, and gestures).
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  {hapticFeedback && (
-                    <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg p-0.5">
-                      {(['subtle', 'balanced', 'firm'] as const).map((strength) => (
-                        <button
-                          key={strength}
-                          type="button"
-                          onClick={() => {
-                            handleUpdateHapticConfig(true, strength);
-                            showNotification(`Haptic intensity: ${strength}`);
-                          }}
-                          className={`px-2.5 py-1 rounded text-[10px] font-mono capitalize transition ${
-                            hapticIntensity === strength
-                              ? 'bg-cyan-500 text-slate-950 font-bold'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                          title={`Set haptic intensity to ${strength}`}
-                        >
-                          {strength}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -908,26 +923,65 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
                       handleUpdateHapticConfig(next, hapticIntensity);
                       showNotification(`3D Keyboard haptics ${next ? 'enabled' : 'disabled'}`);
                     }}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-mono font-bold transition shadow-sm ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-mono font-bold transition shadow-sm shrink-0 ${
                       hapticFeedback
-                        ? 'border-cyan-500/50 bg-cyan-950/60 text-cyan-300 hover:bg-cyan-900/60 shadow-[0_0_10px_rgba(0,242,254,0.2)]'
-                        : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-700'
+                        ? 'border-[#6c63ff]/50 bg-[#6c63ff]/20 text-[#8b7fff] hover:bg-[#6c63ff]/30 shadow-[0_0_10px_rgba(108,99,255,0.3)]'
+                        : 'border-[#211d34] bg-[#0b0a14] text-[#9490ac] hover:text-white hover:border-[#6c63ff]/40'
                     }`}
                     title={hapticFeedback ? 'Click to disable 3D keyboard vibration' : 'Click to enable 3D keyboard vibration'}
                   >
                     {hapticFeedback ? (
                       <>
-                        <ToggleRight className="w-5 h-5 text-cyan-400" />
+                        <ToggleRight className="w-5 h-5 text-[#8b7fff]" />
                         <span>Vibration ON</span>
                       </>
                     ) : (
                       <>
-                        <ToggleLeft className="w-5 h-5 text-slate-500" />
+                        <ToggleLeft className="w-5 h-5 text-[#9490ac]" />
                         <span>Vibration OFF</span>
                       </>
                     )}
                   </button>
                 </div>
+
+                {/* 1-10 Vibration Intensity Slider */}
+                {hapticFeedback && (
+                  <div className="pt-3 border-t border-[#211d34] space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-[#9490ac] flex items-center gap-1.5 font-bold">
+                        <SlidersHorizontal className="w-3.5 h-3.5 text-[#6c63ff]" />
+                        Vibration Intensity Slider (Navigator.vibrate):
+                      </span>
+                      <span className="text-[#8b7fff] font-bold bg-[#6c63ff]/15 px-2 py-0.5 rounded border border-[#6c63ff]/30">
+                        Level {hapticLevel} / 10
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-[#9490ac]">1 (Gentle)</span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value={hapticLevel}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          handleUpdateHapticLevel(val);
+                        }}
+                        className="flex-1 accent-[#6c63ff] h-2 bg-[#0b0a14] rounded-lg cursor-pointer border border-[#211d34]"
+                      />
+                      <span className="text-[10px] font-mono text-[#9490ac]">10 (Max Wave)</span>
+                      <button
+                        type="button"
+                        onClick={() => triggerHaptic(undefined, hapticLevel)}
+                        className="px-2.5 py-1 rounded-lg bg-[#6c63ff]/20 border border-[#6c63ff]/40 text-[#8b7fff] hover:text-white text-[11px] font-mono shrink-0 transition active:scale-95"
+                      >
+                        Test Pulse
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Grid of 3D Setting Buttons */}
@@ -1176,53 +1230,91 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose }) => {
                         </div>
 
                         {hapticFeedback && (
-                          <div className="pt-2 border-t border-slate-850 flex flex-wrap items-center justify-between gap-2.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] text-slate-400 font-mono">Haptic Intensity:</span>
-                              <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateHapticConfig(true, 'subtle')}
-                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition ${
-                                    hapticIntensity === 'subtle'
-                                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                                      : 'text-slate-400 hover:text-white'
-                                  }`}
-                                >
-                                  Subtle (8ms)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateHapticConfig(true, 'balanced')}
-                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition ${
-                                    hapticIntensity === 'balanced'
-                                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                                      : 'text-slate-400 hover:text-white'
-                                  }`}
-                                >
-                                  Balanced (14ms)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateHapticConfig(true, 'firm')}
-                                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition ${
-                                    hapticIntensity === 'firm'
-                                      ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                                      : 'text-slate-400 hover:text-white'
-                                  }`}
-                                >
-                                  Firm (24ms)
-                                </button>
+                          <div className="pt-3 border-t border-[#211d34] space-y-3.5">
+                            {/* Vibration Slider Header */}
+                            <div className="flex items-center justify-between text-xs font-mono">
+                              <div>
+                                <span className="font-bold text-[#e8e6f2] flex items-center gap-1.5">
+                                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#6c63ff]" />
+                                  3D Keyboard Vibration Intensity (1 - 10)
+                                </span>
+                                <span className="text-[10.5px] text-[#9490ac] block mt-0.5">
+                                  Uses Navigator.vibrate API patterns for tactile keycap clicks
+                                </span>
+                              </div>
+                              <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-lg bg-[#6c63ff]/20 text-[#8b7fff] border border-[#6c63ff]/40 shadow-sm">
+                                Level {hapticLevel} / 10
+                              </span>
+                            </div>
+
+                            {/* Range Slider 1 to 10 */}
+                            <div className="space-y-1.5 bg-[#0b0a14] p-3 rounded-xl border border-[#211d34]">
+                              <div className="flex items-center justify-between text-[10px] font-mono text-[#9490ac]">
+                                <span>1 (Subtle Micro-Tick)</span>
+                                <span className="text-[#8b7fff] font-bold">
+                                  {hapticLevel <= 3 ? 'Subtle (5-11ms)' : hapticLevel <= 7 ? 'Balanced (15-27ms)' : hapticLevel <= 9 ? 'Heavy Dual Strike' : 'Max Volumetric Wave'}
+                                </span>
+                                <span>10 (Max Wave)</span>
+                              </div>
+
+                              <input
+                                type="range"
+                                min="1"
+                                max="10"
+                                step="1"
+                                value={hapticLevel}
+                                onChange={(e) => {
+                                  handleUpdateHapticLevel(Number(e.target.value));
+                                }}
+                                className="w-full accent-[#6c63ff] h-2 bg-[#14121f] rounded-lg cursor-pointer border border-[#211d34]"
+                              />
+
+                              {/* Clickable 1 to 10 step numbers */}
+                              <div className="grid grid-cols-10 gap-1 pt-1">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((lvl) => (
+                                  <button
+                                    key={lvl}
+                                    type="button"
+                                    onClick={() => handleUpdateHapticLevel(lvl)}
+                                    className={`py-1 rounded text-[10px] font-mono font-bold transition text-center ${
+                                      hapticLevel === lvl
+                                        ? 'bg-[#6c63ff] text-white shadow-[0_0_8px_rgba(108,99,255,0.6)]'
+                                        : 'bg-[#14121f] text-[#9490ac] hover:text-white border border-[#211d34]'
+                                    }`}
+                                  >
+                                    {lvl}
+                                  </button>
+                                ))}
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => triggerHaptic()}
-                              className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-mono flex items-center gap-1 transition"
-                            >
-                              <span>Test Pulse</span>
-                            </button>
+                            {/* Live Interactive Test Keyboard Strip */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0b0a14] border border-[#211d34]">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono text-[#9490ac] font-bold">Test Touch Feel:</span>
+                                {['Q', 'W', 'E', 'Space', '↵ Enter'].map((keyLabel) => (
+                                  <button
+                                    key={keyLabel}
+                                    type="button"
+                                    onClick={() => {
+                                      triggerTactileHaptic(hapticLevel, keyLabel === '↵ Enter' ? 'enter' : keyLabel === 'Space' ? 'space' : 'tap');
+                                    }}
+                                    className="px-2.5 py-1 rounded-md bg-[#14121f] hover:bg-[#211d34] border border-[#211d34] text-xs font-mono font-bold text-[#e8e6f2] active:translate-y-0.5 active:border-[#6c63ff] active:shadow-[0_0_8px_rgba(108,99,255,0.4)] transition"
+                                  >
+                                    {keyLabel}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => triggerTactileHaptic(hapticLevel, 'pulse')}
+                                className="px-3 py-1 rounded-lg bg-[#6c63ff]/20 border border-[#6c63ff]/40 text-[#8b7fff] hover:text-white text-xs font-mono font-bold flex items-center gap-1 transition active:scale-95 shadow-sm"
+                              >
+                                <Zap className="w-3 h-3 text-[#8b7fff]" />
+                                <span>Diagnostic Pulse</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>

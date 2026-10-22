@@ -246,9 +246,9 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-black text-zinc-100 overflow-y-auto font-mono">
+    <div className="flex flex-col h-full bg-[#0b0a14] text-[#e8e6f2] overflow-y-auto font-mono">
       {/* 1. GOOGLE WORKSPACE AUTHENTICATION HEADER */}
-      <div className="p-3.5 bg-[#121318] border-b border-zinc-800 flex items-center justify-between">
+      <div className="p-3.5 bg-[#14121f] border-b border-[#211d34] flex items-center justify-between">
         {currentUser ? (
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2.5">
@@ -256,18 +256,18 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                 <img
                   src={currentUser.photoURL}
                   alt={currentUser.displayName || 'User'}
-                  className="w-9 h-9 rounded-full border border-red-600/40 shadow-[0_0_10px_rgba(220,38,38,0.3)]"
+                  className="w-9 h-9 rounded-full border border-[#00f0ff]/50 shadow-[0_0_10px_rgba(0,240,255,0.3)]"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-xs">
+                <div className="w-9 h-9 rounded-full bg-[#00f0ff] flex items-center justify-center font-bold text-black text-xs">
                   {currentUser.displayName?.charAt(0) || 'U'}
                 </div>
               )}
               <div>
-                <span className="text-xs font-semibold text-white block">
+                <span className="text-xs font-semibold text-[#e8e6f2] block">
                   {currentUser.displayName || 'Google Account'}
                 </span>
-                <span className="text-[10px] text-zinc-400 block leading-tight">
+                <span className="text-[10px] text-[#9490ac] block leading-tight">
                   {currentUser.email}
                 </span>
               </div>
@@ -275,7 +275,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
 
             <button
               onClick={handleSignOut}
-              className="p-1.5 rounded-lg bg-black text-zinc-400 hover:text-white border border-zinc-800 transition"
+              className="p-1.5 rounded-lg bg-[#0b0a14] text-[#9490ac] hover:text-[#e8e6f2] border border-[#211d34] transition"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -283,7 +283,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
           </div>
         ) : (
           <div className="w-full flex flex-col items-center justify-center py-2 space-y-2">
-            <p className="text-xs text-zinc-400 text-center text-[11px]">
+            <p className="text-xs text-[#9490ac] text-center text-[11px]">
               Authorize Google Workspace to inspect Drive files, Gmail threads, and Keep ledgers.
             </p>
 
@@ -305,13 +305,13 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
       </div>
 
       {/* 2. PRODUCT TABS */}
-      <div className="grid grid-cols-3 p-1.5 bg-black border-b border-zinc-800 text-xs">
+      <div className="grid grid-cols-3 p-1.5 bg-[#0b0a14] border-b border-[#211d34] text-xs">
         <button
           onClick={() => setActiveTab('drive')}
           className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold transition ${
             activeTab === 'drive'
-              ? 'bg-red-950/40 text-red-400 border border-red-600/40 shadow-[0_0_10px_rgba(220,38,38,0.2)]'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/50 shadow-[0_0_10px_rgba(0,240,255,0.25)]'
+              : 'text-[#9490ac] hover:text-[#e8e6f2]'
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -322,8 +322,8 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
           onClick={() => setActiveTab('gmail')}
           className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold transition ${
             activeTab === 'gmail'
-              ? 'bg-red-950/40 text-red-400 border border-red-600/40 shadow-[0_0_10px_rgba(220,38,38,0.2)]'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/50 shadow-[0_0_10px_rgba(0,240,255,0.25)]'
+              : 'text-[#9490ac] hover:text-[#e8e6f2]'
           }`}
         >
           <Mail className="w-3.5 h-3.5" />
@@ -334,8 +334,8 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
           onClick={() => setActiveTab('keep')}
           className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold transition ${
             activeTab === 'keep'
-              ? 'bg-red-950/40 text-red-400 border border-red-600/40 shadow-[0_0_10px_rgba(220,38,38,0.2)]'
-              : 'text-zinc-500 hover:text-zinc-300'
+              ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/50 shadow-[0_0_10px_rgba(0,240,255,0.25)]'
+              : 'text-[#9490ac] hover:text-[#e8e6f2]'
           }`}
         >
           <CheckSquare className="w-3.5 h-3.5" />
@@ -344,21 +344,21 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
       </div>
 
       {/* 3. TAB BODIES */}
-      <div className="p-3.5 flex-1 bg-black">
+      <div className="p-3.5 flex-1 bg-[#0b0a14]">
         {/* TAB 1: GOOGLE DRIVE */}
         {activeTab === 'drive' && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Folder className="w-4 h-4 text-red-400" />
+            <div className="flex items-center justify-between pb-2 border-b border-[#211d34]">
+              <span className="text-xs font-bold text-[#e8e6f2] flex items-center gap-1.5">
+                <Folder className="w-4 h-4 text-[#00f0ff]" />
                 Drive Files & Ledgers
               </span>
               <button
                 onClick={loadDrive}
-                className="p-1 rounded-md text-zinc-400 hover:text-white"
+                className="p-1 rounded-md text-[#9490ac] hover:text-[#00f0ff]"
                 title="Refresh Drive"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingDrive ? 'animate-spin text-red-400' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingDrive ? 'animate-spin text-[#00f0ff]' : ''}`} />
               </button>
             </div>
 
@@ -366,15 +366,15 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
               {driveFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="p-3 rounded-xl bg-[#121318] border border-zinc-800 flex items-center justify-between gap-2.5 hover:border-red-600/40 transition group"
+                  className="p-3 rounded-xl bg-[#14121f] border border-[#211d34] flex items-center justify-between gap-2.5 hover:border-[#00f0ff]/40 transition group"
                 >
                   <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-                    <FileText className="w-4 h-4 text-red-400 shrink-0" />
+                    <FileText className="w-4 h-4 text-[#00f0ff] shrink-0" />
                     <div className="overflow-hidden">
-                      <p className="text-xs font-semibold text-zinc-200 truncate">
+                      <p className="text-xs font-semibold text-[#e8e6f2] truncate">
                         {file.name}
                       </p>
-                      <span className="text-[10px] text-zinc-500">
+                      <span className="text-[10px] text-[#9490ac]">
                         {file.modifiedTime || 'Synced with Drive'}
                       </span>
                     </div>
@@ -383,7 +383,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => onInsertToKeyboard?.(`[Drive File: ${file.name}]`)}
-                      className="px-2.5 py-1 rounded-lg bg-red-950/40 text-red-400 border border-red-600/40 text-[10px] font-bold hover:bg-red-900/40 transition"
+                      className="px-2.5 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-[10px] font-bold hover:bg-[#00f0ff] hover:text-black transition"
                       title="Insert reference into active keyboard input"
                     >
                       Insert
@@ -393,7 +393,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                         href={file.webViewLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-black text-zinc-400 hover:text-white border border-zinc-800"
+                        className="p-1.5 rounded-lg bg-[#0b0a14] text-[#9490ac] hover:text-[#00f0ff] border border-[#211d34]"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -408,57 +408,57 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
         {/* TAB 2: GMAIL */}
         {activeTab === 'gmail' && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Mail className="w-4 h-4 text-red-400" />
+            <div className="flex items-center justify-between pb-2 border-b border-[#211d34]">
+              <span className="text-xs font-bold text-[#e8e6f2] flex items-center gap-1.5">
+                <Mail className="w-4 h-4 text-[#00f0ff]" />
                 Gmail Threads
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setShowCompose(!showCompose)}
-                  className="px-2 py-1 rounded-lg bg-red-950/40 text-red-400 border border-red-600/40 text-xs font-bold hover:bg-red-900/40 transition"
+                  className="px-2 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-xs font-bold hover:bg-[#00f0ff] hover:text-black transition"
                 >
                   {showCompose ? 'Close' : '+ Compose'}
                 </button>
                 <button
                   onClick={loadGmail}
-                  className="p-1 text-zinc-400 hover:text-white"
+                  className="p-1 text-[#9490ac] hover:text-[#00f0ff]"
                   title="Refresh Gmail"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingGmail ? 'animate-spin text-red-400' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingGmail ? 'animate-spin text-[#00f0ff]' : ''}`} />
                 </button>
               </div>
             </div>
 
             {/* Compose Mail Drawer */}
             {showCompose && (
-              <div className="p-3.5 rounded-2xl bg-[#121318] border border-red-600/40 space-y-2.5 mb-3 animate-in fade-in">
-                <span className="text-xs font-bold text-red-400 block">Compose with OmniAI</span>
+              <div className="p-3.5 rounded-2xl bg-[#14121f] border border-[#00f0ff]/40 space-y-2.5 mb-3 animate-in fade-in">
+                <span className="text-xs font-bold text-[#00f0ff] block">Compose with OmniAI</span>
                 <input
                   type="email"
                   value={composeTo}
                   onChange={(e) => setComposeTo(e.target.value)}
                   placeholder="To: recipient@example.com"
-                  className="w-full rounded-xl bg-black border border-zinc-800 px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500"
+                  className="w-full rounded-xl bg-[#0b0a14] border border-[#211d34] px-3 py-1.5 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff]"
                 />
                 <input
                   type="text"
                   value={composeSubject}
                   onChange={(e) => setComposeSubject(e.target.value)}
                   placeholder="Subject: Status update"
-                  className="w-full rounded-xl bg-black border border-zinc-800 px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500"
+                  className="w-full rounded-xl bg-[#0b0a14] border border-[#211d34] px-3 py-1.5 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff]"
                 />
                 <textarea
                   value={composeBody}
                   onChange={(e) => setComposeBody(e.target.value)}
                   placeholder="Message body..."
                   rows={3}
-                  className="w-full rounded-xl bg-black border border-zinc-800 p-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500"
+                  className="w-full rounded-xl bg-[#0b0a14] border border-[#211d34] p-3 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff]"
                 />
                 <button
                   onClick={handleSendEmail}
                   disabled={!composeTo || !composeSubject || !composeBody || isSendingMail}
-                  className="w-full py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                  className="w-full py-2 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] hover:brightness-110 text-black font-bold text-xs transition disabled:opacity-40 flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(0,240,255,0.25)]"
                 >
                   {isSendingMail ? (
                     'Sending via Gmail API...'
@@ -479,25 +479,25 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
               {gmailMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className="p-3 rounded-xl bg-[#121318] border border-zinc-800 space-y-1.5 hover:border-red-600/40 transition"
+                  className="p-3 rounded-xl bg-[#14121f] border border-[#211d34] space-y-1.5 hover:border-[#00f0ff]/40 transition"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-white truncate max-w-[70%]">
+                    <span className="font-semibold text-[#e8e6f2] truncate max-w-[70%]">
                       {msg.from}
                     </span>
-                    <span className="text-[10px] text-zinc-500">{msg.date}</span>
+                    <span className="text-[10px] text-[#9490ac]">{msg.date}</span>
                   </div>
-                  <p className="text-xs font-semibold text-zinc-200">
+                  <p className="text-xs font-semibold text-[#e8e6f2]">
                     {msg.subject}
                   </p>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2">
+                  <p className="text-[11px] text-[#9490ac] line-clamp-2">
                     {msg.snippet}
                   </p>
 
-                  <div className="flex items-center gap-2 pt-1 border-t border-zinc-800/60">
+                  <div className="flex items-center gap-2 pt-1 border-t border-[#211d34]">
                     <button
                       onClick={() => onLoadIntoScreenSimulator?.(msg.subject || 'Gmail Email', msg.snippet, msg.from || 'Sender')}
-                      className="text-[10px] text-red-400 hover:text-red-300 font-bold"
+                      className="text-[10px] text-[#00f0ff] hover:underline font-bold"
                     >
                       Inspect in Viewport Cognition →
                     </button>
@@ -507,7 +507,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                         setComposeSubject(`Re: ${msg.subject}`);
                         setShowCompose(true);
                       }}
-                      className="text-[10px] text-zinc-400 hover:text-white font-bold ml-auto"
+                      className="text-[10px] text-[#9490ac] hover:text-[#00f0ff] font-bold ml-auto"
                     >
                       Reply
                     </button>
@@ -521,38 +521,38 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
         {/* TAB 3: GOOGLE KEEP */}
         {activeTab === 'keep' && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <CheckSquare className="w-4 h-4 text-red-400" />
+            <div className="flex items-center justify-between pb-2 border-b border-[#211d34]">
+              <span className="text-xs font-bold text-[#e8e6f2] flex items-center gap-1.5">
+                <CheckSquare className="w-4 h-4 text-[#00f0ff]" />
                 Keep Notes & Ledgers
               </span>
               <button
                 onClick={() => setShowAddNote(!showAddNote)}
-                className="px-2.5 py-1 rounded-lg bg-red-950/40 text-red-400 border border-red-600/40 text-xs font-bold hover:bg-red-900/40 transition"
+                className="px-2.5 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-xs font-bold hover:bg-[#00f0ff] hover:text-black transition"
               >
                 {showAddNote ? 'Cancel' : '+ New Note'}
               </button>
             </div>
 
             {showAddNote && (
-              <div className="p-3.5 rounded-2xl bg-[#121318] border border-red-600/40 space-y-2 mb-3">
+              <div className="p-3.5 rounded-2xl bg-[#14121f] border border-[#00f0ff]/40 space-y-2 mb-3">
                 <input
                   type="text"
                   value={newNoteTitle}
                   onChange={(e) => setNewNoteTitle(e.target.value)}
                   placeholder="Note Title..."
-                  className="w-full rounded-xl bg-black border border-zinc-800 px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500"
+                  className="w-full rounded-xl bg-[#0b0a14] border border-[#211d34] px-3 py-1.5 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff]"
                 />
                 <textarea
                   value={newNoteBody}
                   onChange={(e) => setNewNoteBody(e.target.value)}
                   placeholder="Note body or checklist..."
                   rows={3}
-                  className="w-full rounded-xl bg-black border border-zinc-800 p-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500"
+                  className="w-full rounded-xl bg-[#0b0a14] border border-[#211d34] p-3 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff]"
                 />
                 <button
                   onClick={handleCreateKeepNote}
-                  className="w-full py-2 rounded-xl bg-red-600 text-white font-bold text-xs hover:bg-red-500 transition shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                  className="w-full py-2 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black font-bold text-xs hover:brightness-110 transition shadow-[0_0_15px_rgba(0,240,255,0.25)]"
                 >
                   Save to Keep
                 </button>
@@ -563,21 +563,21 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
               {keepNotes.map((note) => (
                 <div
                   key={note.id}
-                  className="p-3 rounded-xl bg-[#121318] border border-zinc-800 hover:border-red-600/40 transition space-y-2"
+                  className="p-3 rounded-xl bg-[#14121f] border border-[#211d34] hover:border-[#00f0ff]/40 transition space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-red-400">
+                    <span className="text-xs font-bold text-[#00f0ff]">
                       {note.title}
                     </span>
-                    <span className="text-[10px] text-zinc-500">{note.updatedAt}</span>
+                    <span className="text-[10px] text-[#9490ac]">{note.updatedAt}</span>
                   </div>
-                  <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed text-[11px]">
+                  <p className="text-xs text-[#e8e6f2] whitespace-pre-line leading-relaxed text-[11px]">
                     {note.body}
                   </p>
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-zinc-800/60">
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#211d34]">
                     <button
                       onClick={() => onInsertToKeyboard?.(note.body)}
-                      className="px-2.5 py-1 rounded-lg bg-red-950/40 text-red-400 border border-red-600/40 text-[10px] font-bold hover:bg-red-900/40 transition"
+                      className="px-2.5 py-1 rounded-lg bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 text-[10px] font-bold hover:bg-[#00f0ff] hover:text-black transition"
                     >
                       Insert into Input
                     </button>
@@ -601,12 +601,12 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
               }
             }
           }}
-          className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-red-600 hover:bg-red-500 text-white shadow-[0_0_25px_rgba(220,38,38,0.45)] hover:shadow-[0_0_35px_rgba(220,38,38,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 border border-red-500/40"
+          className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] hover:brightness-110 text-black shadow-[0_0_25px_rgba(0,240,255,0.4)] hover:shadow-[0_0_35px_rgba(0,240,255,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 border border-[#00f0ff]/50"
           title="Create Scratchpad Note (Auto-syncs with Vault)"
           aria-label="Create Scratchpad Note"
         >
-          <Plus className="w-7 h-7 text-white stroke-[2.5] group-hover:rotate-90 transition-transform duration-300" />
-          <span className="absolute -top-9 right-0 bg-[#0a0a0c] text-red-400 text-[10px] font-mono px-2.5 py-1 rounded-md border border-red-600/40 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition shadow-lg">
+          <Plus className="w-7 h-7 text-black stroke-[2.5] group-hover:rotate-90 transition-transform duration-300" />
+          <span className="absolute -top-9 right-0 bg-[#14121f] text-[#00f0ff] text-[10px] font-mono px-2.5 py-1 rounded-md border border-[#00f0ff]/40 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition shadow-lg">
             + Scratchpad → Vault Sync
           </span>
         </button>
@@ -614,22 +614,22 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
 
       {/* QUICK SCRATCHPAD MODAL */}
       {showQuickScratchpad && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-6 animate-in fade-in">
-          <div className="relative w-full max-w-lg bg-[#0a0a0c] border border-red-600/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col space-y-4 p-5 sm:p-6">
+        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center bg-[#0b0a14]/80 backdrop-blur-md p-3 sm:p-6 animate-in fade-in">
+          <div className="relative w-full max-w-lg bg-[#0b0a14] border border-[#00f0ff]/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col space-y-4 p-5 sm:p-6">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+            <div className="flex items-center justify-between pb-3 border-b border-[#211d34]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-red-950/40 border border-red-600/40 text-red-400">
+                <div className="p-2 rounded-xl bg-[#14121f] border border-[#00f0ff]/40 text-[#00f0ff]">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#e8e6f2] flex items-center gap-2">
                     <span>New Scratchpad Note</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-950/40 text-red-400 border border-red-600/40">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#14121f] text-[#00f0ff] border border-[#00f0ff]/40">
                       Vault Auto-Sync
                     </span>
                   </h3>
-                  <p className="text-[11px] text-zinc-400 font-mono">
+                  <p className="text-[11px] text-[#9490ac] font-mono">
                     Captures raw thoughts & automatically persists to the Global Vault.
                   </p>
                 </div>
@@ -641,7 +641,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                   setQuickNoteTitle('');
                   setQuickNoteBody('');
                 }}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+                className="p-1 rounded-lg text-[#9490ac] hover:text-[#e8e6f2] hover:bg-[#211d34] transition"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -651,7 +651,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
             {/* Form Inputs */}
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-zinc-300 block mb-1">
+                <label className="text-xs font-bold text-[#e8e6f2] block mb-1">
                   Note Title
                 </label>
                 <input
@@ -659,13 +659,13 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                   value={quickNoteTitle}
                   onChange={(e) => setQuickNoteTitle(e.target.value)}
                   placeholder="e.g., Production Directives, Architecture Idea..."
-                  className="w-full rounded-xl bg-black border border-zinc-800 px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500 font-mono"
+                  className="w-full rounded-xl bg-[#14121f] border border-[#211d34] px-3.5 py-2 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff] font-mono"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-zinc-300 block mb-1">
+                <label className="text-xs font-bold text-[#e8e6f2] block mb-1">
                   Scratchpad Content
                 </label>
                 <textarea
@@ -673,22 +673,22 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                   value={quickNoteBody}
                   onChange={(e) => setQuickNoteBody(e.target.value)}
                   placeholder="Type raw notes, code logic, concept sketches, checklist items, or prompt ideas..."
-                  className="w-full rounded-xl bg-black border border-zinc-800 p-3.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500 font-mono leading-relaxed"
+                  className="w-full rounded-xl bg-[#14121f] border border-[#211d34] p-3.5 text-xs text-[#e8e6f2] placeholder-[#9490ac] focus:outline-none focus:border-[#00f0ff] font-mono leading-relaxed"
                 />
               </div>
 
               {/* Sync Destination Indicator */}
-              <div className="p-3 rounded-xl bg-[#121318] border border-zinc-800 flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2 text-zinc-300">
-                  <Sparkles className="w-3.5 h-3.5 text-red-400" />
+              <div className="p-3 rounded-xl bg-[#14121f] border border-[#211d34] flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-2 text-[#e8e6f2]">
+                  <Sparkles className="w-3.5 h-3.5 text-[#00f0ff]" />
                   <span>Vault Destination: <strong className="text-white">/vault/scratchpads</strong></span>
                 </div>
-                <span className="font-mono text-[10px] text-red-400">⚡ Instant Sync</span>
+                <span className="font-mono text-[10px] text-[#00f0ff]">⚡ Instant Sync</span>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-800">
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#211d34]">
               <button
                 type="button"
                 onClick={() => {
@@ -696,7 +696,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                   setQuickNoteTitle('');
                   setQuickNoteBody('');
                 }}
-                className="px-4 py-2 rounded-xl border border-zinc-800 text-zinc-400 hover:text-white text-xs font-mono transition"
+                className="px-4 py-2 rounded-xl border border-[#211d34] text-[#9490ac] hover:text-[#e8e6f2] text-xs font-mono transition"
               >
                 Cancel
               </button>
@@ -704,7 +704,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
                 type="button"
                 onClick={handleSaveQuickScratchpad}
                 disabled={!quickNoteTitle.trim() && !quickNoteBody.trim()}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(220,38,38,0.3)] transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] hover:brightness-110 text-black font-bold text-xs shadow-[0_0_15px_rgba(0,240,255,0.3)] transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check className="w-4 h-4 stroke-[2.5]" />
                 <span>Save & Sync to Vault</span>
@@ -716,7 +716,7 @@ export const WorkspaceHub: React.FC<WorkspaceHubProps> = ({
 
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#121318] border border-red-600/50 text-red-400 text-xs px-4 py-2 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] font-mono animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#14121f] border border-[#00f0ff]/50 text-[#00f0ff] text-xs px-4 py-2 rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.3)] font-mono animate-in fade-in slide-in-from-bottom-2">
           {toastMessage}
         </div>
       )}

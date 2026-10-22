@@ -225,8 +225,8 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
         schedule.enabled 
           ? isCurrentlyActive 
             ? 'bg-emerald-950/30 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-            : 'bg-indigo-950/20 border-indigo-500/30'
-          : 'bg-zinc-900/60 border-zinc-800'
+            : 'bg-[#14121f] border-[#6c63ff]/40 shadow-[0_0_15px_rgba(108,99,255,0.15)]'
+          : 'bg-[#14121f]/60 border-[#211d34]'
       }`}>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -234,26 +234,26 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
               schedule.enabled
                 ? isCurrentlyActive
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
-                : 'bg-zinc-800 text-zinc-500'
+                  : 'bg-[#6c63ff]/20 text-[#8b7fff] border border-[#6c63ff]/40'
+                : 'bg-[#211d34] text-[#9490ac]'
             }`}>
               <Calendar className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-white">Autonomous Schedule Mode</h4>
+                <h4 className="text-sm font-bold text-[#e8e6f2]">Autonomous Schedule Mode</h4>
                 {schedule.enabled && (
                   <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${
                     isCurrentlyActive
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'bg-[#6c63ff]/20 text-[#8b7fff] border border-[#6c63ff]/40'
                   }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isCurrentlyActive ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${isCurrentlyActive ? 'bg-emerald-400 animate-ping' : 'bg-[#8b7fff]'}`} />
                     {isCurrentlyActive ? 'SCHEDULE ACTIVE NOW' : 'STANDBY (SCHEDULED)'}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-[11px] text-[#9490ac] mt-0.5">
                 Automatically toggles Autonomous Autopilot ON during configured hours and OFF when outside.
               </p>
             </div>
@@ -264,8 +264,8 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
             onClick={() => onChangeSchedule({ ...schedule, enabled: !schedule.enabled })}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 ${
               schedule.enabled
-                ? 'bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-950/40'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400'
+                ? 'bg-[#6c63ff] hover:bg-[#8b7fff] text-white shadow-md shadow-[#6c63ff]/30'
+                : 'bg-[#211d34] hover:bg-[#211d34]/80 text-[#9490ac]'
             }`}
           >
             {schedule.enabled ? (
@@ -274,7 +274,7 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
               </>
             ) : (
               <>
-                <ToggleLeft className="w-4 h-4 text-zinc-500" /> Disabled
+                <ToggleLeft className="w-4 h-4 text-[#9490ac]" /> Disabled
               </>
             )}
           </button>
@@ -282,12 +282,12 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
 
         {/* Real-time status sub-note */}
         {schedule.enabled && (
-          <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between text-[11px] text-zinc-300 gap-2">
+          <div className="mt-3 pt-3 border-t border-[#211d34] flex flex-wrap items-center justify-between text-[11px] text-[#e8e6f2] gap-2">
             <span className="flex items-center gap-1.5 font-mono">
-              <Clock className="w-3.5 h-3.5 text-zinc-400" />
-              Active Window: <strong className="text-white">{schedule.startTime} – {schedule.endTime}</strong> ({schedule.days.join(', ')})
+              <Clock className="w-3.5 h-3.5 text-[#9490ac]" />
+              Active Window: <strong className="text-[#e8e6f2]">{schedule.startTime} – {schedule.endTime}</strong> ({schedule.days.join(', ')})
             </span>
-            <span className="text-[10px] text-zinc-400 font-mono">
+            <span className="text-[10px] text-[#9490ac] font-mono">
               Current Mode: {isCurrentlyActive ? '⚡ Autonomous Takeover Engaged' : '💤 Manual / Standby Mode'}
             </span>
           </div>
@@ -297,10 +297,10 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
       {/* PRESET CALENDAR BLOCKS */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-mono text-red-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+          <label className="text-xs font-mono text-[#8b7fff] uppercase tracking-wider font-bold flex items-center gap-1.5">
             <Briefcase className="w-3.5 h-3.5" /> 1. Select Operating Calendar Hours
           </label>
-          <span className="text-[11px] text-zinc-500 font-mono">1-Tap Fast Presets</span>
+          <span className="text-[11px] text-[#9490ac] font-mono">1-Tap Fast Presets</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -315,32 +315,32 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
                 onClick={() => handleSelectPreset(preset.id)}
                 className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-red-950/30 border-red-500/70 shadow-md shadow-red-950/30'
-                    : 'bg-[#121318] border-zinc-800 hover:border-zinc-700 hover:bg-[#161820]'
+                    ? 'bg-[#14121f] border-[#6c63ff] shadow-md shadow-[#6c63ff]/20'
+                    : 'bg-[#14121f] border-[#211d34] hover:border-[#6c63ff]/50'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-                        isSelected ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400'
+                        isSelected ? 'bg-[#6c63ff] text-white' : 'bg-[#211d34] text-[#9490ac]'
                       }`}>
                         <PresetIcon className="w-3.5 h-3.5" />
                       </div>
-                      <span className="text-xs font-bold text-white">{preset.label}</span>
+                      <span className="text-xs font-bold text-[#e8e6f2]">{preset.label}</span>
                     </div>
                     {isSelected && (
-                      <CheckCircle2 className="w-4 h-4 text-red-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-[#8b7fff] shrink-0" />
                     )}
                   </div>
-                  <p className="text-[10.5px] text-zinc-400 leading-relaxed mb-2">
+                  <p className="text-[10.5px] text-[#9490ac] leading-relaxed mb-2">
                     {preset.description}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] font-mono pt-2 border-t border-white/5 text-zinc-400">
+                <div className="flex items-center justify-between text-[10px] font-mono pt-2 border-t border-[#211d34] text-[#9490ac]">
                   <span>{preset.hours}</span>
-                  <span className="text-red-400/90">{preset.days.slice(0, 3).join(', ')}{preset.days.length > 3 ? '...' : ''}</span>
+                  <span className="text-[#8b7fff]">{preset.days.slice(0, 3).join(', ')}{preset.days.length > 3 ? '...' : ''}</span>
                 </div>
               </button>
             );
@@ -349,18 +349,18 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
       </div>
 
       {/* CUSTOM RANGE ADJUSTMENT & DAYS OF WEEK */}
-      <div className="p-4 rounded-2xl bg-[#121318] border border-zinc-800 space-y-4">
+      <div className="p-4 rounded-2xl bg-[#14121f] border border-[#211d34] space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-mono text-zinc-300 font-bold flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-red-400" /> 2. Fine-Tune Daily Hours & Days
+          <label className="text-xs font-mono text-[#e8e6f2] font-bold flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-[#8b7fff]" /> 2. Fine-Tune Daily Hours & Days
           </label>
-          <span className="text-[10px] font-mono text-zinc-500">24h format</span>
+          <span className="text-[10px] font-mono text-[#9490ac]">24h format</span>
         </div>
 
         {/* Start / End Time Inputs */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col gap-1">
-            <span className="text-[10px] font-mono text-zinc-400 uppercase">Auto-Turn ON Time</span>
+          <div className="p-2.5 rounded-xl bg-[#0b0a14] border border-[#211d34] flex flex-col gap-1">
+            <span className="text-[10px] font-mono text-[#9490ac] uppercase">Auto-Turn ON Time</span>
             <input
               type="time"
               value={schedule.startTime}
@@ -372,12 +372,12 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
                   startTime: e.target.value
                 });
               }}
-              className="bg-transparent text-sm font-mono font-bold text-white focus:outline-none"
+              className="bg-transparent text-sm font-mono font-bold text-[#e8e6f2] focus:outline-none"
             />
           </div>
 
-          <div className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col gap-1">
-            <span className="text-[10px] font-mono text-zinc-400 uppercase">Auto-Turn OFF Time</span>
+          <div className="p-2.5 rounded-xl bg-[#0b0a14] border border-[#211d34] flex flex-col gap-1">
+            <span className="text-[10px] font-mono text-[#9490ac] uppercase">Auto-Turn OFF Time</span>
             <input
               type="time"
               value={schedule.endTime}
@@ -389,14 +389,14 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
                   endTime: e.target.value
                 });
               }}
-              className="bg-transparent text-sm font-mono font-bold text-white focus:outline-none"
+              className="bg-transparent text-sm font-mono font-bold text-[#e8e6f2] focus:outline-none"
             />
           </div>
         </div>
 
         {/* Day Selector Chips */}
         <div>
-          <span className="text-[10.5px] font-mono text-zinc-400 mb-2 block">Active Days of Week:</span>
+          <span className="text-[10.5px] font-mono text-[#9490ac] mb-2 block">Active Days of Week:</span>
           <div className="grid grid-cols-7 gap-1.5">
             {DAYS_OF_WEEK.map((day) => {
               const isDayActive = schedule.days.includes(day);
@@ -407,8 +407,8 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
                   onClick={() => handleToggleDay(day)}
                   className={`py-2 rounded-xl text-xs font-mono font-bold transition text-center ${
                     isDayActive
-                      ? 'bg-red-600 text-white shadow-sm shadow-red-950/40 border border-red-500/60'
-                      : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300 border border-zinc-800'
+                      ? 'bg-[#6c63ff] text-white shadow-sm shadow-[#6c63ff]/30 border border-[#8b7fff]'
+                      : 'bg-[#0b0a14] text-[#9490ac] hover:text-[#e8e6f2] border border-[#211d34]'
                   }`}
                 >
                   {day}
@@ -419,22 +419,22 @@ export const AutoModeScheduleSubComponent: React.FC<AutoModeScheduleSubComponent
         </div>
 
         {/* Coverage Scope Options */}
-        <div className="pt-2 border-t border-zinc-800/80 flex flex-col sm:flex-row gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-zinc-300 select-none">
+        <div className="pt-2 border-t border-[#211d34] flex flex-col sm:flex-row gap-3">
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-[#e8e6f2] select-none">
             <input
               type="checkbox"
               checked={schedule.takeoverMessages}
               onChange={(e) => onChangeSchedule({ ...schedule, takeoverMessages: e.target.checked })}
-              className="w-4 h-4 rounded text-red-600 bg-zinc-900 border-zinc-700 focus:ring-0"
+              className="w-4 h-4 rounded text-[#6c63ff] bg-[#0b0a14] border-[#211d34] focus:ring-0 accent-[#6c63ff]"
             />
             <span>Auto-Pilot Chat & Messages (Slack/WhatsApp/SMS)</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-zinc-300 select-none">
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-[#e8e6f2] select-none">
             <input
               type="checkbox"
               checked={schedule.takeoverCalls}
               onChange={(e) => onChangeSchedule({ ...schedule, takeoverCalls: e.target.checked })}
-              className="w-4 h-4 rounded text-red-600 bg-zinc-900 border-zinc-700 focus:ring-0"
+              className="w-4 h-4 rounded text-[#6c63ff] bg-[#0b0a14] border-[#211d34] focus:ring-0 accent-[#6c63ff]"
             />
             <span>Autonomous Voice Call Screening & Answering</span>
           </label>
@@ -646,30 +646,30 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 font-sans select-none animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-[#0b0a14]/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 font-sans select-none animate-in fade-in duration-200">
       
-      <div className="w-full max-w-2xl bg-[#0a0a0c] border border-zinc-800 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="w-full max-w-2xl bg-[#0b0a14] border border-[#211d34] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         
         {/* MODAL HEADER */}
-        <div className="p-4 bg-[#121318] border-b border-zinc-800 flex items-center justify-between shrink-0">
+        <div className="p-4 bg-[#14121f] border-b border-[#211d34] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-red-950/80 border border-red-600/40 flex items-center justify-center text-red-400 font-black shadow-lg shadow-red-950/30">
-              <Zap className="w-4 h-4 text-red-400 fill-current" />
+            <div className="w-9 h-9 rounded-xl bg-[#6c63ff]/20 border border-[#6c63ff]/50 flex items-center justify-center text-[#8b7fff] font-black shadow-lg shadow-[#6c63ff]/20">
+              <Zap className="w-4 h-4 text-[#8b7fff] fill-current" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-[#e8e6f2] flex items-center gap-2">
                 OMNINEXUS AUTO-PILOT MODEL
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-950/60 text-red-300 border border-red-800/40">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#14121f] text-[#8b7fff] border border-[#6c63ff]/40">
                   NEXUS 4.0
                 </span>
               </h2>
-              <p className="text-[11px] text-zinc-400">Configure personality calibration, voice synthesis, and calendar schedules</p>
+              <p className="text-[11px] text-[#9490ac]">Configure personality calibration, voice synthesis, and calendar schedules</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+            className="p-1.5 rounded-full bg-[#14121f] hover:bg-[#211d34] text-[#9490ac] hover:text-[#e8e6f2] transition"
             title="Close Setup"
           >
             <X className="w-5 h-5" />
@@ -677,13 +677,13 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
         </div>
 
         {/* STEP TOGGLE SWITCHER */}
-        <div className="p-2 bg-[#0a0a0c] border-b border-zinc-800 flex items-center justify-center gap-1.5 shrink-0 overflow-x-auto">
+        <div className="p-2 bg-[#0b0a14] border-b border-[#211d34] flex items-center justify-center gap-1.5 shrink-0 overflow-x-auto">
           <button
             onClick={() => setActiveStep('calibrate')}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition flex items-center gap-1.5 shrink-0 ${
               activeStep === 'calibrate'
-                ? 'bg-red-600 text-white shadow-md shadow-red-950/40'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#6c63ff] text-white shadow-md shadow-[#6c63ff]/40'
+                : 'text-[#9490ac] hover:text-[#e8e6f2]'
             }`}
           >
             <Bot className="w-3.5 h-3.5" /> 1. Style Calibration
@@ -692,8 +692,8 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
             onClick={() => setActiveStep('voice_clone')}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition flex items-center gap-1.5 shrink-0 ${
               activeStep === 'voice_clone'
-                ? 'bg-red-600 text-white shadow-md shadow-red-950/40'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#6c63ff] text-white shadow-md shadow-[#6c63ff]/40'
+                : 'text-[#9490ac] hover:text-[#e8e6f2]'
             }`}
           >
             <Mic className="w-3.5 h-3.5" /> 2. Voice Clone
@@ -702,8 +702,8 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
             onClick={() => setActiveStep('schedule')}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition flex items-center gap-1.5 shrink-0 ${
               activeStep === 'schedule'
-                ? 'bg-red-600 text-white shadow-md shadow-red-950/40'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#6c63ff] text-white shadow-md shadow-[#6c63ff]/40'
+                : 'text-[#9490ac] hover:text-[#e8e6f2]'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" /> 3. Auto-Mode Schedule
@@ -716,24 +716,24 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
           {/* STEP 1: CALIBRATION QUESTIONS */}
           {activeStep === 'calibrate' && (
             <div className="space-y-6">
-              <div className="p-3.5 rounded-2xl bg-red-950/20 border border-red-800/30 flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-red-400 shrink-0" />
-                <p className="text-xs text-zinc-300 leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-[#14121f] border border-[#6c63ff]/40 flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-[#8b7fff] shrink-0" />
+                <p className="text-xs text-[#e8e6f2] leading-relaxed">
                   OmniAI analyzes these responses to calibrate its internal prompt cascade. When <strong>Auto-Pilot Mode</strong> answers messages for you, it sounds unequivocally like you.
                 </p>
               </div>
 
               {CALIBRATION_QUESTIONS.map((q, qIndex) => (
-                <div key={q.id} className="p-4 rounded-2xl bg-[#121318] border border-zinc-800 space-y-3">
+                <div key={q.id} className="p-4 rounded-2xl bg-[#14121f] border border-[#211d34] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider font-bold">
+                    <span className="text-[10px] font-mono text-[#8b7fff] uppercase tracking-wider font-bold">
                       Question {qIndex + 1} • {q.category}
                     </span>
-                    <span className="text-xs text-red-400 font-mono">
+                    <span className="text-xs text-[#8b7fff] font-mono">
                       {answers[q.id] ? '✓ Configured' : 'Required'}
                     </span>
                   </div>
-                  <h3 className="text-xs sm:text-sm font-bold text-white leading-snug">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#e8e6f2] leading-snug">
                     {q.question}
                   </h3>
 
@@ -747,22 +747,22 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
                           onClick={() => handleSelectAnswer(q.id, opt.id)}
                           className={`p-3 rounded-xl border text-left transition-all flex items-start justify-between ${
                             isSelected
-                              ? 'bg-red-950/30 border-red-500/80 shadow-sm shadow-red-950/20'
-                              : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900'
+                              ? 'bg-[#14121f] border-[#6c63ff] shadow-sm shadow-[#6c63ff]/20'
+                              : 'bg-[#0b0a14] border-[#211d34] hover:border-[#6c63ff]/40'
                           }`}
                         >
                           <div className="space-y-0.5 pr-2">
-                            <span className="text-xs font-bold text-white block">
+                            <span className="text-xs font-bold text-[#e8e6f2] block">
                               {opt.label}
                             </span>
-                            <span className="text-[11px] text-zinc-400 font-mono italic block">
+                            <span className="text-[11px] text-[#9490ac] font-mono italic block">
                               {opt.example}
                             </span>
                           </div>
                           <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
                             isSelected
-                              ? 'border-red-500 bg-red-600 text-white'
-                              : 'border-zinc-700 bg-zinc-800'
+                              ? 'border-[#8b7fff] bg-[#6c63ff] text-white'
+                              : 'border-[#211d34] bg-[#14121f]'
                           }`}>
                             {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                           </div>
@@ -778,47 +778,47 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
           {/* STEP 2: VOICE CLONING TRAINING */}
           {activeStep === 'voice_clone' && (
             <div className="space-y-6">
-              <div className="p-3.5 rounded-2xl bg-red-950/20 border border-red-800/30 flex items-center gap-3">
-                <Mic className="w-5 h-5 text-red-400 shrink-0" />
-                <p className="text-xs text-zinc-300 leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-[#14121f] border border-[#6c63ff]/40 flex items-center gap-3">
+                <Mic className="w-5 h-5 text-[#8b7fff] shrink-0" />
+                <p className="text-xs text-[#e8e6f2] leading-relaxed">
                   Record a 10-second reference audio clip to synthesize your biometric voice signature for <strong>Real-Time Call Answering</strong> and verbal voice notes.
                 </p>
               </div>
 
               {/* SCRIPT TO READ OUT LOUD */}
-              <div className="p-4 rounded-2xl bg-[#121318] border border-zinc-800 space-y-2">
-                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">
+              <div className="p-4 rounded-2xl bg-[#14121f] border border-[#211d34] space-y-2">
+                <span className="text-[10px] font-mono text-[#9490ac] uppercase tracking-wider block">
                   Reference Script (Read Aloud Clearly):
                 </span>
-                <p className="text-xs sm:text-sm text-white font-mono bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 leading-relaxed italic">
+                <p className="text-xs sm:text-sm text-[#e8e6f2] font-mono bg-[#0b0a14] p-3 rounded-xl border border-[#211d34] leading-relaxed italic">
                   "{testScript}"
                 </p>
               </div>
 
               {/* RECORDER BUTTON & TIMER */}
-              <div className="p-6 rounded-2xl bg-[#121318] border border-zinc-800 flex flex-col items-center justify-center gap-4">
+              <div className="p-6 rounded-2xl bg-[#14121f] border border-[#211d34] flex flex-col items-center justify-center gap-4">
                 <div className="relative">
                   <button
                     type="button"
                     onClick={isRecording ? stopRecording : startRecording}
                     className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-xl ${
                       isRecording
-                        ? 'bg-red-600 text-white animate-pulse shadow-red-600/50'
-                        : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700'
+                        ? 'bg-[#6c63ff] text-white animate-pulse shadow-[#6c63ff]/50'
+                        : 'bg-[#211d34] hover:bg-[#211d34]/80 text-[#e8e6f2] border border-[#6c63ff]/40'
                     }`}
                   >
                     {isRecording ? <Square className="w-6 h-6 fill-current" /> : <Mic className="w-6 h-6" />}
                   </button>
                   {isRecording && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 animate-ping" />
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#8b7fff] animate-ping" />
                   )}
                 </div>
 
                 <div className="text-center">
-                  <div className="text-lg font-mono font-bold text-white">
+                  <div className="text-lg font-mono font-bold text-[#e8e6f2]">
                     {isRecording ? `00:${recordingSeconds.toString().padStart(2, '0')}` : recordedAudioUrl ? 'Sample Recorded ✓' : 'Tap to Record'}
                   </div>
-                  <span className="text-[11px] text-zinc-400">
+                  <span className="text-[11px] text-[#9490ac]">
                     {isRecording ? 'Speak clearly at normal conversational volume' : 'At least 5 seconds recommended'}
                   </span>
                 </div>
@@ -829,18 +829,18 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
               </div>
 
               {/* SYNTHESIS TUNERS */}
-              <div className="p-4 rounded-2xl bg-[#121318] border border-zinc-800 space-y-4">
+              <div className="p-4 rounded-2xl bg-[#14121f] border border-[#211d34] space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5 font-mono">
-                    <Sliders className="w-3.5 h-3.5 text-red-400" /> Synthesizer Fine-Tuning
+                  <h4 className="text-xs font-bold text-[#e8e6f2] flex items-center gap-1.5 font-mono">
+                    <Sliders className="w-3.5 h-3.5 text-[#8b7fff]" /> Synthesizer Fine-Tuning
                   </h4>
                   <button
                     type="button"
                     onClick={handleTestClonedVoice}
                     disabled={isTestingVoice}
-                    className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-200 flex items-center gap-1.5 transition"
+                    className="px-3 py-1 rounded-lg bg-[#211d34] hover:bg-[#211d34]/80 text-xs font-mono text-[#e8e6f2] flex items-center gap-1.5 transition"
                   >
-                    <Volume2 className="w-3.5 h-3.5 text-red-400" />
+                    <Volume2 className="w-3.5 h-3.5 text-[#8b7fff]" />
                     {isTestingVoice ? 'Speaking...' : 'Test Cloned Voice'}
                   </button>
                 </div>
@@ -848,8 +848,8 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
                 {/* Pitch Slider */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-zinc-400">Pitch Modulator</span>
-                    <span className="text-white font-bold">{clonedPitch.toFixed(2)}x</span>
+                    <span className="text-[#9490ac]">Pitch Modulator</span>
+                    <span className="text-[#e8e6f2] font-bold">{clonedPitch.toFixed(2)}x</span>
                   </div>
                   <input
                     type="range"
@@ -858,15 +858,15 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
                     step="0.05"
                     value={clonedPitch}
                     onChange={(e) => setClonedPitch(parseFloat(e.target.value))}
-                    className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                    className="w-full accent-[#6c63ff] h-1.5 bg-[#0b0a14] rounded-lg cursor-pointer"
                   />
                 </div>
 
                 {/* Cadence Rate Slider */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-zinc-400">Cadence & Speech Speed</span>
-                    <span className="text-white font-bold">{clonedRate.toFixed(2)}x</span>
+                    <span className="text-[#9490ac]">Cadence & Speech Speed</span>
+                    <span className="text-[#e8e6f2] font-bold">{clonedRate.toFixed(2)}x</span>
                   </div>
                   <input
                     type="range"
@@ -875,7 +875,7 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
                     step="0.05"
                     value={clonedRate}
                     onChange={(e) => setClonedRate(parseFloat(e.target.value))}
-                    className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                    className="w-full accent-[#6c63ff] h-1.5 bg-[#0b0a14] rounded-lg cursor-pointer"
                   />
                 </div>
               </div>
@@ -894,9 +894,9 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
         </div>
 
         {/* MODAL FOOTER */}
-        <div className="p-4 bg-[#121318] border-t border-zinc-800 flex items-center justify-between shrink-0">
+        <div className="p-4 bg-[#14121f] border-t border-[#211d34] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-zinc-400">
+            <span className="text-[11px] font-mono text-[#9490ac]">
               {activeStep === 'calibrate' ? 'Step 1 of 3' : activeStep === 'voice_clone' ? 'Step 2 of 3' : 'Step 3 of 3'}
             </span>
           </div>
@@ -906,7 +906,7 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveStep('voice_clone')}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white transition flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#211d34] hover:bg-[#211d34]/80 text-xs font-bold text-[#e8e6f2] transition flex items-center gap-1.5"
               >
                 Next: Voice Clone <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -916,7 +916,7 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveStep('schedule')}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white transition flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#211d34] hover:bg-[#211d34]/80 text-xs font-bold text-[#e8e6f2] transition flex items-center gap-1.5"
               >
                 Next: Auto-Mode Schedule <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -928,7 +928,7 @@ export const OmniNexusSetupModel: React.FC<OmniNexusSetupModelProps> = ({
               className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition flex items-center gap-1.5 ${
                 saveSuccess
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-950/40'
+                  : 'bg-[#6c63ff] hover:bg-[#8b7fff] text-white shadow-lg shadow-[#6c63ff]/30'
               }`}
             >
               {saveSuccess ? (
