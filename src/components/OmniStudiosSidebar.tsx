@@ -22,8 +22,7 @@ import {
   MessageSquare,
   Bot,
   Cloud,
-  Shapes,
-  Clapperboard
+  Tv
 } from 'lucide-react';
 import { StudioId } from './OmniStudiosView';
 import { HoloOrb } from './HoloOrb';
@@ -55,17 +54,16 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
 
   const studios = [
     { id: 'motion', name: 'OmniMotion', tag: 'CapCut Video Studio', icon: Video, color: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
-    { id: 'beat', name: 'OmniBeat', tag: 'Freebeat Music Video', icon: Film, color: 'text-purple-400 bg-purple-500/20 border-purple-500/30' },
-    { id: 'wave', name: 'OmniWave', tag: 'Suno Song Generator', icon: Music, color: 'text-amber-400 bg-amber-500/20 border-amber-500/30' },
-    { id: 'storyboard', name: 'Omni Storyboard', tag: 'Scene & Face Anchor', icon: Clapperboard, color: 'text-[#00ffcc] bg-[#00ffcc]/15 border-[#00ffcc]/35' },
-    { id: 'forge', name: 'OmniForge', tag: 'Three-State Fluid Mobile Builder', icon: Hammer, color: 'text-indigo-400 bg-indigo-500/20 border-indigo-500/30' },
-    { id: 'vector', name: 'Vector and Brand Lab', tag: 'VTracer & Infinite SVG', icon: Shapes, color: 'text-[#00ffcc] bg-[#00ffcc]/15 border-[#00ffcc]/35' },
+    { id: 'beat', name: 'Omni Storyboard', tag: 'Script & Character Anchor Engine', icon: Film, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'wave', name: 'OmniVoice Studio', tag: 'Voice Dub & Lip-Sync', icon: Music, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'yale', name: 'OmniYale Studio', tag: 'Multi-Cam Broadcast & Slides', icon: Tv, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'forge', name: 'Vector and Brand Lab', tag: 'Raster to Vector Studio', icon: Hammer, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
     { id: 'code', name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code, color: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' },
     { id: 'imagine', name: 'OmniImagine', tag: 'Mobile Canvas & Magic Eraser Suite', icon: Wand2, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
     { id: 'analyzer', name: 'OmniAnalyzer', tag: 'Site & Social Auditor', icon: Search, color: 'text-blue-400 bg-blue-500/20 border-blue-500/30' },
-    { id: 'style', name: 'OmniStyle', tag: 'Wardrobe & Aesthetic', icon: Shirt, color: 'text-violet-400 bg-violet-500/20 border-violet-500/30' },
-    { id: 'spatial', name: 'Spatial 3D', tag: 'Three.js Spatial Canvas', icon: Rotate3d, color: 'text-teal-400 bg-teal-500/20 border-teal-500/30' },
-    { id: 'mockup', name: 'Viral Mockup', tag: 'Social Feed Safe Zones', icon: Smartphone, color: 'text-rose-400 bg-rose-500/20 border-rose-500/30' },
+    { id: 'style', name: 'OmniStyle Studio', tag: 'Wardrobe Try-On Engine', icon: Shirt, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'spatial', name: 'Omnispacial 3D Studio', tag: 'WebGL 3D Engine', icon: Rotate3d, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'mockup', name: 'Viral Mockup Studio', tag: 'Social Feed Safe Zones', icon: Smartphone, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
     { id: 'cosmic', name: 'Cosmic UI Lab', tag: 'Generative Components', icon: Palette, color: 'text-fuchsia-400 bg-fuchsia-500/20 border-fuchsia-500/30' },
     { id: 'architect', name: 'OmniArchitect', tag: 'Database & API Schemas', icon: Database, color: 'text-sky-400 bg-sky-500/20 border-sky-500/30' },
     { id: 'automations', name: 'Automations', tag: 'AI Autonomous Agents', icon: Workflow, color: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30' },

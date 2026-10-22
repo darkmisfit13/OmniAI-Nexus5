@@ -15,316 +15,270 @@ import {
   Download,
   AlertTriangle,
   Layers,
-  Flame
+  Flame,
+  Hash,
+  AtSign
 } from 'lucide-react';
 import { HoloOrb, OrbPhase } from '../HoloOrb';
 
-export const OmniViralMockupStudio: React.FC<{ onSaveToVault?: (asset: any) => void }> = ({ onSaveToVault }) => {
-  const [platform, setPlatform] = useState<'tiktok' | 'reels' | 'shorts' | 'spotify' | 'appstore'>('tiktok');
-  const [creatorHandle, setCreatorHandle] = useState('@darkmisfit');
-  const [caption, setCaption] = useState('When the beat drops in OmniBeat ⚡ No one makes music like this. Link in bio.');
-  const [audioTrackLabel, setAudioTrackLabel] = useState('DarkMisfit Protocol Anthem - Original Sound');
-  const [hashtags, setHashtags] = useState('#OmniAI #Cyberpunk #DarkMisfit #NewMusic #AITools');
-  const [showSafeZones, setShowSafeZones] = useState(true);
-  const [mockupImage, setMockupImage] = useState('https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&q=80');
-  const [orbPhase, setOrbPhase] = useState<OrbPhase>('idle');
+interface OmniViralMockupStudioProps {
+  onSaveToVault?: (asset: any) => void;
+}
+
+export type MockupPlatform = 'TikTok' | 'Instagram' | 'YouTube' | 'App Store' | 'Spotify' | 'Canvas';
+
+export const OmniViralMockupStudio: React.FC<OmniViralMockupStudioProps> = ({ onSaveToVault }) => {
+  // Platform Tabs (6 required platforms)
+  const [selectedPlatform, setSelectedPlatform] = useState<MockupPlatform>('TikTok');
+
+  // Input Tray States
+  const [creatorHandle, setCreatorHandle] = useState<string>('@darkmisfit');
+  const [caption, setCaption] = useState<string>('When the beat drops in OmniBeat ⚡ No one makes music like this.');
+  const [hashtags, setHashtags] = useState<string>('#OmniAI #OmniMotion #Cyberpunk #TechTrend');
+  const [audioLabel, setAudioLabel] = useState<string>('OmniStyle Studio - Original Audio');
+
+  // Mockup Media
+  const [previewMedia, setPreviewMedia] = useState<string>('https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&q=80');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const handlePushToVault = () => {
     if (onSaveToVault) {
       onSaveToVault({
-        type: 'motion',
-        title: `Viral Mockup (${platform.toUpperCase()}) - ${creatorHandle}`,
-        thumbnail: mockupImage,
-        tags: ['ViralMockup', platform, 'SafeZone Guarded'],
-        details: `${caption} | ${hashtags}`
+        type: 'mockup',
+        title: `Viral Mockup (${selectedPlatform}) - ${creatorHandle}`,
+        thumbnail: previewMedia,
+        tags: ['Viral Mockup Studio', selectedPlatform, 'Safe Zone Guarded', creatorHandle],
+        details: `${caption} ${hashtags}`
       });
-      alert('Mockup pushed directly to OMNI VAULT!');
+      setToastMessage(`Saved ${selectedPlatform} mockup directly to Omni Vault!`);
+      setTimeout(() => setToastMessage(null), 2500);
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#07090e] text-slate-100 overflow-hidden font-sans">
-      
-      {/* Top Header */}
-      <div className="p-3 bg-[#0d1017] border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white shadow-md shadow-rose-500/20 font-black">
-            <Smartphone className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              OMNI VIRAL MOCKUP & SAFE ZONE GUARD
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                ZERO-BLOCKING GUARANTEE
-              </span>
-            </h3>
-            <p className="text-[11px] text-slate-400">Preview TikTok, Reels, Shorts & Spotify Canvas. Red grid shows where UI overlays cover your text.</p>
-          </div>
+    <div 
+      className="w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative flex flex-col justify-between bg-black text-white font-sans select-none"
+      style={{ boxSizing: 'border-box' }}
+    >
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full bg-[#131024]/95 border border-[#00ffcc]/50 text-[#00ffcc] text-[10.5px] font-mono shadow-2xl backdrop-blur-md animate-in fade-in flex items-center gap-1.5 max-w-[90%] truncate">
+          <Sparkles className="w-3 h-3 text-[#00ffcc] shrink-0" />
+          <span className="truncate">{toastMessage}</span>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <div className="h-12 px-4 bg-[#131024] border-b border-zinc-900 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <Smartphone className="w-4 h-4 text-[#00ffcc]" />
+          <h1 className="font-bold text-xs tracking-wider uppercase text-white font-mono">
+            Viral Mockup Studio
+          </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Safe Zone Toggle */}
-          <button
-            onClick={() => setShowSafeZones(!showSafeZones)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
-              showSafeZones
-                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30'
-                : 'bg-slate-900 text-slate-400 border border-slate-800'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            {showSafeZones ? 'Safe Zones: ON' : 'Safe Zones: OFF'}
-          </button>
-
+        <div className="flex items-center gap-1.5">
+          <span className="text-[8.5px] font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">
+            Red Safe Zones Active
+          </span>
           <button
             onClick={handlePushToVault}
-            className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+            className="px-2 py-0.5 rounded-md bg-[#00ffcc] text-slate-950 font-bold text-[9.5px] font-mono flex items-center gap-1 active:scale-95 transition"
+            title="Push Mockup to Vault"
           >
-            <FolderLock className="w-3.5 h-3.5" />
-            Push to Vault
+            <FolderLock className="w-2.5 h-2.5" />
+            <span>Vault</span>
           </button>
         </div>
       </div>
 
-      {/* Main Studio Body */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      {/* ZONE 1 (Live Viewport - 60% Height) */}
+      <div className="h-[60%] min-h-[460px] bg-[#0b0816] relative flex items-center justify-center p-3 overflow-hidden border-b border-zinc-900">
         
-        {/* Center: Live Phone Viewport Simulator */}
-        <div className="flex-1 bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {/* Smartphone Device Mockup Container */}
+        <div className="relative w-[240px] h-[440px] rounded-[32px] bg-black border-4 border-zinc-800 shadow-[0_0_30px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between">
           
-          {/* Phone Frame */}
-          <div className="relative h-[90%] aspect-[9/19.5] rounded-[42px] bg-slate-950 border-[6px] border-slate-800 shadow-2xl overflow-hidden flex flex-col select-none">
-            
-            {/* Dynamic Island / Notch */}
-            <div className="absolute top-2 inset-x-0 mx-auto w-24 h-5 bg-black rounded-full z-30" />
+          {/* Dynamic Island / Camera Notch */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-40 border border-zinc-900 flex items-center justify-center">
+            <div className="w-2 h-2 rounded-full bg-zinc-900 mr-2" />
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-900/60" />
+          </div>
 
-            {/* Background Media */}
-            <img
-              src={mockupImage}
-              alt="Social Media Preview"
-              className="absolute inset-0 w-full h-full object-cover"
+          {/* Background Mockup Image */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={previewMedia} 
+              alt="Mockup background"
+              className="w-full h-full object-cover" 
             />
-
-            {/* SAFE ZONE OVERLAY RED GRID */}
-            {showSafeZones && (
-              <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between">
-                
-                {/* Top UI Region (12% Profile & Tiles) */}
-                <div className="h-[12%] bg-red-500/25 border-b-2 border-red-500 border-dashed flex items-center justify-center p-1 text-center">
-                  <span className="text-[9px] font-mono font-black text-white bg-red-600/90 px-1.5 py-0.5 rounded shadow">
-                    TOP UI (12% BLOCKED)
-                  </span>
-                </div>
-
-                {/* Middle Clear Region with Left & Right Safe Borders */}
-                <div className="flex-1 flex justify-between">
-                  {/* Left Column (8%) */}
-                  <div className="w-[8%] bg-red-500/20 border-r border-red-500/60 border-dashed" />
-                  
-                  {/* Center Clear Safe Sanctuary */}
-                  <div className="flex-1 flex items-center justify-center">
-                    <span className="text-[10px] font-mono font-bold text-emerald-300 bg-black/60 px-2 py-1 rounded border border-emerald-500/40">
-                      ✓ SAFE CLEAR REGION (PUT TEXT HERE)
-                    </span>
-                  </div>
-
-                  {/* Right Column (18% Like / Comment / Share Rail) */}
-                  <div className="w-[18%] bg-red-500/25 border-l-2 border-red-500 border-dashed flex items-center justify-center text-center">
-                    <span className="text-[8px] font-mono font-black text-white bg-red-600/90 px-1 py-0.5 rounded -rotate-90">
-                      18% BLOCKED
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bottom UI Region (22% Caption & Audio) */}
-                <div className="h-[22%] bg-red-500/25 border-t-2 border-red-500 border-dashed flex items-center justify-center p-1 text-center">
-                  <span className="text-[9px] font-mono font-black text-white bg-red-600/90 px-1.5 py-0.5 rounded shadow">
-                    BOTTOM UI & CAPTION (22% BLOCKED)
-                  </span>
-                </div>
-
-              </div>
-            )}
-
-            {/* Simulated Native Social UI Elements */}
-            <div className="absolute inset-0 z-10 flex flex-col justify-between p-4 pointer-events-none">
-              
-              {/* Top Navigation Header */}
-              <div className="pt-6 flex items-center justify-between text-white text-xs font-bold drop-shadow">
-                <span className="opacity-80">LIVE</span>
-                <div className="flex gap-4">
-                  <span className="opacity-60">Following</span>
-                  <span className="border-b-2 border-white pb-0.5">For You</span>
-                </div>
-                <span className="opacity-80">🔍</span>
-              </div>
-
-              {/* Bottom Details & Right Rail */}
-              <div className="flex items-end justify-between pb-2">
-                
-                {/* Left: Creator handle, caption, music label */}
-                <div className="flex-1 pr-4 space-y-1.5 drop-shadow-md">
-                  <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    {creatorHandle}
-                    <span className="text-[10px] text-cyan-400">✓</span>
-                  </h4>
-                  <p className="text-xs text-slate-100 line-clamp-2 leading-relaxed">
-                    {caption}
-                  </p>
-                  <p className="text-[10px] font-mono text-cyan-300">
-                    {hashtags}
-                  </p>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-200 font-mono">
-                    <Music2 className="w-3 h-3 text-cyan-300 animate-spin" />
-                    <span className="truncate">{audioTrackLabel}</span>
-                  </div>
-                </div>
-
-                {/* Right: Social Action Column */}
-                <div className="flex flex-col items-center gap-3 text-white">
-                  <div className="w-9 h-9 rounded-full bg-slate-900 border border-white/20 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=100&q=80" alt="Avatar" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <Heart className="w-6 h-6 text-white drop-shadow" />
-                    <span className="text-[10px] font-bold mt-0.5">142.8K</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <MessageCircle className="w-6 h-6 text-white drop-shadow" />
-                    <span className="text-[10px] font-bold mt-0.5">3,490</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <Bookmark className="w-6 h-6 text-white drop-shadow" />
-                    <span className="text-[10px] font-bold mt-0.5">12.1K</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <Share2 className="w-6 h-6 text-white drop-shadow" />
-                    <span className="text-[10px] font-bold mt-0.5">Share</span>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85" />
           </div>
 
-          <div className="mt-3 text-xs font-mono text-slate-400">
-            Keep vital text inside the clear region. The red grid shows where social app UI blocks your media!
+          {/* PERMANENT SEMI-TRANSLUCENT RED SAFE ZONE GUARD OVERLAY LINES */}
+          <div className="absolute inset-0 z-20 pointer-events-none">
+            {/* Top Red Safe Line (Status Bar & Following/For You tabs) */}
+            <div className="absolute top-[48px] left-0 right-0 border-b border-dashed border-red-500/80 bg-red-500/10 h-6 flex items-center justify-between px-2 text-[7px] font-mono text-red-300 font-bold">
+              <span>▲ HEADER SAFE LIMIT</span>
+              <span>NO TEXT ZONE</span>
+            </div>
+
+            {/* Right Action Rail Red Safe Zone (Like, Comment, Bookmark, Share rail) */}
+            <div className="absolute top-[110px] bottom-[110px] right-0 w-12 border-l border-dashed border-red-500/80 bg-red-500/10 flex flex-col items-center justify-center p-1 text-[6.5px] font-mono text-red-300 font-bold text-center leading-tight">
+              <span>R</span>
+              <span>A</span>
+              <span>I</span>
+              <span>L</span>
+            </div>
+
+            {/* Bottom Caption & Audio Safe Line */}
+            <div className="absolute bottom-[20px] left-0 right-0 h-20 border-t border-dashed border-red-500/80 bg-red-500/10 flex flex-col justify-end p-1 text-[7px] font-mono text-red-300 font-bold">
+              <div className="flex justify-between">
+                <span>▼ FEED CAPTION & AUDIO MARQUEE BOUNDARY</span>
+                <span>SAFE</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Simulated Platform UI Elements */}
+          {/* Header */}
+          <div className="relative z-30 pt-6 px-3 flex justify-center items-center text-xs font-bold text-white drop-shadow">
+            <div className="flex gap-3 text-[11px]">
+              <span className="opacity-60">Following</span>
+              <span className="border-b-2 border-white pb-0.5">For You</span>
+            </div>
+          </div>
+
+          {/* Right Action Rail (Icons) */}
+          <div className="relative z-30 self-end pr-2 flex flex-col items-center gap-3 text-white drop-shadow-md">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center">
+                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+              </div>
+              <span className="text-[9px] font-mono font-bold mt-0.5">142K</span>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[9px] font-mono font-bold mt-0.5">3.8K</span>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center">
+                <Bookmark className="w-4 h-4 text-amber-400 fill-amber-400" />
+              </div>
+              <span className="text-[9px] font-mono font-bold mt-0.5">18.4K</span>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center">
+                <Share2 className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[9px] font-mono font-bold mt-0.5">Share</span>
+            </div>
+          </div>
+
+          {/* Bottom Feed Overlay (Handle, Caption, Audio) */}
+          <div className="relative z-30 p-3 pt-0 text-white space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold font-mono text-white">{creatorHandle}</span>
+              <span className="text-[8.5px] px-1 rounded bg-[#00ffcc] text-slate-950 font-bold">PRO</span>
+            </div>
+
+            <p className="text-[10px] text-zinc-200 line-clamp-2 leading-tight">
+              {caption}
+            </p>
+
+            <p className="text-[9.5px] text-[#00ffcc] font-mono truncate">
+              {hashtags}
+            </p>
+
+            <div className="flex items-center gap-1 text-[9px] font-mono text-zinc-300 pt-0.5">
+              <Music2 className="w-3 h-3 text-[#00ffcc] animate-spin" />
+              <span className="truncate">{audioLabel}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ZONE 2 (Input Tray - 40% Height) */}
+      <div className="h-[40%] min-h-[290px] p-3 bg-[#131024] flex flex-col justify-between overflow-y-auto">
+        
+        {/* Platform Tabs (6 required platforms) */}
+        <div className="space-y-1">
+          <span className="text-[9px] font-mono font-bold text-zinc-400 uppercase">
+            Select Platform Format:
+          </span>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {(
+              ['TikTok', 'Instagram', 'YouTube', 'App Store', 'Spotify', 'Canvas'] as MockupPlatform[]
+            ).map((plat) => {
+              const isSelected = selectedPlatform === plat;
+              return (
+                <button
+                  key={plat}
+                  onClick={() => setSelectedPlatform(plat)}
+                  className={`px-2.5 py-1 rounded-lg font-mono text-[9.5px] font-bold whitespace-nowrap shrink-0 transition active:scale-95 border ${
+                    isSelected 
+                      ? 'bg-[#00ffcc] text-slate-950 border-[#00ffcc] shadow-[0_0_8px_rgba(0,255,204,0.3)]' 
+                      : 'bg-black/60 text-zinc-300 border-zinc-800 hover:border-zinc-700'
+                  }`}
+                >
+                  {plat}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right Configuration Deck & Omni Orb Assistant */}
-        <div className="w-full md:w-84 bg-[#0d1017] border-l border-slate-800 p-4 flex flex-col justify-between space-y-4 overflow-y-auto">
-          
-          <div className="space-y-4">
-            
-            {/* Omni Orb Assistant */}
-            <div className="p-3.5 rounded-xl bg-slate-900 border border-rose-500/30 flex items-center gap-3">
-              <div className="w-12 h-12 flex-shrink-0">
-                <HoloOrb phase={orbPhase} className="w-full h-full" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-mono text-rose-400 font-bold uppercase block">VIRAL SAFE ZONE RADAR</span>
-                <p className="text-xs text-slate-300">"Never let TikTok comment buttons cover your video text again."</p>
-              </div>
-            </div>
-
-            {/* Platform Selector */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">Target Social Platform</span>
-              <div className="grid grid-cols-2 gap-1.5">
-                {[
-                  { id: 'tiktok', label: 'TikTok' },
-                  { id: 'reels', label: 'IG Reels' },
-                  { id: 'shorts', label: 'YT Shorts' },
-                  { id: 'spotify', label: 'Spotify Canvas' },
-                ].map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPlatform(p.id as any)}
-                    className={`p-2 rounded-lg text-xs font-mono font-bold text-center transition-all ${
-                      platform === p.id
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/50'
-                        : 'bg-slate-900 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Creator Metadata Inputs */}
-            <div className="space-y-3 pt-2 border-t border-slate-800">
-              
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-slate-400 uppercase font-bold">Creator Handle</label>
-                <input
-                  type="text"
-                  value={creatorHandle}
-                  onChange={(e) => setCreatorHandle(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-lg text-xs text-white font-mono outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-slate-400 uppercase font-bold">Caption & Hook</label>
-                <textarea
-                  rows={2}
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className="w-full p-2 bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-lg text-xs text-white outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-slate-400 uppercase font-bold">Audio Track Label</label>
-                <input
-                  type="text"
-                  value={audioTrackLabel}
-                  onChange={(e) => setAudioTrackLabel(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-lg text-xs text-white font-mono outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-slate-400 uppercase font-bold">Hashtag Injection</label>
-                <input
-                  type="text"
-                  value={hashtags}
-                  onChange={(e) => setHashtags(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-lg text-xs text-cyan-300 font-mono outline-none"
-                />
-              </div>
-
-            </div>
-
-            {/* Safe Zone Details Box */}
-            <div className="p-3 rounded-xl bg-black/40 border border-slate-800 space-y-1 text-[10px] font-mono text-slate-400">
-              <div className="flex justify-between text-rose-400 font-bold">
-                <span>Top UI Region:</span> <span>12%</span>
-              </div>
-              <div className="flex justify-between text-rose-400 font-bold">
-                <span>Bottom Caption UI:</span> <span>22%</span>
-              </div>
-              <div className="flex justify-between text-rose-400 font-bold">
-                <span>Right Action Rail:</span> <span>18%</span>
-              </div>
-              <div className="flex justify-between text-emerald-400 font-bold">
-                <span>Safe Clear Sanctuary:</span> <span>48%</span>
-              </div>
-            </div>
-
+        {/* Form Inputs (Creator Handle, Caption, Hashtags) */}
+        <div className="space-y-2 mt-1">
+          {/* Creator Handle */}
+          <div className="flex items-center gap-2 bg-[#0b0816] rounded-xl px-2.5 py-1.5 border border-zinc-800 focus-within:border-[#00ffcc] transition">
+            <AtSign className="w-3.5 h-3.5 text-[#00ffcc] shrink-0" />
+            <input
+              type="text"
+              value={creatorHandle}
+              onChange={(e) => setCreatorHandle(e.target.value)}
+              className="w-full bg-transparent text-xs text-white outline-none font-mono"
+              placeholder="@handle"
+            />
           </div>
 
-          <button
-            onClick={handlePushToVault}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-bold text-xs uppercase tracking-wider shadow-md"
-          >
-            Push Guarded Mockup to Vault
-          </button>
+          {/* Caption Textarea */}
+          <div className="bg-[#0b0816] rounded-xl p-2 border border-zinc-800 focus-within:border-[#00ffcc] transition">
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              rows={2}
+              className="w-full bg-transparent text-xs text-white outline-none font-sans resize-none"
+              placeholder="Caption text (guaranteed safe zone margins)..."
+            />
+          </div>
+
+          {/* Metadata Hashtags */}
+          <div className="flex items-center gap-2 bg-[#0b0816] rounded-xl px-2.5 py-1.5 border border-zinc-800 focus-within:border-[#00ffcc] transition">
+            <Hash className="w-3.5 h-3.5 text-[#00ffcc] shrink-0" />
+            <input
+              type="text"
+              value={hashtags}
+              onChange={(e) => setHashtags(e.target.value)}
+              className="w-full bg-transparent text-xs text-cyan-300 outline-none font-mono"
+              placeholder="#hashtags"
+            />
+          </div>
         </div>
+
+        {/* Bottom Neon #00ffcc Action Button: Push Mockup to Vault */}
+        <button
+          onClick={handlePushToVault}
+          className="mt-2 w-full py-3 rounded-xl bg-[#00ffcc] hover:bg-[#1affd4] text-slate-950 font-black font-mono text-xs tracking-wider uppercase shadow-lg shadow-[#00ffcc]/20 active:scale-98 transition flex items-center justify-center gap-2"
+        >
+          <FolderLock className="w-4 h-4 text-slate-950 fill-current" />
+          <span>Push Mockup to Vault</span>
+        </button>
 
       </div>
     </div>

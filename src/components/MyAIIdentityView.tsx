@@ -33,6 +33,7 @@ import {
 } from '../lib/omniVoice';
 import { DataVaultPrivacyView } from './DataVaultPrivacyView';
 import { securityEngine } from '../lib/securityEngine';
+import { AITwinStudio } from './studios/AITwinStudio';
 
 export type IdentitySubView = 'hub' | 'voice' | 'persona' | 'privacy';
 
@@ -354,7 +355,7 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
   };
 
   const handleTestNaturalSpeech = () => {
-    const sample = "On June 1st, I will send $75 because I don't want any delay!";
+    const sample = `Hey, this is OmniAI dialing in vocal imperfections. Stability is at ${vocalSettings.stability} percent, style exaggeration at ${vocalSettings.style_exaggeration} percent, and pacing variation at ${vocalSettings.pacing_speed.toFixed(2)}x.`;
     omniVoice.speak(sample);
   };
 
@@ -578,6 +579,103 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
                 </span>
               </div>
             </button>
+
+            {/* CARD 4: VOCAL NATURALNESS SETTINGS (HUMAN IMPERFECTION DIALS) */}
+            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-3.5 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-red-950/60 border border-red-500/40 flex items-center justify-center text-red-400">
+                    <Sliders className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-bold text-white tracking-wider uppercase">
+                      Vocal Naturalness Settings
+                    </h2>
+                    <p className="text-[10px] text-zinc-400 font-sans">
+                      Dial in human-like vocal imperfections & cadence
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTestNaturalSpeech}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-cyan-300 text-[10px] font-bold flex items-center gap-1 active:scale-95 transition shadow-sm"
+                  title="Test dialed-in vocal imperfections"
+                >
+                  <Volume2 className="w-3 h-3 text-cyan-400" />
+                  Test Voice
+                </button>
+              </div>
+
+              <div className="space-y-3 text-[11px] pt-1 border-t border-zinc-900/80">
+                {/* 1. Stability (0-100%, default 40) */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="font-semibold">Stability</span>
+                    <span className="font-mono font-bold text-red-400">{vocalSettings.stability}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={vocalSettings.stability}
+                    onChange={(e) => handleUpdateVocalSetting('stability', parseInt(e.target.value, 10))}
+                    className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[9px] text-zinc-500">
+                    <span>0% (Raw Drift & Imperfections)</span>
+                    <span className="text-zinc-400">Default: 40%</span>
+                    <span>100% (Robotic Flat)</span>
+                  </div>
+                </div>
+
+                {/* 2. Style Exaggeration (0-100%, default 50) */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="font-semibold">Style Exaggeration</span>
+                    <span className="font-mono font-bold text-red-400">{vocalSettings.style_exaggeration}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={vocalSettings.style_exaggeration}
+                    onChange={(e) => handleUpdateVocalSetting('style_exaggeration', parseInt(e.target.value, 10))}
+                    className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[9px] text-zinc-500">
+                    <span>0% (Monotone Neutral)</span>
+                    <span className="text-zinc-400">Default: 50%</span>
+                    <span>100% (High Drama)</span>
+                  </div>
+                </div>
+
+                {/* 3. Pacing Variation (0.8x-1.5x, default 1.1x) */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="font-semibold">Pacing Variation</span>
+                    <span className="font-mono font-bold text-red-400">{vocalSettings.pacing_speed.toFixed(2)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.8"
+                    max="1.5"
+                    step="0.05"
+                    value={vocalSettings.pacing_speed}
+                    onChange={(e) => handleUpdateVocalSetting('pacing_speed', parseFloat(e.target.value))}
+                    className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[9px] text-zinc-500">
+                    <span>0.80x (Slow & Hushed)</span>
+                    <span className="text-zinc-400">Default: 1.10x</span>
+                    <span>1.50x (Rapid Fire)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Bottom Active Status Summary */}
@@ -733,77 +831,59 @@ export const MyAIIdentityView: React.FC<MyAIIdentityViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-2.5 text-[11px]">
-              {/* 1. Stability */}
+            <div className="space-y-3 text-[11px]">
+              {/* 1. Stability (0-100%, default 40) */}
               <div>
                 <div className="flex items-center justify-between text-zinc-300">
-                  <span>Stability (Inflection Drift)</span>
-                  <span className="font-bold text-red-400">{vocalSettings.stability.toFixed(2)}</span>
+                  <span className="font-semibold">Stability</span>
+                  <span className="font-mono font-bold text-red-400">{vocalSettings.stability}%</span>
                 </div>
                 <input
                   type="range"
-                  min="0.10"
-                  max="1.00"
-                  step="0.05"
+                  min="0"
+                  max="100"
+                  step="1"
                   value={vocalSettings.stability}
-                  onChange={(e) => handleUpdateVocalSetting('stability', parseFloat(e.target.value))}
+                  onChange={(e) => handleUpdateVocalSetting('stability', parseInt(e.target.value, 10))}
                   className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
                 />
-                <span className="text-[9.5px] text-zinc-500 block">Lower introduces natural vocal inflection and human drift.</span>
+                <span className="text-[9.5px] text-zinc-500 block">Lower introduces natural vocal inflection and human drift (default: 40%).</span>
               </div>
 
-              {/* 2. Similarity Boost */}
+              {/* 2. Style Exaggeration (0-100%, default 50) */}
               <div>
                 <div className="flex items-center justify-between text-zinc-300">
-                  <span>Similarity Boost (Speaker Match)</span>
-                  <span className="font-bold text-red-400">{vocalSettings.similarity_boost.toFixed(2)}</span>
+                  <span className="font-semibold">Style Exaggeration</span>
+                  <span className="font-mono font-bold text-red-400">{vocalSettings.style_exaggeration}%</span>
                 </div>
                 <input
                   type="range"
-                  min="0.10"
-                  max="1.00"
-                  step="0.05"
-                  value={vocalSettings.similarity_boost}
-                  onChange={(e) => handleUpdateVocalSetting('similarity_boost', parseFloat(e.target.value))}
-                  className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
-                />
-                <span className="text-[9.5px] text-zinc-500 block">Maintains clear speaker identity and vocal timbre.</span>
-              </div>
-
-              {/* 3. Style Exaggeration */}
-              <div>
-                <div className="flex items-center justify-between text-zinc-300">
-                  <span>Style Exaggeration (Conversational Energy)</span>
-                  <span className="font-bold text-red-400">{vocalSettings.style_exaggeration.toFixed(2)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.00"
-                  max="1.00"
-                  step="0.05"
+                  min="0"
+                  max="100"
+                  step="1"
                   value={vocalSettings.style_exaggeration}
-                  onChange={(e) => handleUpdateVocalSetting('style_exaggeration', parseFloat(e.target.value))}
+                  onChange={(e) => handleUpdateVocalSetting('style_exaggeration', parseInt(e.target.value, 10))}
                   className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
                 />
-                <span className="text-[9.5px] text-zinc-500 block">Forces dramatic conversational energy variance.</span>
+                <span className="text-[9.5px] text-zinc-500 block">Forces dynamic conversational energy and emphasis variance (default: 50%).</span>
               </div>
 
-              {/* 4. Pacing & Speed Variation */}
+              {/* 3. Pacing Variation (0.8x-1.5x, default 1.1x) */}
               <div>
                 <div className="flex items-center justify-between text-zinc-300">
-                  <span>Pacing & Speed Variation</span>
-                  <span className="font-bold text-red-400">{(vocalSettings.pacing_speed || 1.05).toFixed(2)}x</span>
+                  <span className="font-semibold">Pacing Variation</span>
+                  <span className="font-mono font-bold text-red-400">{vocalSettings.pacing_speed.toFixed(2)}x</span>
                 </div>
                 <input
                   type="range"
-                  min="0.85"
-                  max="1.30"
+                  min="0.8"
+                  max="1.5"
                   step="0.05"
-                  value={vocalSettings.pacing_speed || 1.05}
+                  value={vocalSettings.pacing_speed}
                   onChange={(e) => handleUpdateVocalSetting('pacing_speed', parseFloat(e.target.value))}
                   className="w-full accent-red-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
                 />
-                <span className="text-[9.5px] text-zinc-500 block">Breaks robotic monotony with natural speech cadence acceleration (~1.05x - 1.1x).</span>
+                <span className="text-[9.5px] text-zinc-500 block">Breaks robotic monotony with human-like cadence variation (default: 1.10x).</span>
               </div>
 
               {/* 5. Speaker Boost Toggle */}

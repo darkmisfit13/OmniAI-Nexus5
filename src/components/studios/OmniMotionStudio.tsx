@@ -54,7 +54,11 @@ import {
   ChevronLeft,
   Flame,
   Gauge,
-  Magnet
+  Magnet,
+  FileCode,
+  Key,
+  FolderLock,
+  Camera
 } from 'lucide-react';
 import { HoloOrb, OrbPhase } from '../HoloOrb';
 import { omniVoice } from '../../lib/omniVoice';
@@ -157,6 +161,22 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
   // 4. Advanced Effects & LUTs
   const [selectedLUT, setSelectedLUT] = useState<string>('normal');
   const [lutIntensity, setLutIntensity] = useState<number>(100);
+
+  // 4.5. Real-time Motion Blur & Batch Studio Export
+  const [isMotionBlurEnabled, setIsMotionBlurEnabled] = useState<boolean>(true);
+  const [realtimeMotionBlur, setRealtimeMotionBlur] = useState<number>(45); // 0-100%
+  const [showBatchExportModal, setShowBatchExportModal] = useState<boolean>(false);
+  const [selectedBatchAssetIds, setSelectedBatchAssetIds] = useState<string[]>(['batch-1', 'batch-2', 'batch-4']);
+  const [isBatchExporting, setIsBatchExporting] = useState<boolean>(false);
+  const [batchProgress, setBatchProgress] = useState<number>(0);
+  const [currentBatchItemName, setCurrentBatchItemName] = useState<string>('');
+
+  // 4.6. Quick Preset Export & Viewport Keyframe Scrubber
+  const [showPresetExportModal, setShowPresetExportModal] = useState<boolean>(false);
+  const [presetFileName, setPresetFileName] = useState<string>('OmniMotion_Cyberpunk_Master.json');
+  const [keyframePoints, setKeyframePoints] = useState<number[]>([0.0, 1.2, 2.5, 4.0, 5.8, 7.0]);
+  const [isShutterFlashing, setIsShutterFlashing] = useState<boolean>(false);
+  const [selectedPresetFilter, setSelectedPresetFilter] = useState<'All' | 'Formal' | 'Streetwear' | 'Holo' | 'Vintage'>('All');
 
   // 5. Next-Gen AI Removal & Enhancement Tools
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -711,7 +731,7 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
           )}
         </div>
 
-        {/* Right: Companion + Vibrant Teal `Export` Button (Authentic CapCut Teal `#00d2c4`) */}
+        {/* Right: Companion + Batch Studio Export + Vibrant Teal `Export` Button (Authentic CapCut Teal `#00d2c4`) */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {onOpenCompanion && (
             <button
@@ -723,6 +743,26 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
               <span className="hidden sm:inline">AI Copilot</span>
             </button>
           )}
+
+          <button
+            onClick={() => setShowBatchExportModal(true)}
+            className="px-2 sm:px-2.5 py-1 rounded-full bg-[#1b182a] hover:bg-[#25213b] border border-cyan-500/40 hover:border-[#00ffcc] text-cyan-300 hover:text-white font-mono text-[9.5px] sm:text-xs font-bold flex items-center gap-1 shadow active:scale-95 transition"
+            title="Batch Studio Export: Select & Export Multiple Cached Project Assets"
+          >
+            <Layers className="w-3 h-3 text-[#00ffcc]" />
+            <span className="hidden xs:inline">Batch Export</span>
+            <span className="xs:hidden">Batch</span>
+          </button>
+
+          <button
+            onClick={() => setShowPresetExportModal(true)}
+            className="px-2 sm:px-2.5 py-1 rounded-full bg-[#1b182a] hover:bg-[#25213b] border border-[#00ffcc]/40 hover:border-[#00ffcc] text-[#00ffcc] hover:text-white font-mono text-[9.5px] sm:text-xs font-bold flex items-center gap-1 shadow active:scale-95 transition"
+            title="Quick Preset Export: Save Motion Configuration Parameters as JSON to Vault"
+          >
+            <FileCode className="w-3 h-3 text-[#00ffcc]" />
+            <span className="hidden xs:inline">Quick Preset Export</span>
+            <span className="xs:hidden">Preset</span>
+          </button>
 
           <button
             onClick={() => setShowExportModal(true)}
@@ -779,7 +819,7 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
           <div 
             className="relative w-full h-full overflow-hidden flex items-center justify-center"
             style={{
-              filter: `${activeLUTCSS} ${superResActive ? 'contrast(106%) brightness(102%)' : ''}`,
+              filter: `${activeLUTCSS} ${superResActive ? 'contrast(106%) brightness(102%)' : ''} ${isMotionBlurEnabled && realtimeMotionBlur > 0 ? `blur(${(realtimeMotionBlur * 0.035).toFixed(2)}px)` : ''}`,
             }}
           >
             <video
@@ -791,6 +831,48 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
               poster="/assets/filmstrip/thumb_01.jpg"
               onClick={() => setIsPlaying(!isPlaying)}
             />
+
+            {/* Real-time Motion Blur Viewport Control Slider */}
+            <div className="absolute top-2 left-2 z-30 flex flex-col gap-1 p-2 rounded-xl bg-black/85 backdrop-blur-md border border-[#00ffcc]/30 text-white font-mono shadow-2xl transition-all max-w-[160px] sm:max-w-[180px]">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Flame className={`w-3.5 h-3.5 ${isMotionBlurEnabled ? 'text-[#00ffcc] animate-pulse' : 'text-slate-400'}`} />
+                  <span className="text-[9.5px] sm:text-[10px] font-bold tracking-tight text-white">Motion Blur</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMotionBlurEnabled(!isMotionBlurEnabled)}
+                  className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase transition ${
+                    isMotionBlurEnabled ? 'bg-[#00ffcc]/20 text-[#00ffcc] border border-[#00ffcc]/40' : 'bg-white/10 text-slate-400'
+                  }`}
+                  title="Toggle Real-time Motion Blur"
+                >
+                  {isMotionBlurEnabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+
+              {isMotionBlurEnabled && (
+                <div className="space-y-1 pt-0.5">
+                  <div className="flex justify-between items-center text-[8.5px]">
+                    <span className="text-slate-400">Frame Interpolation</span>
+                    <span className="text-[#00ffcc] font-bold">{realtimeMotionBlur}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={realtimeMotionBlur}
+                    onChange={(e) => setRealtimeMotionBlur(Number(e.target.value))}
+                    className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
+                    title="Real-time Motion Blur Intensity (0-100%)"
+                  />
+                  <div className="flex justify-between text-[7.5px] text-slate-500 font-mono">
+                    <span>0% Crisp</span>
+                    <span>100% Hyper</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Subtitle / Caption Overlay */}
             {textTrack.map((sub) => {
@@ -818,6 +900,37 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
               </div>
             )}
 
+            {/* Quick Snapshot Button in Try-On Player Zone */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsShutterFlashing(true);
+                setTimeout(() => setIsShutterFlashing(false), 200);
+
+                onSaveToVault?.({
+                  type: 'image',
+                  title: `Quick Reference - Outfit Frame ${formatTime(currentTime)}`,
+                  thumbnail: '/assets/filmstrip/thumb_01.jpg',
+                  tags: ['OmniMotion', 'Quick Reference', 'Outfit Snapshot', selectedResolution],
+                  details: `Captured at ${formatTime(currentTime)} with ${selectedLUT} LUT and ${realtimeMotionBlur}% frame interpolation.`
+                });
+
+                setHandoffToast(`Quick Reference captured at ${formatTime(currentTime)} and saved to Vault!`);
+                setTimeout(() => setHandoffToast(null), 3000);
+              }}
+              className="absolute top-8 right-2 z-30 px-2 py-1 rounded-lg bg-black/85 hover:bg-[#00ffcc] text-slate-200 hover:text-slate-950 border border-[#00ffcc]/40 font-mono text-[9px] font-bold flex items-center gap-1.5 shadow-xl transition active:scale-95"
+              title="Quick Snapshot: Capture current frame and save as Quick Reference in local vault"
+            >
+              <Camera className="w-3 h-3 text-[#00ffcc] group-hover:text-slate-950" />
+              <span>Quick Snapshot</span>
+            </button>
+
+            {/* Camera Shutter Flash Animation */}
+            {isShutterFlashing && (
+              <div className="absolute inset-0 bg-white z-50 pointer-events-none transition-opacity duration-200" />
+            )}
+
             {/* Social Media Safe Zones */}
             {showSafeZone && (
               <div className="absolute inset-0 pointer-events-none border border-dashed border-cyan-400/40 flex flex-col justify-between p-2">
@@ -825,6 +938,125 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
                 <span className="text-[7.5px] font-mono text-cyan-400/70 text-right">REELS/TIKTOK CAPTION SAFE</span>
               </div>
             )}
+
+            {/* Compact Horizontal Keyframe Scrubber (Bottom of Viewport) */}
+            <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/90 backdrop-blur-md border-t border-[#00ffcc]/30 px-2 sm:px-3 py-1.5 flex flex-col gap-1 font-mono select-none">
+              <div className="flex items-center justify-between text-[9px]">
+                <div className="flex items-center gap-1 text-[#00ffcc] font-bold">
+                  <Key className="w-2.5 h-2.5" />
+                  <span>KEYFRAME SCRUBBER</span>
+                  <span className="text-slate-500 text-[8px]">({keyframePoints.length} points)</span>
+                </div>
+                
+                <div className="flex items-center gap-1.5">
+                  {/* Jump Prev Keyframe */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prevPoints = keyframePoints.filter(p => p < currentTime - 0.05);
+                      const target = prevPoints.length > 0 ? prevPoints[prevPoints.length - 1] : 0;
+                      setCurrentTime(target);
+                      if (videoRef.current) videoRef.current.currentTime = target;
+                      setHandoffToast(`Snapped to Keyframe: ${target.toFixed(1)}s`);
+                      setTimeout(() => setHandoffToast(null), 1500);
+                    }}
+                    className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-[#00ffcc]/20 hover:text-[#00ffcc] text-slate-300 text-[8.5px] transition"
+                    title="Jump to Previous Interpolated Keyframe"
+                  >
+                    ◀ Prev
+                  </button>
+
+                  <span className="text-[#00ffcc] font-bold text-[9.5px]">
+                    {currentTime.toFixed(1)}s
+                  </span>
+
+                  {/* Jump Next Keyframe */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextPoints = keyframePoints.filter(p => p > currentTime + 0.05);
+                      const target = nextPoints.length > 0 ? nextPoints[0] : totalDuration;
+                      setCurrentTime(target);
+                      if (videoRef.current) videoRef.current.currentTime = target;
+                      setHandoffToast(`Snapped to Keyframe: ${target.toFixed(1)}s`);
+                      setTimeout(() => setHandoffToast(null), 1500);
+                    }}
+                    className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-[#00ffcc]/20 hover:text-[#00ffcc] text-slate-300 text-[8.5px] transition"
+                    title="Jump to Next Interpolated Keyframe"
+                  >
+                    Next ▶
+                  </button>
+
+                  {/* Add Keyframe at current point */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rounded = Number(currentTime.toFixed(1));
+                      if (!keyframePoints.includes(rounded)) {
+                        setKeyframePoints(prev => [...prev, rounded].sort((a, b) => a - b));
+                        setHandoffToast(`Added Keyframe Marker at ${rounded}s`);
+                        setTimeout(() => setHandoffToast(null), 1500);
+                      }
+                    }}
+                    className="px-1.5 py-0.5 rounded bg-[#00ffcc]/20 border border-[#00ffcc]/40 text-[#00ffcc] text-[8.5px] font-bold transition hover:bg-[#00ffcc]/30"
+                    title="Add Keyframe Marker at Current Position"
+                  >
+                    + Key
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrubber Bar Track with Keyframe Diamonds */}
+              <div 
+                className="relative h-2 bg-zinc-900 rounded-full cursor-pointer overflow-visible flex items-center"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const clickX = e.clientX - rect.left;
+                  const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+                  const newTime = Number((ratio * totalDuration).toFixed(1));
+                  setCurrentTime(newTime);
+                  if (videoRef.current) videoRef.current.currentTime = newTime;
+                }}
+              >
+                {/* Progress bar fill */}
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 to-[#00ffcc] rounded-full pointer-events-none transition-all duration-75"
+                  style={{ width: `${(currentTime / totalDuration) * 100}%` }}
+                />
+
+                {/* Keyframe Marker Diamonds */}
+                {keyframePoints.map((kf, idx) => {
+                  const posPercent = (kf / totalDuration) * 100;
+                  const isActive = Math.abs(currentTime - kf) < 0.15;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentTime(kf);
+                        if (videoRef.current) videoRef.current.currentTime = kf;
+                        setHandoffToast(`Keyframe #${idx + 1} Selected (${kf}s)`);
+                        setTimeout(() => setHandoffToast(null), 1500);
+                      }}
+                      style={{ left: `calc(${posPercent}% - 5px)` }}
+                      className={`absolute w-2.5 h-2.5 rotate-45 border transition-all z-20 ${
+                        isActive 
+                          ? 'bg-white border-[#00ffcc] scale-125 shadow-[0_0_8px_#00ffcc]' 
+                          : 'bg-[#00ffcc] border-black hover:scale-125 hover:bg-white'
+                      }`}
+                      title={`Jump to Keyframe #${idx + 1} (${kf}s) - Interpolation Point`}
+                    />
+                  );
+                })}
+
+                {/* Current Playhead Handle */}
+                <div 
+                  style={{ left: `calc(${(currentTime / totalDuration) * 100}% - 4px)` }}
+                  className="absolute w-2 h-3.5 bg-white rounded-sm shadow-md pointer-events-none z-30 border border-slate-950"
+                />
+              </div>
+            </div>
           </div>
 
           {/* AI Processing Overlay */}
@@ -1283,6 +1515,63 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
                 </button>
               );
             })}
+          </div>
+
+          {/* Horizontal Row of Filter Chips labeled 'Formal', 'Streetwear', 'Holo', 'Vintage' */}
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-[#090812] border-b border-white/10 overflow-x-auto no-scrollbar font-mono text-[9px] shrink-0">
+            <span className="text-slate-400 font-bold uppercase text-[8px] mr-1">Filter Chips:</span>
+            {(['All', 'Formal', 'Streetwear', 'Holo', 'Vintage'] as const).map((cat) => {
+              const isSelected = selectedPresetFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPresetFilter(cat);
+                    setHandoffToast(`Preset filter set to ${cat}`);
+                    setTimeout(() => setHandoffToast(null), 1500);
+                  }}
+                  className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition active:scale-95 ${
+                    isSelected
+                      ? 'bg-[#00ffcc] text-slate-950 shadow-[0_0_8px_rgba(0,255,204,0.3)]'
+                      : 'bg-black/60 text-slate-300 border border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Clothing Vault Preset Row */}
+          <div className="flex items-center gap-2 overflow-x-auto px-3 py-2 bg-[#0b0a16] border-b border-white/10 no-scrollbar shrink-0">
+            {[
+              { id: 'pv-1', name: 'Cyber Tuxedo Onyx', category: 'Formal', thumb: '/assets/filmstrip/thumb_01.jpg', tag: 'Bespoke' },
+              { id: 'pv-2', name: 'Neo-Tokyo Hoodie', category: 'Streetwear', thumb: '/assets/filmstrip/thumb_03.jpg', tag: 'Urban' },
+              { id: 'pv-3', name: 'Prismatic Veil Aura', category: 'Holo', thumb: '/assets/filmstrip/thumb_05.jpg', tag: '4D Mesh' },
+              { id: 'pv-4', name: 'Retro Analog Bomber', category: 'Vintage', thumb: '/assets/filmstrip/thumb_02.jpg', tag: 'Classic' },
+              { id: 'pv-5', name: 'Matrix Longcoat Velvet', category: 'Formal', thumb: '/assets/filmstrip/thumb_06.jpg', tag: 'Runway' },
+              { id: 'pv-6', name: 'Cargo Exoskeleton Pant', category: 'Streetwear', thumb: '/assets/filmstrip/thumb_04.jpg', tag: 'Techwear' },
+              { id: 'pv-7', name: 'Holo Luminescence Armor', category: 'Holo', thumb: '/assets/filmstrip/thumb_05.jpg', tag: 'Optic' },
+              { id: 'pv-8', name: '70s Golden Amber Jacket', category: 'Vintage', thumb: '/assets/filmstrip/thumb_01.jpg', tag: 'Retro' },
+            ]
+              .filter(p => selectedPresetFilter === 'All' || p.category === selectedPresetFilter)
+              .map((preset) => (
+                <div
+                  key={preset.id}
+                  onClick={() => {
+                    setHandoffToast(`Selected Outfit Preset: ${preset.name}`);
+                    setTimeout(() => setHandoffToast(null), 2000);
+                  }}
+                  className="flex items-center gap-2 p-1.5 rounded-xl bg-black/60 border border-white/10 hover:border-[#00ffcc] cursor-pointer transition shrink-0 group active:scale-95"
+                >
+                  <img src={preset.thumb} alt="" className="w-8 h-8 rounded-lg object-cover group-hover:scale-105 transition-transform" />
+                  <div className="min-w-0 pr-1">
+                    <span className="text-[10px] font-bold text-white block truncate max-w-[100px]">{preset.name}</span>
+                    <span className="text-[8px] font-mono text-[#00ffcc]">{preset.category}</span>
+                  </div>
+                </div>
+              ))}
           </div>
 
           {/* Drawer Body Scroll Area */}
@@ -1971,6 +2260,320 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
                 className="px-4 py-2 rounded-xl bg-[#00d2c4] hover:bg-[#00f2e0] text-slate-950 font-bold shadow-md shadow-[#00d2c4]/30 active:scale-95 transition"
               >
                 {isExporting ? 'Rendering...' : 'Start Render'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* BATCH STUDIO EXPORT MODAL */}
+      {showBatchExportModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 font-sans">
+          <div className="bg-[#121020] border border-cyan-500/40 rounded-2xl w-full max-w-md p-4 space-y-4 shadow-2xl animate-in zoom-in-95 text-white">
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-[#00ffcc]/15 text-[#00ffcc]">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm tracking-wide text-white">BATCH STUDIO EXPORT</h3>
+                  <p className="text-[10px] text-slate-400 font-mono">Sequential queue for cached project assets</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => !isBatchExporting && setShowBatchExportModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Selection Toolbar */}
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#00ffcc] font-bold">
+                {selectedBatchAssetIds.length} / 5 Assets Selected
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedBatchAssetIds.length === 5) {
+                    setSelectedBatchAssetIds([]);
+                  } else {
+                    setSelectedBatchAssetIds(['batch-1', 'batch-2', 'batch-3', 'batch-4', 'batch-5']);
+                  }
+                }}
+                className="text-slate-300 hover:text-white underline text-[11px]"
+              >
+                {selectedBatchAssetIds.length === 5 ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
+
+            {/* Asset Queue List */}
+            <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+              {[
+                { id: 'batch-1', title: 'Black Rose Winged Fairy - 4K Master Cut', format: 'AI UHD MP4 (60fps)', size: '24.8 MB', thumb: '/assets/filmstrip/thumb_01.jpg', tag: 'Master Render' },
+                { id: 'batch-2', title: 'Winged Fairy Blow Kiss - Alpha Matte Cut', format: 'ProRes 4444 (Alpha)', size: '42.1 MB', thumb: '/assets/filmstrip/thumb_05.jpg', tag: 'Alpha VFX' },
+                { id: 'batch-3', title: 'Freebeat Phonk Rhythm Audio Stem (140 BPM)', format: 'WAV 24-bit / 48kHz', size: '12.4 MB', thumb: '/assets/filmstrip/thumb_03.jpg', tag: 'Audio Stem' },
+                { id: 'batch-4', title: '9:16 Vertical Reel Cut (Color Graded & Subbed)', format: 'H.265 / 1080x1920', size: '18.6 MB', thumb: '/assets/filmstrip/thumb_02.jpg', tag: 'Social Reel' },
+                { id: 'batch-5', title: 'AI Motion Blur Interpolated Sequence (120fps)', format: 'Frame Cache / 120fps', size: '36.2 MB', thumb: '/assets/filmstrip/thumb_06.jpg', tag: 'Interpolation' },
+              ].map((item) => {
+                const isSelected = selectedBatchAssetIds.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      if (isBatchExporting) return;
+                      setSelectedBatchAssetIds(prev => 
+                        prev.includes(item.id) ? prev.filter(x => x !== item.id) : [...prev, item.id]
+                      );
+                    }}
+                    className={`flex items-center gap-3 p-2 rounded-xl border cursor-pointer transition ${
+                      isSelected 
+                        ? 'bg-[#181432] border-[#00ffcc]/60 shadow-[0_0_12px_rgba(0,255,204,0.15)]' 
+                        : 'bg-black/50 border-white/10 hover:border-white/20 opacity-70'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded flex items-center justify-center border transition ${
+                      isSelected ? 'bg-[#00ffcc] border-[#00ffcc] text-slate-950' : 'border-slate-500'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+
+                    <img 
+                      src={item.thumb} 
+                      alt="" 
+                      className="w-10 h-10 object-cover rounded-lg border border-white/10 shrink-0" 
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-white truncate">{item.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[9.5px] font-mono text-slate-400 mt-0.5">
+                        <span className="text-[#00d2c4]">{item.format}</span>
+                        <span>•</span>
+                        <span>{item.size}</span>
+                        <span className="ml-auto px-1.5 py-0.2 rounded bg-white/10 text-[8.5px] text-slate-300">{item.tag}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Batch Progress Bar */}
+            {isBatchExporting && (
+              <div className="space-y-1.5 p-3 rounded-xl bg-black/60 border border-cyan-500/30 font-mono">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-cyan-300 font-bold truncate max-w-[240px]">
+                    {currentBatchItemName || 'Processing batch pipeline...'}
+                  </span>
+                  <span className="text-[#00ffcc] font-bold">{batchProgress}%</span>
+                </div>
+                <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-white/10">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#00d2c4] to-[#00ffcc] transition-all duration-300 shadow-[0_0_10px_#00ffcc]"
+                    style={{ width: `${batchProgress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[8.5px] text-slate-400">
+                  <span>Sequential Engine Active</span>
+                  <span>Direct Cloud Vault Write</span>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="pt-2 flex items-center justify-between border-t border-white/10">
+              <button
+                disabled={isBatchExporting}
+                onClick={() => setShowBatchExportModal(false)}
+                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono transition"
+              >
+                Close
+              </button>
+
+              <button
+                disabled={isBatchExporting || selectedBatchAssetIds.length === 0}
+                onClick={() => {
+                  if (selectedBatchAssetIds.length === 0) return;
+                  setIsBatchExporting(true);
+                  setBatchProgress(12);
+                  setCurrentBatchItemName('Exporting 1/' + selectedBatchAssetIds.length + ': Black Rose Fairy 4K Master...');
+
+                  setTimeout(() => {
+                    setBatchProgress(42);
+                    setCurrentBatchItemName('Exporting 2/' + selectedBatchAssetIds.length + ': Alpha Matte Sequence...');
+                  }, 650);
+
+                  setTimeout(() => {
+                    setBatchProgress(78);
+                    setCurrentBatchItemName('Exporting 3/' + selectedBatchAssetIds.length + ': Audio Stem & Final Vault sync...');
+                  }, 1300);
+
+                  setTimeout(() => {
+                    setBatchProgress(100);
+                    setIsBatchExporting(false);
+                    setShowBatchExportModal(false);
+                    
+                    selectedBatchAssetIds.forEach((id, idx) => {
+                      onSaveToVault?.({
+                        type: 'video',
+                        title: `OmniMotion Batch Asset #${idx + 1} (${id})`,
+                        thumbnail: '/assets/filmstrip/thumb_01.jpg',
+                        tags: ['OmniMotion', 'Batch Export', 'Vault Cache'],
+                        details: `Exported via OmniMotion Batch Studio Export engine.`
+                      });
+                    });
+
+                    setHandoffToast(`Batch Studio Export completed! ${selectedBatchAssetIds.length} project assets stored in Vault.`);
+                    setTimeout(() => setHandoffToast(null), 4000);
+                  }, 1900);
+                }}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#00d2c4] to-[#00ffcc] hover:opacity-95 text-slate-950 font-bold text-xs font-mono shadow-lg shadow-[#00ffcc]/20 active:scale-95 transition disabled:opacity-50"
+              >
+                {isBatchExporting ? 'Exporting Batch Queue...' : `Export All Selected (${selectedBatchAssetIds.length})`}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* QUICK PRESET EXPORT MODAL */}
+      {showPresetExportModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 font-sans">
+          <div className="bg-[#121020] border border-[#00ffcc]/40 rounded-2xl w-full max-w-md p-4 space-y-4 shadow-2xl animate-in zoom-in-95 text-white">
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-[#00ffcc]/15 text-[#00ffcc]">
+                  <FileCode className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm tracking-wide text-white">QUICK PRESET EXPORT</h3>
+                  <p className="text-[10px] text-slate-400 font-mono">Export motion config as JSON to Omni Vault</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowPresetExportModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* File Name Input */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-slate-400 uppercase font-bold block">
+                Preset Filename (.json):
+              </label>
+              <div className="flex items-center gap-2 bg-black/60 rounded-xl px-3 py-2 border border-white/10 focus-within:border-[#00ffcc] transition font-mono text-xs">
+                <FileCode className="w-3.5 h-3.5 text-[#00ffcc] shrink-0" />
+                <input
+                  type="text"
+                  value={presetFileName}
+                  onChange={(e) => setPresetFileName(e.target.value)}
+                  className="w-full bg-transparent text-white outline-none"
+                  placeholder="OmniMotion_Preset.json"
+                />
+              </div>
+            </div>
+
+            {/* Parameters JSON Inspector */}
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
+                <span>CONFIG PARAMETERS PAYLOAD:</span>
+                <span className="text-[#00ffcc] font-bold">11 Parameters Bundled</span>
+              </div>
+              <div className="h-44 bg-black/80 rounded-xl border border-white/10 p-2.5 overflow-y-auto font-mono text-[10px] text-cyan-300 leading-relaxed no-scrollbar select-text">
+                <pre>{JSON.stringify({
+                  presetName: presetFileName.replace('.json', ''),
+                  resolution: selectedResolution,
+                  fps: exportFps,
+                  aspectRatio: aspectRatio,
+                  lut: selectedLUT,
+                  lutIntensity: lutIntensity,
+                  motionBlur: {
+                    enabled: isMotionBlurEnabled,
+                    intensity: `${realtimeMotionBlur}%`
+                  },
+                  superResolution: superResActive,
+                  keyframes: keyframePoints,
+                  beatSync: {
+                    active: isBeatSyncActive,
+                    bpm: beatBpm,
+                    sensitivity: beatSensitivity
+                  },
+                  clipSpeed: clipSpeed,
+                  backgroundMode: backgroundMode,
+                  exportedAt: new Date().toISOString()
+                }, null, 2)}</pre>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 flex items-center justify-between border-t border-white/10">
+              <button
+                onClick={() => setShowPresetExportModal(false)}
+                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  const presetPayload = {
+                    presetName: presetFileName.replace('.json', ''),
+                    resolution: selectedResolution,
+                    fps: exportFps,
+                    aspectRatio: aspectRatio,
+                    lut: selectedLUT,
+                    lutIntensity: lutIntensity,
+                    motionBlur: {
+                      enabled: isMotionBlurEnabled,
+                      intensity: `${realtimeMotionBlur}%`
+                    },
+                    superResolution: superResActive,
+                    keyframes: keyframePoints,
+                    beatSync: {
+                      active: isBeatSyncActive,
+                      bpm: beatBpm,
+                      sensitivity: beatSensitivity
+                    },
+                    clipSpeed: clipSpeed,
+                    backgroundMode: backgroundMode,
+                    exportedAt: new Date().toISOString()
+                  };
+
+                  // Save to Omni Vault
+                  onSaveToVault?.({
+                    type: 'preset',
+                    title: presetFileName.endsWith('.json') ? presetFileName : `${presetFileName}.json`,
+                    thumbnail: '/assets/filmstrip/thumb_01.jpg',
+                    tags: ['OmniMotion', 'JSON Preset', selectedResolution, `${realtimeMotionBlur}% Blur`],
+                    details: JSON.stringify(presetPayload, null, 2)
+                  });
+
+                  // Trigger browser JSON file download
+                  const blob = new Blob([JSON.stringify(presetPayload, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = presetFileName.endsWith('.json') ? presetFileName : `${presetFileName}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+
+                  setShowPresetExportModal(false);
+                  setHandoffToast(`Preset '${presetFileName}' saved to Vault & downloaded!`);
+                  setTimeout(() => setHandoffToast(null), 3500);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#00ffcc] hover:bg-[#1affd4] text-slate-950 font-bold text-xs font-mono shadow-lg shadow-[#00ffcc]/20 active:scale-95 transition flex items-center gap-1.5"
+              >
+                <FolderLock className="w-3.5 h-3.5" />
+                <span>Save Preset to Vault</span>
               </button>
             </div>
 

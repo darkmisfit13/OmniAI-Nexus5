@@ -48,18 +48,18 @@ export const defaultClonedVoiceProfile: ClonedVoiceProfile = {
 
 // Omni Voice Realism Optimization & Human Conversation Parameters
 export interface VocalRealismSettings {
-  stability: number;           // 0.40: Lower stability introduces natural human vocal inflection and drift
+  stability: number;           // 0-100 (percentage, default 40): Lower stability introduces natural human vocal inflection and drift
   similarity_boost: number;    // 0.75: Maintains clear speaker identity
-  style_exaggeration: number;  // 0.50: Forces dramatic conversational energy variance
-  pacing_speed: number;        // 1.05: Natural pacing & speed variation (1.05x - 1.1x)
+  style_exaggeration: number;  // 0-100 (percentage, default 50): Expressive conversational energy variance
+  pacing_speed: number;        // 0.8x-1.5x (default 1.1x): Natural pacing & speed variation
   speaker_boost: boolean;      // true: Enhances vocal projection and presence
 }
 
 export const defaultVocalRealismSettings: VocalRealismSettings = {
-  stability: 0.40,
+  stability: 40,
   similarity_boost: 0.75,
-  style_exaggeration: 0.50,
-  pacing_speed: 1.05,
+  style_exaggeration: 50,
+  pacing_speed: 1.1,
   speaker_boost: true,
 };
 
@@ -258,7 +258,18 @@ export class OmniVoiceEngine {
       try {
         const savedRealism = localStorage.getItem('omni_vocal_realism');
         if (savedRealism) {
-          this.vocalRealism = { ...defaultVocalRealismSettings, ...JSON.parse(savedRealism) };
+          const parsed = JSON.parse(savedRealism);
+          // Normalize legacy decimal values if previously stored
+          if (parsed.stability !== undefined && parsed.stability <= 1) {
+            parsed.stability = Math.round(parsed.stability * 100);
+          }
+          if (parsed.style_exaggeration !== undefined && parsed.style_exaggeration <= 1) {
+            parsed.style_exaggeration = Math.round(parsed.style_exaggeration * 100);
+          }
+          if (parsed.pacing_speed === undefined) {
+            parsed.pacing_speed = 1.1;
+          }
+          this.vocalRealism = { ...defaultVocalRealismSettings, ...parsed };
         }
       } catch (err) {
         console.warn('Could not parse vocal realism settings:', err);
@@ -565,14 +576,28 @@ export class OmniVoiceEngine {
       calibratedRate = Math.max(0.5, Math.min(2.0, this.clonedProfile.extractedMetrics.rate));
     }
 
-    // Apply realism modulation (subtle drift if stability < 0.50)
-    if (this.vocalRealism.stability < 0.5) {
-      const inflectionOffset = (0.5 - this.vocalRealism.stability) * 0.06 * (Math.random() - 0.5);
+    // Apply Vocal Naturalness modulation:
+    // Stability (0-100%, default 40): Lower stability introduces human-like vocal inflection, micro-pauses, and pitch drift
+    const stabilityVal = this.vocalRealism.stability <= 1 ? this.vocalRealism.stability * 100 : this.vocalRealism.stability;
+    if (stabilityVal < 100) {
+      const imperfectionIntensity = (100 - stabilityVal) / 100;
+      // Human-like pitch drift and micro-inflection jitter
+      const inflectionOffset = imperfectionIntensity * 0.14 * (Math.random() - 0.5);
       calibratedPitch = Math.max(0.1, calibratedPitch + inflectionOffset);
     }
 
+    // Style Exaggeration (0-100%, default 50): Expressive conversational energy variance
+    const styleVal = this.vocalRealism.style_exaggeration <= 1 ? this.vocalRealism.style_exaggeration * 100 : this.vocalRealism.style_exaggeration;
+    if (styleVal > 50) {
+      const dynamicBoost = ((styleVal - 50) / 50) * 0.05 * (Math.random() - 0.3);
+      calibratedPitch = Math.max(0.1, calibratedPitch + dynamicBoost);
+    }
+
+    // Pacing Variation (0.8x-1.5x, default 1.1x): Natural cadence acceleration & speed variance
+    const pacingMultiplier = this.vocalRealism.pacing_speed || 1.1;
+
     utterance.pitch = options?.pitch ?? calibratedPitch;
-    utterance.rate = (options?.rate ?? calibratedRate) * (this.vocalRealism.pacing_speed || 1.05);
+    utterance.rate = (options?.rate ?? calibratedRate) * pacingMultiplier;
     utterance.volume = this.vocalRealism.speaker_boost ? 1.0 : (this.engineTunings.volume ?? 0.95);
 
     utterance.onstart = () => {

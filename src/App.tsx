@@ -24,9 +24,7 @@ import {
   Bot,
   Vibrate,
   VibrateOff,
-  Cloud,
-  Sliders,
-  ExternalLink
+  Cloud
 } from 'lucide-react';
 import { HoloOrb, OrbPhase } from './components/HoloOrb';
 import { AIKeyboardBar } from './components/AIKeyboardBar';
@@ -59,14 +57,9 @@ import { LiveCallView, CALLER_PRESETS, LiveCallCaller } from './components/LiveC
 import { OmniNexusSetupModel } from './components/OmniNexusSetupModel';
 import { MyAIIdentityView } from './components/MyAIIdentityView';
 import { useSwipeTabs, PRIMARY_TABS } from './hooks/useSwipeTabs';
-import { getHapticPattern } from './lib/hapticFeedback';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'keyboard' | 'chat' | 'vision' | 'workspace' | 'extension' | 'studios' | 'sync' | 'setup' | 'admin' | 'identity'>('keyboard');
-  const [adminInitialSubPage, setAdminInitialSubPage] = useState<'companion' | null>(null);
-  const [isHapticTooltipOpen, setIsHapticTooltipOpen] = useState(false);
-  const hapticHoldTimerRef = useRef<any>(null);
-  const isHapticHoldingRef = useRef(false);
   const [isDesktopOverlayActive, setIsDesktopOverlayActive] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState<boolean>(omniVoice.getVoiceEnabled());
   const [isLiveCallOpen, setIsLiveCallOpen] = useState(false);
@@ -190,88 +183,6 @@ export default function App() {
   // Phone frame simulation toggle for desktop screens
   const [phoneFrameMode, setPhoneFrameMode] = useState(true);
 
-  // 3-Finger Swipe Left Undo Toast Feedback
-  const [undoToast, setUndoToast] = useState<{ message: string; timestamp: number } | null>(null);
-
-  // Global three-finger swipe left gesture handler for Workspace Undo
-  const triggerWorkspaceUndo = useCallback(() => {
-    // 1. Native Vibration API for tactile haptic feedback click
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate([20, 40, 20]);
-      } catch {
-        try {
-          navigator.vibrate(25);
-        } catch {}
-      }
-    }
-
-    // 2. Dispatch custom event to notify WorkspaceHub and active editors
-    window.dispatchEvent(
-      new CustomEvent('omni_workspace_undo', {
-        detail: { timestamp: Date.now() },
-      })
-    );
-
-    // 3. Fallback native document undo
-    try {
-      document.execCommand('undo');
-    } catch {}
-
-    // 4. Visual confirmation toast
-    setUndoToast({
-      message: '↩️ 3-Finger Gesture: Undid last action in workspace',
-      timestamp: Date.now(),
-    });
-    setTimeout(() => {
-      setUndoToast((prev) => (prev && Date.now() - prev.timestamp >= 2400 ? null : prev));
-    }, 2500);
-  }, []);
-
-  // Global window listener for 3-finger swipe left gesture
-  useEffect(() => {
-    let threeStartX = 0;
-    let threeStartY = 0;
-    let threeStartTime = 0;
-    let isTrackingThreeFingers = false;
-
-    const handleGlobalTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 3) {
-        threeStartX = (e.touches[0].clientX + e.touches[1].clientX + e.touches[2].clientX) / 3;
-        threeStartY = (e.touches[0].clientY + e.touches[1].clientY + e.touches[2].clientY) / 3;
-        threeStartTime = Date.now();
-        isTrackingThreeFingers = true;
-      } else {
-        isTrackingThreeFingers = false;
-      }
-    };
-
-    const handleGlobalTouchEnd = (e: TouchEvent) => {
-      if (isTrackingThreeFingers) {
-        isTrackingThreeFingers = false;
-        // Check changedTouches
-        if (e.changedTouches.length > 0) {
-          const endX = e.changedTouches[0].clientX;
-          const endY = e.changedTouches[0].clientY;
-          const deltaX = endX - threeStartX;
-          const deltaY = endY - threeStartY;
-          const elapsed = Date.now() - threeStartTime;
-
-          if (deltaX < -35 && Math.abs(deltaY) <= 120 && elapsed <= 1000) {
-            triggerWorkspaceUndo();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
-    window.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener('touchstart', handleGlobalTouchStart);
-      window.removeEventListener('touchend', handleGlobalTouchEnd);
-    };
-  }, [triggerWorkspaceUndo]);
-
   // Swipe-to-switch navigation between primary mobile views (Keyboard <-> Vision <-> Workspace)
   const { swipeHandlers, isPrimaryTab, canSwipeLeft, canSwipeRight, nextTabName, prevTabName } = useSwipeTabs({
     activeTab,
@@ -281,7 +192,6 @@ export default function App() {
         setIsKeyboardCollapsed(false);
       }
     },
-    onThreeFingerSwipeLeft: triggerWorkspaceUndo,
     enabled: activeTab === 'keyboard' || activeTab === 'vision' || activeTab === 'workspace',
   });
 
@@ -889,49 +799,25 @@ export default function App() {
             <div className={`w-1.5 h-1.5 rounded-full ${isStreaming ? 'bg-[#8b7fff] animate-pulse' : 'bg-[#211d34]'}`} />
           </div>
 
-          <div className="flex items-center gap-2 relative">
-            {/* Visual Haptic Feedback Indicator Icon with Hold-Down Tooltip */}
+          <div className="flex items-center gap-2">
+            {/* Visual Haptic Feedback Indicator Icon */}
             <button
               type="button"
-              onPointerDown={() => {
-                isHapticHoldingRef.current = false;
-                hapticHoldTimerRef.current = setTimeout(() => {
-                  isHapticHoldingRef.current = true;
-                  setIsHapticTooltipOpen(true);
-                  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-                    try { navigator.vibrate([15, 20, 15]); } catch {}
-                  }
-                }, 280);
-              }}
-              onPointerUp={() => {
-                if (hapticHoldTimerRef.current) {
-                  clearTimeout(hapticHoldTimerRef.current);
-                  hapticHoldTimerRef.current = null;
+              onClick={() => {
+                const next = !hapticFeedback;
+                setHapticFeedback(next);
+                localStorage.setItem('omni_haptic_enabled', String(next));
+                if (next && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                  try { navigator.vibrate(18); } catch {}
                 }
-                if (!isHapticHoldingRef.current) {
-                  const next = !hapticFeedback;
-                  setHapticFeedback(next);
-                  localStorage.setItem('omni_haptic_enabled', String(next));
-                  if (next && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-                    try { navigator.vibrate(18); } catch {}
-                  }
-                  window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled: next } }));
-                }
-                isHapticHoldingRef.current = false;
+                window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled: next } }));
               }}
-              onPointerCancel={() => {
-                if (hapticHoldTimerRef.current) {
-                  clearTimeout(hapticHoldTimerRef.current);
-                  hapticHoldTimerRef.current = null;
-                }
-                isHapticHoldingRef.current = false;
-              }}
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition select-none cursor-pointer ${
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition ${
                 hapticFeedback
                   ? 'text-[#00f0ff] bg-[#14121f] border border-[#00f0ff]/50 shadow-[0_0_8px_rgba(0,240,255,0.35)]'
                   : 'text-[#9490ac] hover:text-[#e8e6f2] border border-transparent'
               }`}
-              title="Tap to toggle, or Hold down to inspect vibration intensity & pattern"
+              title={hapticFeedback ? '3D Keyboard Haptics: ENABLED (Tap to toggle)' : '3D Keyboard Haptics: DISABLED (Tap to toggle)'}
             >
               {hapticFeedback ? (
                 <Vibrate className="w-3.5 h-3.5 text-[#00f0ff] animate-pulse" />
@@ -942,102 +828,6 @@ export default function App() {
                 {hapticFeedback ? 'ON' : 'OFF'}
               </span>
             </button>
-
-            {/* Custom Tooltip when Held Down displaying Vibration Intensity & Pattern */}
-            {isHapticTooltipOpen && (
-              <div 
-                onClick={(e) => e.stopPropagation()} 
-                className="absolute top-7 right-0 z-50 w-72 p-3 rounded-2xl bg-[#0a0a0c] border border-[#00f0ff]/70 shadow-[0_0_25px_rgba(0,240,255,0.35)] text-zinc-100 font-mono animate-in fade-in slide-in-from-top-1 backdrop-blur-md"
-              >
-                {/* Tooltip Header */}
-                <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800 text-xs">
-                  <div className="flex items-center gap-1.5 text-[#00f0ff] font-bold">
-                    <Vibrate className="w-3.5 h-3.5 animate-pulse" />
-                    <span>Haptic Feedback Engine</span>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsHapticTooltipOpen(false)}
-                    className="p-1 text-zinc-400 hover:text-white rounded"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Intensity & Pattern Details */}
-                <div className="py-2 space-y-1.5 text-[11px]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-400">Status:</span>
-                    <span className={`font-bold ${hapticFeedback ? 'text-[#00f0ff]' : 'text-zinc-500'}`}>
-                      {hapticFeedback ? 'Active (Enabled)' : 'Muted (Disabled)'}
-                    </span>
-                  </div>
-
-                  {(() => {
-                    const currentLevel = typeof window !== 'undefined' ? parseInt(localStorage.getItem('omni_haptic_level') || '6', 10) : 6;
-                    const currentStrength = typeof window !== 'undefined' ? (localStorage.getItem('omni_haptic_strength') || 'balanced') : 'balanced';
-                    const currentTapPattern = getHapticPattern(currentLevel, 'tap');
-
-                    return (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-400">Vibration Intensity:</span>
-                          <span className="text-white font-bold">
-                            Level {currentLevel}/10 ({currentStrength.toUpperCase()})
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-400">Current Pattern:</span>
-                          <span className="text-[#00f0ff] font-bold text-[10px]">
-                            {Array.isArray(currentTapPattern) ? `[${currentTapPattern.join(', ')}]ms` : `${currentTapPattern}ms pulse`}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-400">3-Finger Gesture:</span>
-                          <span className="text-zinc-300 text-[10px] font-bold">[20, 40, 20]ms</span>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-
-                {/* Test Pulse & Advanced Settings Link */}
-                <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const lvl = typeof window !== 'undefined' ? parseInt(localStorage.getItem('omni_haptic_level') || '6', 10) : 6;
-                      const pat = getHapticPattern(lvl, 'tap');
-                      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-                        try { navigator.vibrate(pat); } catch {}
-                      }
-                    }}
-                    className="px-2 py-1 rounded bg-[#14121f] border border-[#00f0ff]/40 text-[#00f0ff] text-[10px] font-bold hover:bg-[#00f0ff] hover:text-black transition flex items-center gap-1 active:scale-95"
-                  >
-                    <Zap className="w-3 h-3" />
-                    <span>Test Pulse</span>
-                  </button>
-
-                  {/* Advanced Settings Link Redirecting to AdminHub Vibration Preferences */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsHapticTooltipOpen(false);
-                      setActiveTab('admin');
-                      setAdminInitialSubPage('companion');
-                      window.dispatchEvent(new CustomEvent('omni_open_admin_haptics'));
-                    }}
-                    className="text-[10.5px] text-[#00f0ff] hover:underline flex items-center gap-1 font-bold ml-auto group"
-                    title="Open Vibration Preferences in AdminHub"
-                  >
-                    <Sliders className="w-3 h-3 text-[#00f0ff] group-hover:rotate-45 transition-transform" />
-                    <span>Advanced Settings →</span>
-                  </button>
-                </div>
-              </div>
-            )}
 
             <Wifi className="w-3 h-3 text-[#9490ac]" />
             <Battery className="w-3.5 h-3.5 text-[#9490ac]" />
@@ -1347,7 +1137,7 @@ export default function App() {
           {/* TAB 9: ADMIN CONSOLE */}
           {activeTab === 'admin' && (
             <div className="h-full overflow-y-auto">
-              <AdminHub initialSubPage={adminInitialSubPage} />
+              <AdminHub />
             </div>
           )}
 
@@ -1455,16 +1245,6 @@ export default function App() {
           currentStudioName={activeTab === 'studios' ? (studioMeta[selectedStudio]?.name || 'Studio') : undefined}
           currentStudioTag={activeTab === 'studios' ? (studioMeta[selectedStudio]?.tag || '') : undefined}
         />
-
-        {/* 3-Finger Gesture Undo Confirmation Toast */}
-        {undoToast && (
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/90 border border-[#00ffcc] text-[#00ffcc] text-[11px] font-mono shadow-[0_0_20px_rgba(0,255,204,0.35)] backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-[#00ffcc] animate-ping" />
-              <span>{undoToast.message}</span>
-            </div>
-          </div>
-        )}
 
         {/* 5. NATIVE MOBILE HOME INDICATOR BAR */}
         <div className={`w-full flex justify-center shrink-0 ${

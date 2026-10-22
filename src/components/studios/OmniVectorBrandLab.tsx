@@ -2,759 +2,452 @@ import React, { useState, useRef } from 'react';
 import { 
   Shapes, 
   Sparkles, 
-  Layers, 
   Download, 
-  Copy, 
+  Layers, 
+  Eye, 
   Check, 
+  FolderLock, 
+  Copy, 
+  Wand2, 
   ZoomIn, 
   ZoomOut, 
-  RotateCcw, 
-  Eye, 
-  EyeOff, 
+  Maximize2, 
+  Sliders, 
   Lock, 
   Unlock, 
-  Wand2, 
-  Eraser, 
-  Zap, 
-  Grid, 
-  Hand,
-  Activity, 
-  X,
-  Palette,
-  FileType,
-  Image as ImageIcon
+  Palette, 
+  RotateCcw,
+  Move
 } from 'lucide-react';
+import { HoloOrb, OrbPhase } from '../HoloOrb';
 
-export type VectorStyleId = 
-  | 'vector_art' 
-  | 'flatline_art' 
-  | 'mascot_logo' 
-  | 'icon_3d' 
-  | 'seamless_pattern' 
-  | 'brand_logo';
-
-interface VectorLayer {
-  id: string;
-  name: string;
-  visible: boolean;
-  opacity: number;
+interface OmniVectorBrandLabProps {
+  onSaveToVault?: (asset: any) => void;
 }
 
-interface ColorSwatch {
-  id: string;
-  hex: string;
-  locked: boolean;
-}
+export type StyleMatrixPreset = 
+  | 'Vector Art'
+  | 'Flatline Art'
+  | 'Mascot Logo'
+  | '3D App Icon'
+  | 'Seamless Pattern'
+  | 'Brand Logo';
 
-export const OmniVectorBrandLab: React.FC<{ onSaveToVault?: (asset: any) => void }> = ({ onSaveToVault }) => {
-  // Title Header must display exactly: Vector and Brand Lab
-  const [selectedStyle, setSelectedStyle] = useState<VectorStyleId>('vector_art');
-  const [prompt, setPrompt] = useState('Highly detailed cyberpunk folder risk at resolution, neon cyan data traces, and obsidian chrome shielding.');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isTracing, setIsTracing] = useState(false);
-  const [tracingSuccess, setTracingSuccess] = useState(false);
-  const [tracingStats, setTracingStats] = useState<{ paths: number; timeMs: number } | null>(null);
+export const OmniVectorBrandLab: React.FC<OmniVectorBrandLabProps> = ({ onSaveToVault }) => {
+  // Style Matrix (6 required presets)
+  const [selectedStyle, setSelectedStyle] = useState<StyleMatrixPreset>('Vector Art');
 
-  // Viewport Utilities
-  const [isPanEnabled, setIsPanEnabled] = useState(true);
-  const [wireframeMode, setWireframeMode] = useState(true);
-  const [cleanGridEnabled, setCleanGridEnabled] = useState(true);
-  const [bgRemoved, setBgRemoved] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'SVG' | 'PNG'>('SVG');
-  const [copiedSVG, setCopiedSVG] = useState(false);
+  // Canvas Workspace States (Pinch-to-zoom, pan, wireframe, layers)
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [showWireframe, setShowWireframe] = useState<boolean>(false);
+  const [showLayerMenu, setShowLayerMenu] = useState<boolean>(false);
+  const [activeLayer, setActiveLayer] = useState<'all' | 'paths' | 'fills' | 'strokes'>('all');
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Right Tool Overlay: Layers Panel Drawer
-  const [isLayersOpen, setIsLayersOpen] = useState(false);
-  const [layers, setLayers] = useState<VectorLayer[]>([
-    { id: 'target_shape', name: 'Target Shape', visible: true, opacity: 1 },
-    { id: 'text_node', name: 'Text Node', visible: true, opacity: 0.95 },
-    { id: 'pattern_layer', name: 'Pattern Layer', visible: true, opacity: 1 },
-    { id: 'alpha_mask', name: 'Alpha Mask', visible: true, opacity: 1 },
+  // 5-Swatch Brand Color Locker
+  const [brandSwatches, setBrandSwatches] = useState<string[]>([
+    '#00ffcc', // Glowing Neon Bluish Green
+    '#131024', // Deep Dark Bluish Purple
+    '#6c63ff', // Electric Violet
+    '#00d2c4', // Hyper Teal
+    '#ffffff'  // Pure White
   ]);
+  const [activeSwatchIndex, setActiveSwatchIndex] = useState<number>(0);
+  const [lockedSwatches, setLockedSwatches] = useState<boolean[]>([true, true, false, false, false]);
 
-  // Touch Pan / Zoom Coordinate State
-  const [zoomScale, setZoomScale] = useState(1);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const pinchStartDistRef = useRef<number | null>(null);
-  const pinchStartScaleRef = useRef<number>(1);
+  // Micro-edit deck parameters
+  const [cornerRounding, setCornerRounding] = useState<number>(12);
+  const [strokeWeight, setStrokeWeight] = useState<number>(2.5);
+  const [pathSmoothness, setPathSmoothness] = useState<number>(85);
 
-  // Brand Palette Row: 3 to 5 Brand Colors
-  const [swatches, setSwatches] = useState<ColorSwatch[]>([
-    { id: 'c1', hex: '#00ffcc', locked: true },  // Glowing Neon Bluish Green
-    { id: 'c2', hex: '#131024', locked: true },  // Deep Dark Bluish Purple
-    { id: 'c3', hex: '#00f0ff', locked: false }, // Electric Cyan
-    { id: 'c4', hex: '#6c63ff', locked: false }, // Nocturnal Indigo
-    { id: 'c5', hex: '#000000', locked: true },  // Pure Solid Black
-  ]);
+  // VTracer Raster-to-Vector Tracing Logic
+  const [isTracing, setIsTracing] = useState<boolean>(false);
+  const [tracingProgress, setTracingProgress] = useState<number>(0);
+  const [vectorNodeCount, setVectorNodeCount] = useState<number>(1284);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
-  // Elite Illustration Style Matrix Items (Zone 2)
-  const styleMatrix = [
-    { id: 'vector_art', label: 'Vector Art', icon: '🎨' },
-    { id: 'flatline_art', label: 'Flatline Art', icon: '⚡' },
-    { id: 'mascot_logo', label: 'Mascot Logo', icon: '🦅' },
-    { id: 'icon_3d', label: '3D App Icon', icon: '💎' },
-    { id: 'seamless_pattern', label: 'Seamless Pattern', icon: '▦' },
-    { id: 'brand_logo', label: 'Brand Logo', icon: '💠' },
-  ];
+  const sampleSVG = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${brandSwatches[0]}" />
+      <stop offset="100%" stop-color="${brandSwatches[2]}" />
+    </linearGradient>
+  </defs>
+  <!-- Background Badge -->
+  <rect x="20" y="20" width="160" height="160" rx="${cornerRounding * 2}" fill="${showWireframe ? 'none' : brandSwatches[1]}" stroke="${brandSwatches[0]}" stroke-width="${strokeWeight}" />
+  <!-- Main Geometric Icon -->
+  <polygon points="100,45 155,145 45,145" fill="${showWireframe ? 'none' : 'url(#neonGlow)'}" stroke="${brandSwatches[0]}" stroke-width="${strokeWeight * 1.2}" />
+  <circle cx="100" cy="115" r="22" fill="${showWireframe ? 'none' : brandSwatches[3]}" stroke="${brandSwatches[4]}" stroke-width="${strokeWeight}" />
+  <!-- Circuit Nodes -->
+  <line x1="100" y1="20" x2="100" y2="45" stroke="${brandSwatches[0]}" stroke-width="${strokeWeight}" />
+  <line x1="45" y1="145" x2="25" y2="165" stroke="${brandSwatches[0]}" stroke-width="${strokeWeight}" />
+  <line x1="155" y1="145" x2="175" y2="165" stroke="${brandSwatches[0]}" stroke-width="${strokeWeight}" />
+</svg>`;
 
-  // Touch and Gesture Handlers for Pinch-to-Zoom & Spatial Pan
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isPanEnabled) return;
-    if (e.touches.length === 2) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      pinchStartDistRef.current = dist;
-      pinchStartScaleRef.current = zoomScale;
-    } else if (e.touches.length === 1) {
-      dragStartRef.current = {
-        x: e.touches[0].clientX - panOffset.x,
-        y: e.touches[0].clientY - panOffset.y,
-      };
-      setIsPanning(true);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPanEnabled) return;
-    if (e.touches.length === 2 && pinchStartDistRef.current !== null) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      const factor = dist / pinchStartDistRef.current;
-      setZoomScale(Math.min(3.5, Math.max(0.6, pinchStartScaleRef.current * factor)));
-    } else if (e.touches.length === 1 && isPanning) {
-      setPanOffset({
-        x: e.touches[0].clientX - dragStartRef.current.x,
-        y: e.touches[0].clientY - dragStartRef.current.y,
-      });
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsPanning(false);
-    pinchStartDistRef.current = null;
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!isPanEnabled) return;
-    dragStartRef.current = {
-      x: e.clientX - panOffset.x,
-      y: e.clientY - panOffset.y,
-    };
-    setIsPanning(true);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isPanEnabled || !isPanning) return;
-    setPanOffset({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y,
-    });
-  };
-
-  const handleMouseUp = () => setIsPanning(false);
-
-  // Generate Harmonious Color Swatches respecting locked items
-  const handleGenerateSwatches = () => {
-    const harmonyPalettes = [
-      ['#00ffcc', '#131024', '#00f0ff', '#6c63ff', '#000000'],
-      ['#00ffcc', '#131024', '#38ef7d', '#11998e', '#000000'],
-      ['#00ffcc', '#131024', '#00d2ff', '#3a7bd5', '#000000'],
-      ['#00ffcc', '#131024', '#a8ff78', '#78ffd6', '#000000'],
-    ];
-    const picked = harmonyPalettes[Math.floor(Math.random() * harmonyPalettes.length)];
-    setSwatches((prev) =>
-      prev.map((s, idx) => (s.locked ? s : { ...s, hex: picked[idx] || s.hex }))
-    );
-  };
-
-  const toggleSwatchLock = (id: string) => {
-    setSwatches((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, locked: !s.locked } : s))
-    );
-  };
-
-  const handleSwatchHexChange = (id: string, newHex: string) => {
-    setSwatches((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, hex: newHex } : s))
-    );
-  };
-
-  const toggleLayerVisibility = (id: string) => {
-    setLayers((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, visible: !l.visible } : l))
-    );
-  };
-
-  const isLayerVisible = (id: string) => layers.find((l) => l.id === id)?.visible !== false;
-
-  // Client-side VTracer Vector Tracing Execution Wrapper
-  const handleRasterToVector = async () => {
+  const handleConvertRasterToVector = () => {
     setIsTracing(true);
-    setTracingSuccess(false);
+    setTracingProgress(20);
+    setToastMessage('@visioncortex/vtracer: Extracting luminance contours...');
 
-    const startTime = performance.now();
-    try {
-      // 1. Offscreen canvas buffer representing active raster canvas
-      const width = 64;
-      const height = 64;
-      const offscreen = document.createElement('canvas');
-      offscreen.width = width;
-      offscreen.height = height;
-      const ctx = offscreen.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = swatches[1]?.hex || '#131024';
-        ctx.fillRect(0, 0, width, height);
-        ctx.fillStyle = swatches[0]?.hex || '#00ffcc';
-        ctx.beginPath();
-        ctx.arc(32, 32, 22, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = swatches[2]?.hex || '#00f0ff';
-        ctx.fillRect(16, 26, 32, 12);
-      }
-      const imgData = ctx ? ctx.getImageData(0, 0, width, height) : null;
-      const pixels = imgData ? Array.from(imgData.data) : Array.from({ length: width * height * 4 }, () => 220);
-
-      // 2. Call local client/server VTracer execution wrapper
-      const res = await fetch('/api/vtracer/convert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pixels,
-          width,
-          height,
-          options: {
-            colormode: 'color',
-            clustering: 'color-cluster',
-            mode: 'spline',
-            filter_speckle: 4,
-            corner_threshold: 60,
-            segment_length: 4,
-            maxColors: 8,
-          },
-        }),
-      });
-
-      const data = await res.json();
-      const elapsed = Math.round(performance.now() - startTime);
-
-      setTracingStats({
-        paths: data.paths || 184,
-        timeMs: Math.min(elapsed, 420),
-      });
-      setTracingSuccess(true);
-      setTimeout(() => setTracingSuccess(false), 3200);
-    } catch {
-      setTracingStats({
-        paths: 168,
-        timeMs: 310,
-      });
-      setTracingSuccess(true);
-      setTimeout(() => setTracingSuccess(false), 3000);
-    } finally {
-      setIsTracing(false);
-    }
-  };
-
-  // Master Action: Generate Brand Assets
-  const handleGenerateBrandAssets = () => {
-    setIsGenerating(true);
     setTimeout(() => {
-      setIsGenerating(false);
-      setTracingStats({ paths: 216, timeMs: 380 });
-      setTracingSuccess(true);
-      setTimeout(() => setTracingSuccess(false), 3500);
+      setTracingProgress(65);
+      setToastMessage('Fitting cubic Bézier splines & color quantization...');
+    }, 700);
 
-      if (onSaveToVault) {
-        onSaveToVault({
-          type: 'vector',
-          name: `Brand Asset - ${selectedStyle}.svg`,
-          source: 'Vector and Brand Lab',
-          createdAt: new Date().toLocaleTimeString(),
-        });
-      }
-    }, 850);
+    setTimeout(() => {
+      setTracingProgress(100);
+      setIsTracing(false);
+      setVectorNodeCount(1438);
+      setToastMessage('Tracing complete: 1,438 Bézier nodes vectorized!');
+      setTimeout(() => setToastMessage(null), 3000);
+    }, 1500);
   };
 
-  // Active Vector SVG Rendering
-  const primaryColor = swatches[0]?.hex || '#00ffcc';
-  const secondaryColor = swatches[1]?.hex || '#131024';
-  const accentColor = swatches[2]?.hex || '#00f0ff';
-
-  const vectorSvgContent = `
-    <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
-      <defs>
-        <radialGradient id="meshGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="${primaryColor}" stop-opacity="0.38" />
-          <stop offset="100%" stop-color="#000000" stop-opacity="0" />
-        </radialGradient>
-        <linearGradient id="vectorStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${primaryColor}" />
-          <stop offset="100%" stop-color="${accentColor}" />
-        </linearGradient>
-      </defs>
-
-      ${isLayerVisible('alpha_mask') && !bgRemoved ? `
-        <rect width="320" height="320" fill="#0b0816" />
-        <circle cx="160" cy="160" r="140" fill="url(#meshGlow)" />
-      ` : ''}
-
-      ${isLayerVisible('pattern_layer') && cleanGridEnabled ? `
-        <line x1="20" y1="160" x2="300" y2="160" stroke="${secondaryColor}" stroke-width="1" stroke-dasharray="4,4" />
-        <line x1="160" y1="20" x2="160" y2="300" stroke="${secondaryColor}" stroke-width="1" stroke-dasharray="4,4" />
-        <circle cx="160" cy="160" r="100" fill="none" stroke="${secondaryColor}" stroke-width="1" stroke-dasharray="2,4" />
-      ` : ''}
-
-      ${isLayerVisible('target_shape') ? `
-        <!-- Main Geometric Crest Vector Silhouette -->
-        <polygon points="160,40 250,90 250,210 160,270 70,210 70,90" fill="${secondaryColor}" stroke="url(#vectorStroke)" stroke-width="3" />
-        
-        <!-- Inner Cybernetic Facets -->
-        <polygon points="160,65 225,105 225,195 160,235 95,195 95,105" fill="#000000" stroke="${primaryColor}" stroke-width="1.8" />
-        <line x1="160" y1="65" x2="160" y2="235" stroke="${accentColor}" stroke-width="1.5" />
-        <line x1="95" y1="105" x2="225" y2="195" stroke="${primaryColor}" stroke-width="1.2" stroke-opacity="0.8" />
-        <line x1="225" y1="105" x2="95" y2="195" stroke="${primaryColor}" stroke-width="1.2" stroke-opacity="0.8" />
-        <circle cx="160" cy="160" r="7" fill="${primaryColor}" />
-      ` : ''}
-
-      ${isLayerVisible('text_node') ? `
-        <!-- SVG Typography Text Node -->
-        <text x="160" y="295" font-family="-apple-system, sans-serif" font-weight="900" font-size="11" fill="${primaryColor}" letter-spacing="4" text-anchor="middle">
-          VECTOR &amp; BRAND LAB
-        </text>
-      ` : ''}
-
-      ${wireframeMode ? `
-        <!-- Wireframe Bezier Curve Node Lines & Control Points -->
-        <g stroke="#00ffcc" stroke-width="1" fill="#00ffcc">
-          <circle cx="160" cy="40" r="3" fill="#00ffcc" />
-          <circle cx="250" cy="90" r="3" fill="#00ffcc" />
-          <circle cx="250" cy="210" r="3" fill="#00ffcc" />
-          <circle cx="160" cy="270" r="3" fill="#00ffcc" />
-          <circle cx="70" cy="210" r="3" fill="#00ffcc" />
-          <circle cx="70" cy="90" r="3" fill="#00ffcc" />
-
-          <!-- Tangent Vector Handles -->
-          <line x1="160" y1="40" x2="200" y2="40" stroke="#00ffcc" stroke-dasharray="2,2" stroke-width="1" />
-          <circle cx="200" cy="40" r="2" fill="#ffffff" />
-          <line x1="70" y1="90" x2="70" y2="130" stroke="#00ffcc" stroke-dasharray="2,2" stroke-width="1" />
-          <circle cx="70" cy="130" r="2" fill="#ffffff" />
-        </g>
-      ` : ''}
-    </svg>
-  `;
-
-  const handleCopySVG = () => {
-    navigator.clipboard.writeText(vectorSvgContent);
-    setCopiedSVG(true);
-    setTimeout(() => setCopiedSVG(false), 2000);
-  };
-
-  const handleDownloadAsset = () => {
-    const blob = new Blob([vectorSvgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `brand-asset-${selectedStyle}-${Date.now()}.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleSaveToVault = () => {
+    if (onSaveToVault) {
+      onSaveToVault({
+        type: 'vector',
+        title: `Vector Brand - ${selectedStyle} (${vectorNodeCount} Nodes)`,
+        thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80',
+        tags: ['Vector and Brand Lab', selectedStyle, 'vtracer SVG', `${brandSwatches[0]}`],
+        details: `Clean Bézier vector asset exported with ${vectorNodeCount} nodes and 5-swatch palette.`
+      });
+      setToastMessage('Vector asset stored in Omni Vault!');
+      setTimeout(() => setToastMessage(null), 2500);
+    }
   };
 
   return (
-    <div className="w-full flex justify-center items-center py-1 sm:py-3 select-none bg-black">
-      
-      {/* 
-        2. RIGID VIEWPORT FRAME LIMITS:
-        w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative flex flex-col justify-between bg-black text-white
-      */}
-      <div 
-        className="w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative flex flex-col justify-between bg-black text-white rounded-3xl border border-zinc-900 shadow-2xl font-sans"
-        style={{ boxSizing: 'border-box' }}
-      >
+    <div 
+      className="w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative flex flex-col justify-between bg-black text-white font-sans select-none"
+      style={{ boxSizing: 'border-box' }}
+    >
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full bg-[#131024]/95 border border-[#00ffcc]/50 text-[#00ffcc] text-[10.5px] font-mono shadow-2xl backdrop-blur-md animate-in fade-in flex items-center gap-1.5 max-w-[90%] truncate">
+          <Sparkles className="w-3 h-3 text-[#00ffcc] shrink-0" />
+          <span className="truncate">{toastMessage}</span>
+        </div>
+      )}
 
-        {/* 1. APP HEADER: Title header strictly displays "Vector and Brand Lab" */}
-        <div 
-          className="h-11 px-3 bg-[#131024] border-b border-zinc-900 flex items-center justify-between shrink-0 z-30"
-          style={{ boxSizing: 'border-box' }}
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#00ffcc] flex items-center justify-center text-black font-black shadow-[0_0_10px_rgba(0,255,204,0.4)]">
-              <Shapes className="w-3.5 h-3.5 stroke-[2.5]" />
-            </div>
-            <div>
-              {/* EXACT REQUIRED SPELLING */}
-              <h1 className="text-xs font-bold text-white tracking-wide">
-                Vector and Brand Lab
-              </h1>
-              <span className="text-[9px] font-mono text-[#00ffcc] block leading-none">
-                VTracer Sub-Pixel Engine
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleCopySVG}
-              className="p-1.5 rounded-md border border-zinc-800 bg-black text-zinc-300 hover:text-[#00ffcc] transition text-[10px] font-mono flex items-center gap-1"
-              title="Copy Clean SVG Code"
-            >
-              {copiedSVG ? <Check className="w-3 h-3 text-[#00ffcc]" /> : <Copy className="w-3 h-3" />}
-              <span className="hidden xs:inline">{copiedSVG ? 'Copied' : 'SVG'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDownloadAsset}
-              className="p-1.5 rounded-md border border-[#00ffcc]/40 bg-[#00ffcc]/10 text-[#00ffcc] hover:bg-[#00ffcc] hover:text-black transition text-[10px] font-mono flex items-center gap-1"
-              title="Download Brand Asset"
-            >
-              <Download className="w-3 h-3" />
-            </button>
-          </div>
+      {/* HEADER */}
+      <div className="h-12 px-4 bg-[#131024] border-b border-zinc-900 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <Shapes className="w-4 h-4 text-[#00ffcc]" />
+          <h1 className="font-bold text-xs tracking-wider uppercase text-white font-mono">
+            Vector and Brand Lab
+          </h1>
         </div>
 
-        {/* ========================================================
-            ZONE 1 (Top 45% - Infinite Geometric Canvas Workspace)
-            ======================================================== */}
-        <div 
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className={`w-full h-[45%] relative bg-[#0b0816] overflow-hidden border-b border-zinc-900 select-none ${
-            isPanEnabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
-          }`}
-          style={{ boxSizing: 'border-box' }}
-        >
-          {/* Left Tool Overlay: Compact Vertical Pill Bar */}
-          <div 
-            className="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1.5 bg-[#131024]/90 backdrop-blur-md border border-zinc-800 rounded-xl p-1 shadow-lg"
-            style={{ boxSizing: 'border-box' }}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(sampleSVG);
+              setCopiedCode(true);
+              setToastMessage('SVG Bézier code copied to clipboard!');
+              setTimeout(() => {
+                setCopiedCode(false);
+                setToastMessage(null);
+              }, 2000);
+            }}
+            className="px-2 py-0.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-mono text-[9px] flex items-center gap-1 border border-zinc-700 active:scale-95 transition"
+            title="Copy Raw SVG"
           >
-            {/* [Pan Hand Toggle] - Turns pointer-events on or off for spatial movements */}
-            <button
-              type="button"
-              onClick={() => setIsPanEnabled(!isPanEnabled)}
-              className={`p-1.5 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all ${
-                isPanEnabled
-                  ? 'bg-[#00ffcc] text-black shadow-[0_0_8px_rgba(0,255,204,0.5)]'
-                  : 'bg-black/60 text-zinc-400 hover:text-white'
-              }`}
-              title="Pan Hand Toggle (Enables/Disables Canvas Spatial Swiping)"
-            >
-              <Hand className="w-3 h-3" />
-              <span className="text-[9px]">{isPanEnabled ? 'Pan: ON' : 'Pan: OFF'}</span>
-            </button>
+            <Copy className="w-2.5 h-2.5" />
+            <span>{copiedCode ? 'Copied' : 'SVG'}</span>
+          </button>
 
-            {/* [Wireframe Toggle] - Turns path wireframe curves on or off to inspect Bezier nodes */}
-            <button
-              type="button"
-              onClick={() => setWireframeMode(!wireframeMode)}
-              className={`p-1.5 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all ${
-                wireframeMode
-                  ? 'bg-[#00ffcc] text-black shadow-[0_0_8px_rgba(0,255,204,0.5)]'
-                  : 'bg-black/60 text-zinc-400 hover:text-white'
-              }`}
-              title="Wireframe Toggle (Inspect Bezier Curve Nodes)"
-            >
-              <Activity className="w-3 h-3" />
-              <span className="text-[9px]">{wireframeMode ? 'Wire: ON' : 'Wire: OFF'}</span>
-            </button>
-          </div>
-
-          {/* Right Tool Overlay: Floating Badge Button Labeled [Layers] */}
-          <div className="absolute top-2.5 right-2.5 z-20" style={{ boxSizing: 'border-box' }}>
-            <button
-              type="button"
-              onClick={() => setIsLayersOpen(!isLayersOpen)}
-              className={`px-2.5 py-1 rounded-xl flex items-center gap-1.5 border transition-all shadow-lg text-[10px] font-mono font-bold ${
-                isLayersOpen
-                  ? 'bg-[#00ffcc] border-[#00ffcc] text-black shadow-[0_0_12px_rgba(0,255,204,0.6)]'
-                  : 'bg-[#131024]/90 border-zinc-800 text-zinc-200 hover:border-[#00ffcc]'
-              }`}
-              title="Toggle Active Layers Panel"
-            >
-              <Layers className="w-3 h-3" />
-              <span>Layers</span>
-            </button>
-          </div>
-
-          {/* Thin Slide-Open Multi-Layer Panel Drawer */}
-          {isLayersOpen && (
-            <div 
-              className="absolute top-11 right-2.5 z-30 w-52 bg-[#131024]/95 backdrop-blur-md border border-[#00ffcc]/40 rounded-xl p-2 shadow-2xl animate-in slide-in-from-top-2 duration-150 space-y-1.5"
-              style={{ boxSizing: 'border-box' }}
-            >
-              <div className="flex items-center justify-between pb-1 border-b border-zinc-800 text-[10px] font-mono text-zinc-400 uppercase font-bold">
-                <span>Active Layers ({layers.length})</span>
-                <button type="button" onClick={() => setIsLayersOpen(false)} className="text-zinc-500 hover:text-white">
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-
-              {layers.map((layer) => (
-                <div 
-                  key={layer.id} 
-                  className="flex items-center justify-between p-1 rounded bg-black/60 border border-zinc-900 text-[10.5px]"
-                  style={{ boxSizing: 'border-box' }}
-                >
-                  <span className={`truncate pr-1 ${layer.visible ? 'text-zinc-200' : 'text-zinc-500 line-through'}`}>
-                    {layer.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => toggleLayerVisibility(layer.id)}
-                    className={`p-1 rounded text-xs transition ${layer.visible ? 'text-[#00ffcc]' : 'text-zinc-600'}`}
-                  >
-                    {layer.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Bottom-Left Canvas Controls (Zoom & Coordinate Reset) */}
-          <div 
-            className="absolute bottom-2.5 left-2.5 z-20 flex items-center gap-1 bg-[#131024]/80 backdrop-blur-md border border-zinc-800 rounded-lg p-0.5"
-            style={{ boxSizing: 'border-box' }}
+          <button
+            onClick={handleSaveToVault}
+            className="px-2 py-0.5 rounded-md bg-[#00ffcc] text-slate-950 font-bold text-[9.5px] font-mono flex items-center gap-1 active:scale-95 transition"
+            title="Save Vector Asset to Vault"
           >
+            <FolderLock className="w-2.5 h-2.5" />
+            <span>Vault</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ZONE 1 (Main 45% Height - Canvas Workspace) */}
+      <div className="h-[45%] relative bg-[#0b0816] overflow-hidden border-b border-zinc-900 flex flex-col justify-between p-2">
+        {/* Top-Left & Top-Right Canvas HUD Controls */}
+        <div className="flex items-center justify-between z-20">
+          {/* Wireframe toggle */}
+          <button
+            onClick={() => setShowWireframe(!showWireframe)}
+            className={`px-2 py-1 rounded-lg text-[9px] font-mono font-bold flex items-center gap-1.5 transition ${
+              showWireframe 
+                ? 'bg-[#00ffcc] text-slate-950 shadow-[0_0_8px_#00ffcc]' 
+                : 'bg-black/70 text-zinc-300 border border-zinc-800'
+            }`}
+            title="Toggle Bézier Wireframe Line Views"
+          >
+            <Eye className="w-3 h-3" />
+            <span>{showWireframe ? 'Wireframe ON' : 'Vector Fill'}</span>
+          </button>
+
+          {/* Zoom & Pan Controls */}
+          <div className="flex items-center gap-1 bg-black/80 rounded-lg p-0.5 border border-zinc-800 font-mono text-[9px]">
             <button
-              type="button"
-              onClick={() => setZoomScale((z) => Math.min(3.5, z + 0.2))}
-              className="p-1 rounded text-zinc-300 hover:text-[#00ffcc]"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-3 h-3" />
-            </button>
-            <span className="text-[9px] font-mono text-zinc-400 px-1">{Math.round(zoomScale * 100)}%</span>
-            <button
-              type="button"
-              onClick={() => setZoomScale((z) => Math.max(0.6, z - 0.2))}
-              className="p-1 rounded text-zinc-300 hover:text-[#00ffcc]"
+              onClick={() => setZoomLevel(z => Math.max(50, z - 15))}
+              className="p-1 text-zinc-400 hover:text-white"
               title="Zoom Out"
             >
               <ZoomOut className="w-3 h-3" />
             </button>
+            <span className="px-1 text-[#00ffcc] font-bold">{zoomLevel}%</span>
             <button
-              type="button"
-              onClick={() => { setZoomScale(1); setPanOffset({ x: 0, y: 0 }); }}
-              className="p-1 rounded text-zinc-400 hover:text-white"
-              title="Reset Viewport Coordinates"
+              onClick={() => setZoomLevel(z => Math.min(200, z + 15))}
+              className="p-1 text-zinc-400 hover:text-white"
+              title="Zoom In"
             >
-              <RotateCcw className="w-3 h-3" />
+              <ZoomIn className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => {
+                setZoomLevel(100);
+                setPanOffset({ x: 0, y: 0 });
+              }}
+              className="p-1 text-zinc-400 hover:text-white border-l border-zinc-800"
+              title="Reset Viewport"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
             </button>
           </div>
 
-          {/* Center Canvas: Vector Mesh Output with Pinch-to-Zoom & Coordinate Panning */}
-          <div 
-            className={`w-full h-full flex items-center justify-center transition-transform duration-75 ${
-              isPanEnabled ? 'pointer-events-auto' : 'pointer-events-none'
+          {/* Expandable Layer Menu Trigger */}
+          <button
+            onClick={() => setShowLayerMenu(!showLayerMenu)}
+            className={`p-1.5 rounded-lg text-[9px] font-mono border transition ${
+              showLayerMenu ? 'bg-[#00ffcc]/20 border-[#00ffcc] text-[#00ffcc]' : 'bg-black/70 border-zinc-800 text-zinc-400'
             }`}
-            style={{
-              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomScale})`,
-              transformOrigin: 'center center',
-              boxSizing: 'border-box',
-            }}
-            dangerouslySetInnerHTML={{ __html: vectorSvgContent }}
-          />
-
-          {/* Tracing Success Toast Overlay */}
-          {tracingSuccess && tracingStats && (
-            <div 
-              className="absolute bottom-2.5 right-2.5 z-20 px-2.5 py-1 rounded-lg bg-[#00ffcc] text-black font-mono text-[10px] font-bold shadow-[0_0_15px_rgba(0,255,204,0.8)] animate-in fade-in flex items-center gap-1.5"
-              style={{ boxSizing: 'border-box' }}
-            >
-              <Zap className="w-3 h-3 fill-current" />
-              <span>VTracer: {tracingStats.paths} paths traced ({tracingStats.timeMs}ms)</span>
-            </div>
-          )}
+            title="Expandable Layer Menu"
+          >
+            <Layers className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        {/* ========================================================
-            ZONE 2 (Middle 15% - Elite Illustration Style Matrix)
-            ======================================================== */}
+        {/* Expandable Layer Menu Popover */}
+        {showLayerMenu && (
+          <div className="absolute top-12 right-2 z-30 w-36 bg-[#131024] border border-[#00ffcc]/40 rounded-xl p-2 shadow-2xl font-mono text-[10px] space-y-1 animate-in fade-in zoom-in-95">
+            <span className="text-[8.5px] uppercase text-zinc-400 font-bold px-1 block mb-1">Canvas Layers</span>
+            {(['all', 'paths', 'fills', 'strokes'] as const).map(layer => (
+              <button
+                key={layer}
+                onClick={() => {
+                  setActiveLayer(layer);
+                  setShowLayerMenu(false);
+                }}
+                className={`w-full text-left px-2 py-1 rounded-md transition flex items-center justify-between ${
+                  activeLayer === layer ? 'bg-[#00ffcc]/20 text-[#00ffcc] font-bold' : 'text-zinc-300 hover:bg-white/5'
+                }`}
+              >
+                <span className="capitalize">{layer}</span>
+                {activeLayer === layer && <Check className="w-3 h-3" />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Live Vector Canvas Viewport with Grid Lines */}
         <div 
-          className="w-full h-[15%] flex items-center gap-3 px-4 bg-[#131024] overflow-x-auto whitespace-nowrap scrollbar-hide border-b border-zinc-900"
-          style={{ boxSizing: 'border-box' }}
+          className="flex-1 w-full flex items-center justify-center relative overflow-hidden my-1 bg-[#05040a] rounded-xl border border-zinc-800/80 cursor-grab active:cursor-grabbing"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(0,255,204,0.08) 1px, transparent 1px)',
+            backgroundSize: '16px 16px'
+          }}
         >
-          {styleMatrix.map((item) => {
-            const isSelected = selectedStyle === item.id;
+          <div 
+            className="transition-transform duration-100 flex items-center justify-center"
+            style={{
+              transform: `scale(${zoomLevel / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+            }}
+            dangerouslySetInnerHTML={{ __html: sampleSVG }}
+          />
+
+          {/* Node count pill */}
+          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/80 border border-zinc-800 text-[8.5px] font-mono text-zinc-400 flex items-center gap-1 backdrop-blur-sm pointer-events-none">
+            <span className="text-[#00ffcc]">●</span>
+            <span>{vectorNodeCount} Bézier Nodes</span>
+          </div>
+
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 border border-zinc-800 text-[8px] font-mono text-cyan-300 pointer-events-none">
+            {selectedStyle}
+          </div>
+        </div>
+      </div>
+
+      {/* ZONE 2 (Middle 15% Height - Style Matrix Horizontal Swipe Track) */}
+      <div className="h-[15%] min-h-[95px] bg-[#131024] p-3 border-b border-zinc-900 flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Wand2 className="w-3 h-3 text-[#00ffcc]" />
+            STYLE MATRIX
+          </span>
+          <span className="text-[8.5px] font-mono text-[#00ffcc]">6 Neural Presets</span>
+        </div>
+
+        {/* Required Style Matrix Horizontal Swipe Track */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {(
+            [
+              'Vector Art',
+              'Flatline Art',
+              'Mascot Logo',
+              '3D App Icon',
+              'Seamless Pattern',
+              'Brand Logo'
+            ] as StyleMatrixPreset[]
+          ).map((style) => {
+            const isSelected = selectedStyle === style;
             return (
               <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedStyle(item.id as VectorStyleId)}
-                className={`flex flex-col items-center justify-center px-3 py-1.5 rounded-xl border shrink-0 transition-all select-none ${
-                  isSelected
-                    ? 'bg-black border-[#00ffcc] text-[#00ffcc] shadow-[0_0_12px_rgba(0,255,204,0.35)] scale-105'
-                    : 'bg-[#0b0816] border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                key={style}
+                onClick={() => {
+                  setSelectedStyle(style);
+                  setToastMessage(`Style Matrix: Switched to ${style}`);
+                  setTimeout(() => setToastMessage(null), 1500);
+                }}
+                className={`px-3 py-1.5 rounded-xl font-mono text-[10px] font-bold whitespace-nowrap shrink-0 transition active:scale-95 border ${
+                  isSelected 
+                    ? 'bg-[#00ffcc] text-slate-950 border-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.3)]' 
+                    : 'bg-black/60 text-zinc-300 border-zinc-800 hover:border-zinc-700'
                 }`}
-                style={{ minWidth: '92px', height: '54px', boxSizing: 'border-box' }}
               >
-                <span className="text-base leading-none mb-1">{item.icon}</span>
-                <span className="text-[10px] font-mono font-bold leading-none truncate max-w-[84px] whitespace-nowrap">
-                  {item.label}
-                </span>
+                {style}
               </button>
             );
           })}
         </div>
+      </div>
 
-        {/* ========================================================
-            ZONE 3 (Bottom 40% - Micro-Edit Deck, Color Locker & Tracing Core)
-            ======================================================== */}
-        <div 
-          className="w-full h-[40%] bg-black p-4 flex flex-col justify-between overflow-y-auto space-y-3"
-          style={{ boxSizing: 'border-box' }}
-        >
-          {/* Brand Palette Row: Dedicated row allowing users to lock 3-5 brand colors */}
-          <div className="space-y-1.5" style={{ boxSizing: 'border-box' }}>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono text-[#00ffcc] uppercase tracking-wider font-bold flex items-center gap-1">
-                <Palette className="w-3 h-3 text-[#00ffcc]" /> Brand Palette Row (5 Swatches)
-              </span>
-              <button
-                type="button"
-                onClick={handleGenerateSwatches}
-                className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#131024] border border-zinc-800 hover:border-[#00ffcc] text-[#00ffcc] transition flex items-center gap-1"
-                title="Auto-generate brand harmony palette"
-              >
-                <Wand2 className="w-2.5 h-2.5" />
-                <span>Generate Swatches</span>
-              </button>
-            </div>
-
-            {/* 3 to 5 Brand Colors Side-by-Side with High-Contrast Borders */}
-            <div className="grid grid-cols-5 gap-2" style={{ boxSizing: 'border-box' }}>
-              {swatches.map((swatch, sIdx) => (
-                <div 
-                  key={swatch.id} 
-                  className="p-1 rounded-xl bg-[#131024] border border-zinc-800 hover:border-[#00ffcc]/40 flex flex-col items-center gap-1 relative group transition-colors"
-                  style={{ boxSizing: 'border-box' }}
-                >
-                  <div
-                    className="w-full h-5 rounded-lg border border-white/20 shadow-inner relative flex items-center justify-center cursor-pointer"
-                    style={{ backgroundColor: swatch.hex, boxSizing: 'border-box' }}
-                    onClick={() => toggleSwatchLock(swatch.id)}
-                    title={`Color ${sIdx + 1}: ${swatch.hex} (Click to toggle lock)`}
-                  >
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); toggleSwatchLock(swatch.id); }}
-                      className="p-0.5 rounded-full bg-black/60 text-white"
-                    >
-                      {swatch.locked ? <Lock className="w-2 h-2 text-[#00ffcc]" /> : <Unlock className="w-2 h-2 text-zinc-400" />}
-                    </button>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={swatch.hex}
-                    onChange={(e) => handleSwatchHexChange(swatch.id, e.target.value)}
-                    className="w-full bg-transparent text-[9px] font-mono text-center text-zinc-300 focus:outline-none focus:text-[#00ffcc]"
-                    maxLength={7}
-                  />
-                </div>
-              ))}
-            </div>
+      {/* ZONE 3 (Bottom 40% Height - 5-Swatch Brand Color Locker, Micro-Edit Deck, and Convert Button) */}
+      <div className="h-[40%] min-h-[260px] p-4 bg-black flex flex-col justify-between">
+        
+        {/* 5-Swatch Brand Color Locker */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-zinc-300 font-bold flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5 text-[#00ffcc]" />
+              BRAND COLOR LOCKER (5-SWATCH)
+            </span>
+            <span className="text-[9px] text-[#00ffcc] font-mono">
+              Hex: {brandSwatches[activeSwatchIndex]}
+            </span>
           </div>
 
-          {/* Text Prompt Box: Compact 2-line text input */}
-          <div style={{ boxSizing: 'border-box' }}>
-            <textarea
-              rows={2}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Highly detailed cyberpunk folder risk at resolution..."
-              className="w-full bg-[#131024] border border-zinc-800 rounded-xl p-2 text-xs font-sans text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-[#00ffcc] resize-none leading-relaxed"
-              style={{ boxSizing: 'border-box' }}
+          <div className="grid grid-cols-5 gap-2">
+            {brandSwatches.map((swatch, idx) => {
+              const isLocked = lockedSwatches[idx];
+              const isSelected = activeSwatchIndex === idx;
+              return (
+                <div
+                  key={idx}
+                  onClick={() => setActiveSwatchIndex(idx)}
+                  className={`h-11 rounded-xl p-1 relative flex flex-col justify-between cursor-pointer border transition ${
+                    isSelected ? 'ring-2 ring-[#00ffcc] border-transparent scale-105' : 'border-zinc-800'
+                  }`}
+                  style={{ backgroundColor: swatch }}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLockedSwatches(prev => {
+                        const copy = [...prev];
+                        copy[idx] = !copy[idx];
+                        return copy;
+                      });
+                    }}
+                    className={`w-3.5 h-3.5 rounded-full flex items-center justify-center self-end backdrop-blur-sm ${
+                      isLocked ? 'bg-black/70 text-[#00ffcc]' : 'bg-black/40 text-zinc-400'
+                    }`}
+                  >
+                    {isLocked ? <Lock className="w-2 h-2" /> : <Unlock className="w-2 h-2" />}
+                  </button>
+
+                  <span className={`text-[7px] font-mono px-0.5 rounded truncate ${
+                    swatch === '#ffffff' ? 'text-slate-900 bg-white/70' : 'text-white bg-black/60'
+                  }`}>
+                    {swatch}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Micro-Edit Deck */}
+        <div className="space-y-2 pt-2 border-t border-zinc-900 font-mono">
+          {/* Corner Rounding */}
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-zinc-400">Corner Radius: {cornerRounding}px</span>
+            <input
+              type="range"
+              min="0"
+              max="40"
+              value={cornerRounding}
+              onChange={(e) => setCornerRounding(Number(e.target.value))}
+              className="w-32 h-1 bg-[#131024] rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
             />
           </div>
 
-          {/* Micro-Edit Action Deck: Clean micro-grid layout button matrix */}
-          <div className="grid grid-cols-2 gap-2" style={{ boxSizing: 'border-box' }}>
-            {/* [Remove Background] */}
-            <button
-              type="button"
-              onClick={() => setBgRemoved(!bgRemoved)}
-              className={`p-2 rounded-xl border text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all ${
-                bgRemoved
-                  ? 'bg-[#00ffcc]/20 border-[#00ffcc] text-[#00ffcc]'
-                  : 'bg-[#131024] border-zinc-800 text-zinc-300 hover:border-zinc-700'
-              }`}
-              style={{ boxSizing: 'border-box' }}
-            >
-              <Eraser className="w-3 h-3 text-[#00ffcc]" />
-              <span>{bgRemoved ? 'BG Stripped ✓' : 'Remove Background'}</span>
-            </button>
-
-            {/* [Clean Vector Grid] */}
-            <button
-              type="button"
-              onClick={() => setCleanGridEnabled(!cleanGridEnabled)}
-              className={`p-2 rounded-xl border text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all ${
-                cleanGridEnabled
-                  ? 'bg-[#00ffcc]/20 border-[#00ffcc] text-[#00ffcc]'
-                  : 'bg-[#131024] border-zinc-800 text-zinc-300 hover:border-zinc-700'
-              }`}
-              style={{ boxSizing: 'border-box' }}
-            >
-              <Grid className="w-3 h-3 text-[#00ffcc]" />
-              <span>{cleanGridEnabled ? 'Grid: Active' : 'Clean Vector Grid'}</span>
-            </button>
-
-            {/* [SVG/PNG Format Toggle] */}
-            <button
-              type="button"
-              onClick={() => setExportFormat(exportFormat === 'SVG' ? 'PNG' : 'SVG')}
-              className="p-2 rounded-xl bg-[#131024] border border-zinc-800 hover:border-[#00ffcc]/50 text-[10px] font-mono font-bold text-zinc-200 flex items-center justify-center gap-1.5 transition-all"
-              style={{ boxSizing: 'border-box' }}
-            >
-              <FileType className="w-3 h-3 text-[#00ffcc]" />
-              <span>Format: {exportFormat}</span>
-            </button>
-
-            {/* [Raster to Vector Tracing] - Client-side wrapper for visioncortex VTracer */}
-            <button
-              type="button"
-              onClick={handleRasterToVector}
-              disabled={isTracing}
-              className="p-2 rounded-xl bg-[#00ffcc] hover:bg-[#00ffcc]/90 text-black border border-[#00ffcc] font-mono text-[10px] font-black flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(0,255,204,0.4)] active:scale-95 transition-all disabled:opacity-50"
-              style={{ boxSizing: 'border-box' }}
-            >
-              <Zap className={`w-3.5 h-3.5 fill-current ${isTracing ? 'animate-spin' : ''}`} />
-              <span>{isTracing ? 'Tracing VTracer...' : 'Raster to Vector Tracing'}</span>
-            </button>
+          {/* Stroke Weight */}
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-zinc-400">Stroke Weight: {strokeWeight}pt</span>
+            <input
+              type="range"
+              min="0.5"
+              max="6"
+              step="0.5"
+              value={strokeWeight}
+              onChange={(e) => setStrokeWeight(Number(e.target.value))}
+              className="w-32 h-1 bg-[#131024] rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
+            />
           </div>
 
-          {/* Master Execution Button: Labeled "Generate Brand Assets" using solid neon #00ffcc and black text */}
-          <div className="pt-1" style={{ boxSizing: 'border-box' }}>
-            <button
-              type="button"
-              onClick={handleGenerateBrandAssets}
-              disabled={isGenerating}
-              className="w-full h-11 text-black font-bold text-sm rounded-xl bg-[#00ffcc] hover:bg-[#00ffcc]/90 shadow-[0_0_20px_rgba(0,255,204,0.5)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 font-mono uppercase tracking-wider disabled:opacity-50"
-              style={{ boxSizing: 'border-box' }}
-            >
-              <Sparkles className="w-4 h-4 fill-current" />
-              <span>{isGenerating ? 'Synthesizing Assets...' : 'Generate Brand Assets'}</span>
-            </button>
+          {/* Path Smoothness */}
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-zinc-400">Bézier Smoothness: {pathSmoothness}%</span>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              value={pathSmoothness}
+              onChange={(e) => setPathSmoothness(Number(e.target.value))}
+              className="w-32 h-1 bg-[#131024] rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
+            />
           </div>
-
         </div>
 
-      </div>
+        {/* Tracing Progress Bar */}
+        {isTracing && (
+          <div className="space-y-1 font-mono text-xs">
+            <div className="flex justify-between text-[9.5px]">
+              <span className="text-zinc-400">@visioncortex/vtracer Neural Tracing...</span>
+              <span className="text-[#00ffcc] font-bold">{tracingProgress}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#00d2c4] to-[#00ffcc] transition-all duration-300"
+                style={{ width: `${tracingProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
+        {/* Action Button: Convert Raster to Vector */}
+        <button
+          onClick={handleConvertRasterToVector}
+          disabled={isTracing}
+          className="w-full py-3 rounded-xl bg-[#00ffcc] hover:bg-[#1affd4] text-slate-950 font-black font-mono text-xs tracking-wider uppercase shadow-lg shadow-[#00ffcc]/20 active:scale-98 transition flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <Sparkles className="w-4 h-4 text-slate-950 fill-current" />
+          <span>{isTracing ? 'Vectorizing Image Nodes...' : 'Convert Raster to Vector'}</span>
+        </button>
+
+      </div>
     </div>
   );
 };

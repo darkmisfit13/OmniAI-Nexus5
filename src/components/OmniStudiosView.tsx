@@ -17,14 +17,18 @@ import {
   ChevronLeft,
   Sparkles,
   Layers,
+  Mic,
   Shapes,
-  Clapperboard
+  Tv
 } from 'lucide-react';
 
 // Import all dedicated studios
 import { OmniMotionStudio } from './studios/OmniMotionStudio';
 import { OmniBeatStudio } from './studios/OmniBeatStudio';
 import { OmniWaveStudio } from './studios/OmniWaveStudio';
+import { OmniVoiceStudio } from './studios/OmniVoiceStudio';
+import { OmniStoryboardStudio } from './studios/OmniStoryboardStudio';
+import { OmniVectorBrandLab } from './studios/OmniVectorBrandLab';
 import { OmniCodeStudio } from './studios/OmniCodeStudio';
 import { OmniForgeStudio } from './studios/OmniForgeStudio';
 import { OmniImagineStudio } from './studios/OmniImagineStudio';
@@ -32,21 +36,18 @@ import { OmniAnalyzerStudio } from './studios/OmniAnalyzerStudio';
 import { OmniStyleStudio } from './studios/OmniStyleStudio';
 import { OmniSpatial3DStudio } from './studios/OmniSpatial3DStudio';
 import { OmniViralMockupStudio } from './studios/OmniViralMockupStudio';
+import { OmniYaleStudio } from './studios/OmniYaleStudio';
 import { OmniCosmicUILab } from './studios/OmniCosmicUILab';
 import { OmniArchitectStudio } from './studios/OmniArchitectStudio';
 import { OmniAutomationsStudio } from './studios/OmniAutomationsStudio';
 import { OmniConnectCatalog } from './studios/OmniConnectCatalog';
-import { OmniVectorBrandLab } from './studios/OmniVectorBrandLab';
-import { OmniStoryboardStudio } from './studios/OmniStoryboardStudio';
 
 export type StudioId = 
   | 'motion' 
   | 'beat' 
   | 'wave' 
-  | 'storyboard'
   | 'code' 
   | 'forge' 
-  | 'vector'
   | 'imagine' 
   | 'analyzer' 
   | 'style' 
@@ -55,7 +56,9 @@ export type StudioId =
   | 'cosmic' 
   | 'architect' 
   | 'automations' 
-  | 'connect';
+  | 'connect'
+  | 'vector'
+  | 'yale';
 
 interface OmniStudiosViewProps {
   onInsertToKeyboard?: (text: string) => void;
@@ -70,17 +73,17 @@ interface OmniStudiosViewProps {
 
 export const studioMeta: Record<StudioId, { name: string; tag: string; icon: any }> = {
   motion: { name: 'OmniMotion', tag: 'CapCut Video Editor', icon: Video },
-  beat: { name: 'OmniBeat', tag: 'Freebeat Music Video', icon: Film },
-  wave: { name: 'OmniWave', tag: 'Suno Song Creator', icon: Music },
-  storyboard: { name: 'Omni Storyboard', tag: 'Scene & Face Anchor', icon: Clapperboard },
-  forge: { name: 'OmniForge', tag: 'Three-State Fluid Mobile Builder', icon: Hammer },
-  vector: { name: 'Vector and Brand Lab', tag: 'VTracer & Infinite SVG', icon: Shapes },
+  beat: { name: 'Omni Storyboard', tag: 'Visual Storyboard & Script Engine', icon: Film },
+  wave: { name: 'OmniVoice Studio', tag: 'AI Voice Dub & Lip-Sync', icon: Mic },
+  yale: { name: 'OmniYale Studio', tag: 'Multi-Cam Broadcast & Slides', icon: Tv },
+  forge: { name: 'Vector and Brand Lab', tag: 'Raster to Vector Studio', icon: Shapes },
+  vector: { name: 'Vector and Brand Lab', tag: 'Raster to Vector Studio', icon: Shapes },
   code: { name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code },
   imagine: { name: 'OmniImagine', tag: 'Mobile Canvas & Magic Eraser Suite', icon: Wand2 },
   analyzer: { name: 'OmniAnalyzer', tag: 'Site & Social Auditor', icon: Search },
-  style: { name: 'OmniStyle', tag: 'Wardrobe & Aesthetic', icon: Shirt },
-  spatial: { name: 'Spatial 3D', tag: 'Three.js Spatial Canvas', icon: Rotate3d },
-  mockup: { name: 'Viral Mockup', tag: 'Social Feed Safe Zones', icon: Smartphone },
+  style: { name: 'OmniStyle Studio', tag: 'Wardrobe Try-On Engine', icon: Shirt },
+  spatial: { name: 'Omnispacial 3D Studio', tag: 'WebGL 3D Engine', icon: Rotate3d },
+  mockup: { name: 'Viral Mockup Studio', tag: 'Social Feed Safe Zones', icon: Smartphone },
   cosmic: { name: 'Cosmic UI Lab', tag: 'Generative UI Sandbox', icon: Palette },
   architect: { name: 'OmniArchitect', tag: 'DB & API Schemas', icon: Database },
   automations: { name: 'Automations', tag: 'AI Autonomous Agents', icon: Workflow },
@@ -101,7 +104,15 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
   const Icon = meta.icon;
 
   const isMotionStudio = selectedStudio === 'motion';
-  const isWaveStudio = selectedStudio === 'wave';
+  const isMobileViewportStudio = 
+    selectedStudio === 'style' || 
+    selectedStudio === 'spatial' || 
+    selectedStudio === 'wave' || 
+    selectedStudio === 'beat' || 
+    selectedStudio === 'mockup' || 
+    selectedStudio === 'forge' || 
+    selectedStudio === 'vector' ||
+    selectedStudio === 'yale';
 
   return (
     <div className="omni-mobile-wrapper h-full flex flex-col bg-[#030303] text-slate-100 overflow-hidden font-sans">
@@ -121,7 +132,7 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
             )}
 
             <div className="flex items-center gap-1.5 pl-1 border-l border-slate-800">
-              <Icon className="w-4 h-4 text-cyan-400" />
+              <Icon className="w-4 h-4 text-[#00ffcc]" />
               <span className="font-bold text-xs text-white">{meta.name}</span>
               <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
                 ({meta.tag})
@@ -133,10 +144,10 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
             {onOpenCompanion && (
               <button
                 onClick={onOpenCompanion}
-                className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-950/90 to-indigo-950/90 border border-cyan-500/50 hover:border-cyan-400 text-cyan-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-950/90 to-indigo-950/90 border border-[#00ffcc]/40 hover:border-[#00ffcc] text-cyan-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
                 title="Open OmniAI Studio Companion"
               >
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                <Sparkles className="w-3.5 h-3.5 text-[#00ffcc]" />
                 <span>OmniAI</span>
               </button>
             )}
@@ -145,9 +156,9 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
             {onOpenSidebar && (
               <button
                 onClick={onOpenSidebar}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-cyan-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-[#00ffcc]/40 text-[#00ffcc] text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm"
               >
-                <Layers className="w-3 h-3 text-cyan-400" />
+                <Layers className="w-3 h-3 text-[#00ffcc]" />
                 <span>Switch Studio</span>
               </button>
             )}
@@ -156,7 +167,7 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
       )}
 
       {/* Render the Active Studio Component inside studio-canvas container */}
-      <div className={`studio-canvas flex-1 min-h-0 w-full flex flex-col ${isMotionStudio ? 'studio-canvas-motion !p-0 !pb-0 !gap-0 overflow-hidden' : isWaveStudio ? '!p-0 sm:!p-2 !pb-2 overflow-y-auto' : 'overflow-y-auto'}`}>
+      <div className={`studio-canvas flex-1 min-h-0 w-full flex flex-col ${isMotionStudio ? 'studio-canvas-motion !p-0 !pb-0 !gap-0 overflow-hidden' : isMobileViewportStudio ? '!p-0 !pb-0 !gap-0 overflow-y-auto' : 'overflow-y-auto'}`}>
         {selectedStudio === 'motion' && (
           <OmniMotionStudio 
             onSaveToVault={onSaveToVault} 
@@ -165,21 +176,15 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
             onOpenCompanion={onOpenCompanion}
           />
         )}
-        {selectedStudio === 'beat' && <OmniBeatStudio onSaveToVault={onSaveToVault} />}
-        {selectedStudio === 'wave' && <OmniWaveStudio onSaveToVault={onSaveToVault} />}
-        {selectedStudio === 'storyboard' && (
-          <OmniStoryboardStudio 
-            onSelectStudio={onSelectStudio} 
-            onSaveToVault={onSaveToVault} 
-          />
-        )}
+        {selectedStudio === 'beat' && <OmniStoryboardStudio onSaveToVault={onSaveToVault} />}
+        {selectedStudio === 'wave' && <OmniVoiceStudio onSaveToVault={onSaveToVault} />}
+        {selectedStudio === 'yale' && <OmniYaleStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'code' && <OmniCodeStudio />}
-        {selectedStudio === 'forge' && <OmniForgeStudio />}
-        {selectedStudio === 'vector' && <OmniVectorBrandLab onSaveToVault={onSaveToVault} />}
+        {(selectedStudio === 'forge' || selectedStudio === 'vector') && <OmniVectorBrandLab onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'imagine' && <OmniImagineStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'analyzer' && <OmniAnalyzerStudio />}
         {selectedStudio === 'style' && <OmniStyleStudio onSaveToVault={onSaveToVault} />}
-        {selectedStudio === 'spatial' && <OmniSpatial3DStudio />}
+        {selectedStudio === 'spatial' && <OmniSpatial3DStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'mockup' && <OmniViralMockupStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'cosmic' && <OmniCosmicUILab />}
         {selectedStudio === 'architect' && <OmniArchitectStudio />}
