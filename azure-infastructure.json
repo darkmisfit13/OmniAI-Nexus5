@@ -1,4 +1,5 @@
-"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "subscriptionId": {
@@ -83,15 +84,15 @@
                     "appSettings": [
                         {
                             "name": "AZURE_OPENAI_ENDPOINT",
-                            "value": "https://OmniAI-Nexus-openai-9032.openai.azure.com/"
+                            "value": "https://OmniAI-Nexus-openai-9dd2.openai.azure.com/"
                         },
                         {
                             "name": "AZURE_OPENAI_KEY",
-                            "value": "[listKeys('/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/OmniAI-Nexus-Production/providers/Microsoft.CognitiveServices/accounts/OmniAI-Nexus-openai-9032', '2024-06-01-preview').key1]"
+                            "value": "[listKeys('/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/OmniAI-Nexus-Production/providers/Microsoft.CognitiveServices/accounts/OmniAI-Nexus-openai-9dd2', '2024-06-01-preview').key1]"
                         },
                         {
                             "name": "AZURE_COSMOSDB_NOSQL_CONNECTION_STRING",
-                            "value": "[listConnectionStrings('/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/OmniAI-Nexus-Production/providers/Microsoft.DocumentDB/databaseAccounts/omniai-nexus-cosmosdbfornosql-a09f', '2025-05-01-preview').connectionStrings[0].connectionString]"
+                            "value": "[listConnectionStrings('/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/OmniAI-Nexus-Production/providers/Microsoft.DocumentDB/databaseAccounts/omniai-nexus-cosmosdbfornosql-900a', '2025-05-01-preview').connectionStrings[0].connectionString]"
                         },
                         {
                             "name": "AzureOpenAI__credential",
@@ -99,7 +100,7 @@
                         },
                         {
                             "name": "AzureOpenAI__endpoint",
-                            "value": "https://OmniAI-Nexus-openai-9032.openai.azure.com/"
+                            "value": "https://OmniAI-Nexus-openai-9dd2.openai.azure.com/"
                         },
                         {
                             "name": "CosmosDBNoSql__credential",
@@ -107,7 +108,7 @@
                         },
                         {
                             "name": "CosmosDBNoSql__endpoint",
-                            "value": "https://omniai-nexus-cosmosdbfornosql-a09f.documents.azure.com:443/"
+                            "value": "https://omniai-nexus-cosmosdbfornosql-900a.documents.azure.com:443/"
                         },
                         {
                             "name": "CHAT_MODEL_DEPLOYMENT_NAME",
@@ -312,7 +313,7 @@
             },
             "properties": {
                 "publicNetworkAccess": "Enabled",
-                "customSubDomainName": "OmniAI-Nexus-openai-9032"
+                "customSubDomainName": "OmniAI-Nexus-openai-9dd2"
             }
         },
         {
@@ -342,7 +343,7 @@
             "apiVersion": "2020-02-02-preview",
             "name": "OmniAI-Nexus",
             "type": "microsoft.insights/components",
-            "location": "eastus",
+            "location": "eastasia",
             "tags": {},
             "dependsOn": [
                 "newWorkspaceTemplate"
@@ -352,7 +353,7 @@
                 "Request_Source": "IbizaWebAppExtensionCreate",
                 "Flow_Type": "Redfield",
                 "Application_Type": "web",
-                "WorkspaceResourceId": "/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EUS",
+                "WorkspaceResourceId": "/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/DefaultResourceGroup-EA/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EA",
                 "DisableLocalAuth": true
             }
         },
@@ -415,7 +416,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2021-04-01",
             "name": "newWorkspaceTemplate",
-            "resourceGroup": "DefaultResourceGroup-EUS",
+            "resourceGroup": "DefaultResourceGroup-EA",
             "subscriptionId": "[parameters('subscriptionId')]",
             "properties": {
                 "mode": "Incremental",
@@ -427,9 +428,9 @@
                     "resources": [
                         {
                             "apiVersion": "2020-08-01",
-                            "name": "DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EUS",
+                            "name": "DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EA",
                             "type": "Microsoft.OperationalInsights/workspaces",
-                            "location": "eastus",
+                            "location": "eastasia",
                             "properties": {}
                         }
                     ]
@@ -456,7 +457,7 @@
                     "resources": [
                         {
                             "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b', 'bda0')]",
+                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b', 'bc56')]",
                             "type": "Microsoft.Authorization/roleAssignments",
                             "scope": "[concat('Microsoft.Storage/storageAccounts', '/', parameters('storageAccountName'))]",
                             "properties": {
@@ -489,7 +490,7 @@
                     "resources": [
                         {
                             "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe', 'adb9')]",
+                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe', '81fd')]",
                             "type": "Microsoft.Authorization/roleAssignments",
                             "scope": "[concat('Microsoft.Storage/storageAccounts', '/', parameters('storageAccountName'), '/blobServices/default/containers/', parameters('storageBlobContainerName'))]",
                             "properties": {
@@ -522,7 +523,7 @@
                     "resources": [
                         {
                             "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/3913510d-42f4-4e42-8a64-420c390055eb', '9e7a')]",
+                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/3913510d-42f4-4e42-8a64-420c390055eb', '9a8e')]",
                             "type": "Microsoft.Authorization/roleAssignments",
                             "scope": "[concat('microsoft.insights/components', '/', 'OmniAI-Nexus')]",
                             "properties": {
@@ -543,7 +544,7 @@
             "subscriptionId": "[parameters('subscriptionId')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "Microsoft.CognitiveServices/accounts/OmniAI-Nexus-openai-9032"
+                "Microsoft.CognitiveServices/accounts/OmniAI-Nexus-openai-9dd2"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -555,9 +556,9 @@
                     "resources": [
                         {
                             "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/5e0bd9bd-7b93-4f28-af87-19fc36ad61bd', 'a76d')]",
+                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/5e0bd9bd-7b93-4f28-af87-19fc36ad61bd', '8ab3')]",
                             "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('Microsoft.CognitiveServices/accounts', '/', 'OmniAI-Nexus-openai-9032')]",
+                            "scope": "[concat('Microsoft.CognitiveServices/accounts', '/', 'OmniAI-Nexus-openai-9dd2')]",
                             "properties": {
                                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
                                 "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
@@ -576,7 +577,7 @@
             "subscriptionId": "[parameters('subscriptionId')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "Microsoft.DocumentDb/databaseAccounts/omniai-nexus-cosmosdbfornosql-a09f"
+                "Microsoft.DocumentDb/databaseAccounts/omniai-nexus-cosmosdbfornosql-900a"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -590,7 +591,7 @@
                             "apiVersion": "2022-04-01",
                             "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/230815da-be43-4aae-9cb4-875f7bd000aa')]",
                             "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('Microsoft.DocumentDb/databaseAccounts', '/', 'omniai-nexus-cosmosdbfornosql-a09f')]",
+                            "scope": "[concat('Microsoft.DocumentDb/databaseAccounts', '/', 'omniai-nexus-cosmosdbfornosql-900a')]",
                             "properties": {
                                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/230815da-be43-4aae-9cb4-875f7bd000aa')]",
                                 "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
