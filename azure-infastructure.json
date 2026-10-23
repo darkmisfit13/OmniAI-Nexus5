@@ -35,15 +35,6 @@
         "numberOfWorkers": {
             "type": "string"
         },
-        "repoUrl": {
-            "type": "string"
-        },
-        "branch": {
-            "type": "string"
-        },
-        "oidcUserIdentityName": {
-            "type": "string"
-        },
         "hostingPlanName": {
             "type": "string"
         },
@@ -52,12 +43,6 @@
         },
         "alwaysOn": {
             "type": "bool"
-        },
-        "openAIName": {
-            "type": "string"
-        },
-        "noSQLName": {
-            "type": "string"
         }
     },
     "variables": {},
@@ -74,73 +59,23 @@
             "dependsOn": [
                 "microsoft.insights/components/OmniAI-Nexus",
                 "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-                "[concat('Microsoft.CognitiveServices/accounts/', parameters('openAIName'))]",
-                "[concat('Microsoft.DocumentDb/databaseAccounts/', parameters('noSQLName'))]"
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
             ],
             "properties": {
                 "name": "[parameters('name')]",
                 "siteConfig": {
                     "appSettings": [
                         {
-                            "name": "AZURE_OPENAI_ENDPOINT",
-                            "value": "https://OmniAI-Nexus-openai-9dd2.openai.azure.com/"
-                        },
-                        {
-                            "name": "AZURE_OPENAI_KEY",
-                            "value": "[listKeys('/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/OmniAI-Nexus-Production/providers/Microsoft.CognitiveServices/accounts/OmniAI-Nexus-openai-9dd2', '2024-06-01-preview').key1]"
-                        },
-                        {
-                            "name": "AZURE_COSMOSDB_NOSQL_CONNECTION_STRING",
-                            "value": "[listConnectionStrings('/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/OmniAI-Nexus-Production/providers/Microsoft.DocumentDB/databaseAccounts/omniai-nexus-cosmosdbfornosql-900a', '2025-05-01-preview').connectionStrings[0].connectionString]"
-                        },
-                        {
-                            "name": "AzureOpenAI__credential",
-                            "value": "managedidentity"
-                        },
-                        {
-                            "name": "AzureOpenAI__endpoint",
-                            "value": "https://OmniAI-Nexus-openai-9dd2.openai.azure.com/"
-                        },
-                        {
-                            "name": "CosmosDBNoSql__credential",
-                            "value": "managedidentity"
-                        },
-                        {
-                            "name": "CosmosDBNoSql__endpoint",
-                            "value": "https://omniai-nexus-cosmosdbfornosql-900a.documents.azure.com:443/"
-                        },
-                        {
-                            "name": "CHAT_MODEL_DEPLOYMENT_NAME",
-                            "value": "chat-completion-model-name-placeholder"
-                        },
-                        {
-                            "name": "EMBEDDING_MODEL_DEPLOYMENT_NAME",
-                            "value": "embeddings-model-name-placeholder"
-                        },
-                        {
-                            "name": "APPLICATIONINSIGHTS_AUTHENTICATION_STRING",
-                            "value": "Authorization=AAD"
+                            "name": "DEPLOYMENT_STORAGE_CONNECTION_STRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-05-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
                         },
                         {
                             "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
                             "value": "[reference('microsoft.insights/components/OmniAI-Nexus', '2015-05-01').ConnectionString]"
                         },
                         {
-                            "name": "AzureWebJobsStorage__credential",
-                            "value": "managedidentity"
-                        },
-                        {
-                            "name": "AzureWebJobsStorage__blobServiceUri",
-                            "value": "[concat('https://', parameters('storageAccountName'), '.blob.', 'core.windows.net')]"
-                        },
-                        {
-                            "name": "AzureWebJobsStorage__queueServiceUri",
-                            "value": "[concat('https://', parameters('storageAccountName'), '.queue.', 'core.windows.net')]"
-                        },
-                        {
-                            "name": "AzureWebJobsStorage__tableServiceUri",
-                            "value": "[concat('https://', parameters('storageAccountName'), '.table.', 'core.windows.net')]"
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-05-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
                         }
                     ],
                     "cors": {
@@ -159,7 +94,8 @@
                             "type": "blobContainer",
                             "value": "[concat('https://', parameters('storageAccountName'), '.blob.', 'core.windows.net', '/', parameters('storageBlobContainerName'))]",
                             "authentication": {
-                                "type": "SystemAssignedIdentity"
+                                "type": "StorageAccountConnectionString",
+                                "storageAccountConnectionStringName": "DEPLOYMENT_STORAGE_CONNECTION_STRING"
                             }
                         }
                     },
@@ -198,88 +134,8 @@
                     "dependsOn": [
                         "[resourceId('Microsoft.Web/sites', parameters('name'))]"
                     ]
-                },
-                {
-                    "type": "sourcecontrols",
-                    "name": "web",
-                    "apiVersion": "2020-12-01",
-                    "properties": {
-                        "RepoUrl": "[parameters('repoUrl')]",
-                        "branch": "[parameters('branch')]",
-                        "IsManualIntegration": false,
-                        "deploymentRollbackEnabled": false,
-                        "isMercurial": false,
-                        "isGitHubAction": true,
-                        "gitHubActionConfiguration": {
-                            "generateWorkflowFile": true,
-                            "workflowSettings": {
-                                "appType": "functionapp",
-                                "authType": "oidc",
-                                "publishType": "code",
-                                "os": "linux",
-                                "runtimeStack": "node",
-                                "workflowApiVersion": "2022-10-01",
-                                "slotName": "production",
-                                "variables": {
-                                    "runtimeVersion": "22.x",
-                                    "resourceGroup": "OmniAI-Nexus-Production",
-                                    "clientId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('oidcUserIdentityName')), '2018-11-30').clientId]",
-                                    "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('oidcUserIdentityName')), '2018-11-30').tenantId]"
-                                }
-                            }
-                        }
-                    },
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('oidcUserIdentityName'))]"
-                    ]
-                }
-            ],
-            "identity": {
-                "type": "SystemAssigned"
-            }
-        },
-        {
-            "apiVersion": "2018-11-30",
-            "name": "[parameters('oidcUserIdentityName')]",
-            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
-            ],
-            "properties": {},
-            "resources": [
-                {
-                    "apiVersion": "2022-01-31-preview",
-                    "name": "[uniqueString(resourceGroup().id)]",
-                    "type": "federatedIdentityCredentials",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('oidcUserIdentityName'))]"
-                    ],
-                    "properties": {
-                        "audiences": [
-                            "api://AzureADTokenExchange"
-                        ],
-                        "issuer": "https://token.actions.githubusercontent.com",
-                        "subject": "repo:darkmisfit13@285755847/OmniAI-Nexus5@1430033019:ref:refs/heads/main"
-                    }
                 }
             ]
-        },
-        {
-            "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, deployment().name)]",
-            "type": "Microsoft.Authorization/roleAssignments",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('oidcUserIdentityName'))]"
-            ],
-            "scope": "[concat('Microsoft.Web/sites/', parameters('name'))]",
-            "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/de139f84-1756-47ae-9be6-808fbbe84772')]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('oidcUserIdentityName')), '2018-11-30').principalId]",
-                "principalType": "ServicePrincipal"
-            }
         },
         {
             "apiVersion": "2024-11-01",
@@ -287,7 +143,7 @@
             "type": "Microsoft.Web/serverfarms",
             "location": "[parameters('location')]",
             "kind": "linux",
-            "tags": {},
+            "tags": null,
             "dependsOn": [],
             "properties": {
                 "name": "[parameters('hostingPlanName')]",
@@ -303,48 +159,11 @@
             }
         },
         {
-            "apiVersion": "2022-03-01",
-            "name": "[parameters('openAIName')]",
-            "location": "eastus",
-            "type": "Microsoft.CognitiveServices/accounts",
-            "kind": "OpenAI",
-            "sku": {
-                "name": "S0"
-            },
-            "properties": {
-                "publicNetworkAccess": "Enabled",
-                "customSubDomainName": "OmniAI-Nexus-openai-9dd2"
-            }
-        },
-        {
-            "apiVersion": "2025-05-01-preview",
-            "name": "[parameters('noSQLName')]",
-            "location": "eastus",
-            "type": "Microsoft.DocumentDb/databaseAccounts",
-            "properties": {
-                "databaseAccountOfferType": "Standard",
-                "publicNetworkAccess": "Enabled",
-                "capabilities": [
-                    {
-                        "name": "EnableNoSQLVectorSearch"
-                    }
-                ],
-                "capacityMode": "serverless",
-                "locations": [
-                    {
-                        "locationName": "eastus",
-                        "failoverPriority": 0
-                    }
-                ],
-                "disableLocalAuth": true
-            }
-        },
-        {
             "apiVersion": "2020-02-02-preview",
             "name": "OmniAI-Nexus",
             "type": "microsoft.insights/components",
-            "location": "eastasia",
-            "tags": {},
+            "location": "eastus",
+            "tags": null,
             "dependsOn": [
                 "newWorkspaceTemplate"
             ],
@@ -353,8 +172,8 @@
                 "Request_Source": "IbizaWebAppExtensionCreate",
                 "Flow_Type": "Redfield",
                 "Application_Type": "web",
-                "WorkspaceResourceId": "/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/DefaultResourceGroup-EA/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EA",
-                "DisableLocalAuth": true
+                "WorkspaceResourceId": "/subscriptions/42644b4f-b06e-4ca7-8bc2-f0c4e150d897/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EUS",
+                "DisableLocalAuth": false
             }
         },
         {
@@ -363,7 +182,7 @@
             "name": "[parameters('storageAccountName')]",
             "dependsOn": [],
             "location": "[parameters('location')]",
-            "tags": {},
+            "tags": null,
             "kind": "StorageV2",
             "sku": {
                 "name": "Standard_LRS"
@@ -373,7 +192,7 @@
                 "minimumTlsVersion": "TLS1_2",
                 "defaultToOAuthAuthentication": true,
                 "allowBlobPublicAccess": false,
-                "allowSharedKeyAccess": false,
+                "allowSharedKeyAccess": true,
                 "publicNetworkAccess": "Enabled"
             }
         },
@@ -416,7 +235,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2021-04-01",
             "name": "newWorkspaceTemplate",
-            "resourceGroup": "DefaultResourceGroup-EA",
+            "resourceGroup": "DefaultResourceGroup-EUS",
             "subscriptionId": "[parameters('subscriptionId')]",
             "properties": {
                 "mode": "Incremental",
@@ -428,175 +247,10 @@
                     "resources": [
                         {
                             "apiVersion": "2020-08-01",
-                            "name": "DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EA",
+                            "name": "DefaultWorkspace-42644b4f-b06e-4ca7-8bc2-f0c4e150d897-EUS",
                             "type": "Microsoft.OperationalInsights/workspaces",
-                            "location": "eastasia",
+                            "location": "eastus",
                             "properties": {}
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "StorageBlobDataOwnerRoleAssignmentTemplate",
-            "resourceGroup": "OmniAI-Nexus-Production",
-            "subscriptionId": "[parameters('subscriptionId')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        {
-                            "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b', 'bc56')]",
-                            "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('Microsoft.Storage/storageAccounts', '/', parameters('storageAccountName'))]",
-                            "properties": {
-                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
-                                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "StorageBlobDataContributorRoleAssignmentTemplate",
-            "resourceGroup": "OmniAI-Nexus-Production",
-            "subscriptionId": "[parameters('subscriptionId')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        {
-                            "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe', '81fd')]",
-                            "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('Microsoft.Storage/storageAccounts', '/', parameters('storageAccountName'), '/blobServices/default/containers/', parameters('storageBlobContainerName'))]",
-                            "properties": {
-                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-                                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "MonitoringMetricsPublisherRoleAssignmentTemplate",
-            "resourceGroup": "OmniAI-Nexus-Production",
-            "subscriptionId": "[parameters('subscriptionId')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "microsoft.insights/components/OmniAI-Nexus"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        {
-                            "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/3913510d-42f4-4e42-8a64-420c390055eb', '9a8e')]",
-                            "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('microsoft.insights/components', '/', 'OmniAI-Nexus')]",
-                            "properties": {
-                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/3913510d-42f4-4e42-8a64-420c390055eb')]",
-                                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "AzureOpenAIRoleAssignmentTemplate",
-            "resourceGroup": "OmniAI-Nexus-Production",
-            "subscriptionId": "[parameters('subscriptionId')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "Microsoft.CognitiveServices/accounts/OmniAI-Nexus-openai-9dd2"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        {
-                            "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/5e0bd9bd-7b93-4f28-af87-19fc36ad61bd', '8ab3')]",
-                            "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('Microsoft.CognitiveServices/accounts', '/', 'OmniAI-Nexus-openai-9dd2')]",
-                            "properties": {
-                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
-                                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal"
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
-            "name": "AzureCosmosDBNoSqlRoleAssignmentTemplate",
-            "resourceGroup": "OmniAI-Nexus-Production",
-            "subscriptionId": "[parameters('subscriptionId')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('name'))]",
-                "Microsoft.DocumentDb/databaseAccounts/omniai-nexus-cosmosdbfornosql-900a"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
-                    "resources": [
-                        {
-                            "apiVersion": "2022-04-01",
-                            "name": "[guid(subscription().id, resourceGroup().id, parameters('name'), '/providers/Microsoft.Authorization/roleDefinitions/230815da-be43-4aae-9cb4-875f7bd000aa')]",
-                            "type": "Microsoft.Authorization/roleAssignments",
-                            "scope": "[concat('Microsoft.DocumentDb/databaseAccounts', '/', 'omniai-nexus-cosmosdbfornosql-900a')]",
-                            "properties": {
-                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/230815da-be43-4aae-9cb4-875f7bd000aa')]",
-                                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2025-05-01', 'Full').identity.principalId]",
-                                "principalType": "ServicePrincipal"
-                            }
                         }
                     ]
                 }
