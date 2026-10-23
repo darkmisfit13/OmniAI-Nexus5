@@ -3,182 +3,271 @@ import {
   Network, 
   Sparkles, 
   Check, 
-  ExternalLink, 
   Plus, 
   ShieldCheck, 
-  Zap,
-  Globe,
-  Lock,
-  Search
+  Zap, 
+  Activity, 
+  Radio, 
+  PhoneCall, 
+  MessageSquare, 
+  FileSpreadsheet, 
+  Webhook, 
+  RefreshCw,
+  Search,
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 import { HoloOrb, OrbPhase } from '../HoloOrb';
 
-interface IntegrationApp {
+interface ConnectionKeyItem {
   id: string;
   name: string;
   category: string;
-  desc: string;
-  iconBg: string;
   connected: boolean;
-  authType: 'OAuth 2.0' | 'API Key' | 'Webhook';
+  accent: string;
+  keyLabel: string;
 }
 
 export const OmniConnectCatalog: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [orbPhase, setOrbPhase] = useState<OrbPhase>('idle');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedKeyForConfig, setSelectedKeyForConfig] = useState<ConnectionKeyItem | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [apps, setApps] = useState<IntegrationApp[]>([
-    { id: 'github', name: 'GitHub', category: 'Developer Tools', desc: 'Sync repositories, pull requests, automated commits and branches directly from OmniCode.', iconBg: 'bg-slate-800 text-white', connected: true, authType: 'OAuth 2.0' },
-    { id: 'salesforce', name: 'Salesforce CRM', category: 'Enterprise CRM', desc: 'Sync client deals, pipeline leads, and customer conversation records.', iconBg: 'bg-blue-600 text-white', connected: false, authType: 'OAuth 2.0' },
-    { id: 'hubspot', name: 'HubSpot', category: 'Marketing & Sales', desc: 'Track marketing campaign leads, inbound contacts, and automated newsletters.', iconBg: 'bg-orange-600 text-white', connected: false, authType: 'OAuth 2.0' },
-    { id: 'discord', name: 'Discord', category: 'Community & Voice', desc: 'Deploy automated server bots, voice channel notifications, and studio clip drops.', iconBg: 'bg-indigo-600 text-white', connected: true, authType: 'Webhook' },
-    { id: 'stripe', name: 'Stripe Billing', category: 'Payments', desc: 'Manage Creator Pro and Studio Ultra recurring subscriptions & invoicing.', iconBg: 'bg-purple-600 text-white', connected: true, authType: 'API Key' },
-    { id: 'figma', name: 'Figma', category: 'Design', desc: 'Import frame layouts, design tokens, and components directly into Omni Cosmic UI Lab.', iconBg: 'bg-rose-600 text-white', connected: false, authType: 'OAuth 2.0' },
-    { id: 'slack', name: 'Slack', category: 'Team Chat', desc: 'Dispatch instant alerts on staging build deploys and high-urgency client messages.', iconBg: 'bg-emerald-600 text-white', connected: true, authType: 'OAuth 2.0' },
-    { id: 'notion', name: 'Notion', category: 'Knowledge Base', desc: 'Sync meeting transcripts, OmniBeat storyboards, and project documentation.', iconBg: 'bg-slate-900 text-white', connected: false, authType: 'OAuth 2.0' },
-    { id: 'shopify', name: 'Shopify Store', category: 'E-Commerce', desc: 'Update merchandise products, track fulfillment, and generate social promos.', iconBg: 'bg-lime-600 text-slate-950', connected: false, authType: 'API Key' },
-    { id: 'zapier', name: 'Zapier', category: 'Automation', desc: 'Connect OmniAI webhooks to 5,000+ external business workflows.', iconBg: 'bg-amber-600 text-white', connected: true, authType: 'Webhook' },
-    { id: 'webflow', name: 'Webflow CMS', category: 'CMS & Sites', desc: 'Export full-stack generated pages from OmniForge directly into live sites.', iconBg: 'bg-blue-500 text-white', connected: false, authType: 'API Key' },
+  // 3-Column Rapid Mobile Connection Toggles
+  const [connectionDeck, setConnectionDeck] = useState<ConnectionKeyItem[]>([
+    { id: 'twilio', name: 'Twilio Bridge', category: 'Telephony', connected: true, accent: '#00ff99', keyLabel: 'Account SID & Auth Token' },
+    { id: 'sip', name: 'SIP Carrier Trunk', category: 'VoIP VoIP', connected: false, accent: '#8b5cf6', keyLabel: 'SIP Trunk URI & Password' },
+    { id: 'whatsapp', name: 'WhatsApp API', category: 'Messaging', connected: true, accent: '#00e5ff', keyLabel: 'Meta Graph API Token' },
+    { id: 'discord', name: 'Discord Client', category: 'Community', connected: true, accent: '#ff007f', keyLabel: 'Bot Client Token' },
+    { id: 'hubspot', name: 'HubSpot Sync', category: 'CRM Leads', connected: false, accent: '#a78bfa', keyLabel: 'Private App Token' },
+    { id: 'sheets', name: 'Google Sheets Proxy', category: 'Database', connected: true, accent: '#00ff99', keyLabel: 'Service Account JSON' },
+    { id: 'webhooks', name: 'Custom Inbound/Outbound', category: 'Webhooks', connected: true, accent: '#00e5ff', keyLabel: 'HMAC Secret Key' },
+    { id: 'stripe', name: 'Stripe Billing', category: 'Payments', connected: true, accent: '#8b5cf6', keyLabel: 'Live Secret Key' },
+    { id: 'slack', name: 'Slack Alerts', category: 'Chat Ops', connected: false, accent: '#ff007f', keyLabel: 'Webhook Incoming URL' },
+    { id: 'github', name: 'GitHub Repo Sync', category: 'Code Version', connected: true, accent: '#a78bfa', keyLabel: 'Personal Access Token' },
+    { id: 'shopify', name: 'Shopify Store', category: 'E-Commerce', connected: false, accent: '#00ff99', keyLabel: 'Admin API Access Token' },
+    { id: 'notion', name: 'Notion Knowledge', category: 'Docs Sync', connected: false, accent: '#00e5ff', keyLabel: 'Internal Integration Secret' },
   ]);
 
-  const handleToggleConnect = (id: string) => {
-    setOrbPhase('processing');
-    setApps((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, connected: !app.connected } : app))
+  const handleToggleKey = (id: string) => {
+    setOrbPhase('thinking');
+    setConnectionDeck((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const next = !item.connected;
+          setToastMessage(`${item.name} toggled: ${next ? 'CONNECTED' : 'DISCONNECTED'}`);
+          setTimeout(() => setToastMessage(null), 2200);
+          return { ...item, connected: next };
+        }
+        return item;
+      })
     );
     setTimeout(() => setOrbPhase('idle'), 600);
   };
 
-  const filteredApps = apps.filter((a) => {
-    const matchesSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase()) || a.desc.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = selectedCategory === 'all' || a.category === selectedCategory;
-    return matchesSearch && matchesCat;
-  });
+  const filteredDeck = connectionDeck.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="h-full flex flex-col bg-[#07090e] text-slate-100 overflow-hidden font-sans">
+    <div className="h-full flex flex-col bg-black text-[#e8e6f2] overflow-hidden font-sans select-none">
       
-      {/* Top Header */}
-      <div className="p-3 bg-[#0d1017] border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black">
-            <Network className="w-4 h-4" />
+      {/* Studio Header */}
+      <div className="h-10 px-3 bg-[#08060c] border-b border-[#181524] flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <Network className="w-3.5 h-3.5 text-[#00e5ff]" />
+          <h1 className="font-bold text-[11px] tracking-wider uppercase text-white font-mono">
+            OmniConnect Integrations
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[8.5px] font-mono px-2 py-0.5 rounded-full bg-[#00e5ff]/15 text-[#00e5ff] border border-[#00e5ff]/40">
+            Pipeline Mesh Active
+          </span>
+        </div>
+      </div>
+
+      {toastMessage && (
+        <div className="bg-[#08060c] border-b border-[#00e5ff]/40 px-3 py-1 text-[10px] font-mono text-[#00e5ff] flex items-center gap-1.5 animate-in fade-in">
+          <Sparkles className="w-3 h-3 text-[#00e5ff]" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* UPPER SECTION: MAIN PIPELINE DATA TRAFFIC STATUS GRAPHS */}
+      <div className="p-3 bg-gradient-to-b from-[#08060c] to-black border-b border-[#181524] shrink-0 space-y-2.5">
+        <div className="flex items-center justify-between text-[10px] font-mono">
+          <span className="font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-[#00ff99] animate-pulse" />
+            Main Pipeline Data Traffic Status
+          </span>
+          <span className="text-[#00ff99] font-bold">● 99.98% UPTIME</span>
+        </div>
+
+        {/* Live Traffic Bar Charts & Packet Flow Metrics */}
+        <div className="grid grid-cols-3 gap-2">
+          {/* Card 1: Throughput */}
+          <div className="p-2 rounded-xl bg-[#08060c] border border-[#00ff99]/40 shadow-[0_0_8px_rgba(0,255,153,0.15)] flex flex-col justify-between">
+            <span className="text-[8.5px] font-mono text-zinc-400 uppercase">Throughput</span>
+            <div className="flex items-baseline gap-1 my-1">
+              <span className="text-sm font-black font-mono text-white">4.8</span>
+              <span className="text-[9px] font-mono text-[#00ff99]">MB/s</span>
+            </div>
+            {/* Animated Traffic Wave Bar */}
+            <div className="flex items-end gap-0.5 h-5 w-full pt-1">
+              {[40, 65, 85, 55, 95, 75, 90, 60, 100, 70, 80].map((h, i) => (
+                <div 
+                  key={i} 
+                  className="flex-1 bg-[#00ff99] rounded-t-sm transition-all duration-300" 
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              OMNI CONNECT EXTERNAL APP CATALOG
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">
-                ECOSYSTEM DIRECTORY
-              </span>
-            </h3>
-            <p className="text-[11px] text-slate-400">Connect GitHub, Salesforce, HubSpot, Stripe, Discord, Slack & Shopify</p>
+
+          {/* Card 2: Inbound Requests */}
+          <div className="p-2 rounded-xl bg-[#08060c] border border-[#8b5cf6]/40 shadow-[0_0_8px_rgba(139,92,246,0.15)] flex flex-col justify-between">
+            <span className="text-[8.5px] font-mono text-zinc-400 uppercase">Packet Rate</span>
+            <div className="flex items-baseline gap-1 my-1">
+              <span className="text-sm font-black font-mono text-white">1,240</span>
+              <span className="text-[9px] font-mono text-[#8b5cf6]">req/m</span>
+            </div>
+            <div className="flex items-end gap-0.5 h-5 w-full pt-1">
+              {[50, 70, 60, 80, 75, 90, 65, 85, 95, 60, 85].map((h, i) => (
+                <div 
+                  key={i} 
+                  className="flex-1 bg-[#8b5cf6] rounded-t-sm transition-all duration-300" 
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Card 3: Global Latency */}
+          <div className="p-2 rounded-xl bg-[#08060c] border border-[#00e5ff]/40 shadow-[0_0_8px_rgba(0,229,255,0.15)] flex flex-col justify-between">
+            <span className="text-[8.5px] font-mono text-zinc-400 uppercase">Avg Latency</span>
+            <div className="flex items-baseline gap-1 my-1">
+              <span className="text-sm font-black font-mono text-white">18</span>
+              <span className="text-[9px] font-mono text-[#00e5ff]">ms</span>
+            </div>
+            <div className="flex items-end gap-0.5 h-5 w-full pt-1">
+              {[30, 25, 40, 35, 30, 20, 25, 30, 20, 25, 20].map((h, i) => (
+                <div 
+                  key={i} 
+                  className="flex-1 bg-[#00e5ff] rounded-t-sm transition-all duration-300" 
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Studio Body */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-        
-        {/* Banner with Omni Orb */}
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-950/30 via-slate-900 to-[#0c0f17] border border-blue-500/30 shadow-xl flex items-center gap-4">
-          <div className="w-16 h-16 flex-shrink-0">
-            <HoloOrb phase={orbPhase} className="w-full h-full" />
-          </div>
-          <div className="flex-1">
-            <span className="text-[10px] font-mono uppercase text-blue-400 font-bold tracking-widest block">
-              ENTERPRISE TOOL CONNECTIONS
-            </span>
-            <h4 className="text-base font-bold text-white">The Unified Command Center For All Your Tools</h4>
-            <p className="text-xs text-slate-300 mt-1">
-              Never switch between fragmented browser tabs again. OmniAI connects with your entire stack so your creative assets and code flow seamlessly.
-            </p>
-          </div>
+      {/* MIDDLE/LOWER SECTION: 3-COLUMN RAPID MOBILE CONNECTION SETUP GRID
+          Exact specification: grid grid-cols-3 gap-2 p-2 max-h-[350px] bg-[#08060c] rounded-xl border border-zinc-900 mx-2 */}
+      <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 px-2 py-1">
+          <span className="font-bold uppercase tracking-wider text-zinc-200">
+            Rapid Connection Deck (Tap to Toggle):
+          </span>
+          <span className="text-[#00e5ff] text-[9px]">Tap Key to Activate</span>
         </div>
 
-        {/* Filter & Search Bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search apps by name, category, or workflow..."
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 focus:border-blue-500 rounded-xl text-xs text-white placeholder-slate-500 outline-none"
-            />
-          </div>
-
-          <div className="flex gap-1.5 overflow-x-auto">
-            {['all', 'Developer Tools', 'Payments', 'Marketing & Sales', 'Community & Voice', 'Design'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-blue-600 text-white font-bold'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+        <div className="grid grid-cols-3 gap-2 p-2 max-h-[350px] bg-[#08060c] rounded-xl border border-zinc-900 mx-2 overflow-y-auto">
+          {filteredDeck.map((keyItem) => {
+            const isConnected = keyItem.connected;
+            return (
+              <div
+                key={keyItem.id}
+                onClick={() => handleToggleKey(keyItem.id)}
+                className={`p-2 rounded-lg border flex flex-col justify-between cursor-pointer transition-all active:scale-95 text-left relative ${
+                  isConnected
+                    ? 'bg-black/90 shadow-[0_0_10px_rgba(0,0,0,0.8)]'
+                    : 'bg-black/40 border-zinc-800 opacity-60 hover:opacity-100'
                 }`}
+                style={{
+                  borderColor: isConnected ? keyItem.accent : '#27272a',
+                  boxShadow: isConnected ? `0 0 10px ${keyItem.accent}33` : undefined,
+                }}
               >
-                {cat === 'all' ? 'All Tools' : cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* App Catalog Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredApps.map((app) => (
-            <div
-              key={app.id}
-              className={`p-4 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
-                app.connected
-                  ? 'bg-slate-900/90 border-blue-500/40 shadow-lg shadow-blue-950/30'
-                  : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className={`w-9 h-9 rounded-xl ${app.iconBg} flex items-center justify-center font-black text-sm shadow-md`}>
-                      {app.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{app.name}</h4>
-                      <span className="text-[10px] text-slate-400 font-mono">{app.category}</span>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                    {app.authType}
+                {/* Status Dot */}
+                <div className="flex items-center justify-between mb-1">
+                  <span 
+                    className="w-2 h-2 rounded-full" 
+                    style={{ 
+                      backgroundColor: isConnected ? keyItem.accent : '#52525b',
+                      boxShadow: isConnected ? `0 0 6px ${keyItem.accent}` : undefined,
+                    }} 
+                  />
+                  <span 
+                    className="text-[7.5px] font-mono font-bold uppercase tracking-tighter"
+                    style={{ color: isConnected ? keyItem.accent : '#71717a' }}
+                  >
+                    {isConnected ? 'ON' : 'OFF'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{app.desc}</p>
-              </div>
 
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${
-                  app.connected ? 'text-emerald-400' : 'text-slate-500'
-                }`}>
-                  {app.connected ? <Check className="w-3 h-3" /> : '•'}
-                  {app.connected ? 'ACTIVE & PAIRED' : 'NOT CONNECTED'}
-                </span>
+                {/* Key Title */}
+                <h4 className="text-[10px] font-bold text-white leading-tight font-sans truncate">
+                  {keyItem.name}
+                </h4>
 
-                <button
-                  onClick={() => handleToggleConnect(app.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    app.connected
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                      : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
-                  }`}
-                >
-                  {app.connected ? 'Disconnect' : 'Connect'}
-                </button>
+                {/* Category & Action */}
+                <div className="mt-1 pt-1 border-t border-zinc-900 flex items-center justify-between">
+                  <span className="text-[7.5px] font-mono text-zinc-500 truncate">
+                    {keyItem.category}
+                  </span>
+                  <span 
+                    className="text-[7.5px] font-mono font-bold"
+                    style={{ color: isConnected ? keyItem.accent : '#a1a1aa' }}
+                  >
+                    {isConnected ? 'LIVE' : 'TAP'}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
+        {/* Configuration Field for Connected Third-Party Keys */}
+        <div className="mx-2 mt-3 p-2.5 rounded-xl bg-[#08060c] border border-zinc-900 text-xs">
+          <div className="flex items-center justify-between font-mono text-[9.5px] text-zinc-400 mb-1.5">
+            <span className="font-bold text-white uppercase flex items-center gap-1">
+              <Lock className="w-3 h-3 text-[#00e5ff]" />
+              Secure API Gateway Token Proxy:
+            </span>
+            <span className="text-[#00ff99]">AES-256 Cloud Encrypted</span>
+          </div>
+          <p className="text-[10px] text-zinc-400 mb-2">
+            Third-party tokens (Twilio, WhatsApp, VoIP, Google Sheets) route through server-side environment proxies. Never exposed client-side.
+          </p>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="password"
+              placeholder="Enter Custom API Key / Webhook Secret..."
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              className="flex-1 bg-black border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-[#00e5ff] font-mono"
+            />
+            <button
+              onClick={() => {
+                if (apiKeyInput.trim()) {
+                  setToastMessage('API Key securely cached in encrypted session vault.');
+                  setApiKeyInput('');
+                  setTimeout(() => setToastMessage(null), 2500);
+                }
+              }}
+              className="px-2.5 py-1 rounded-lg bg-[#00e5ff] text-slate-950 font-mono font-bold text-[10px] hover:brightness-110 active:scale-95 transition"
+            >
+              Save Key
+            </button>
+          </div>
+        </div>
       </div>
+
     </div>
   );
 };

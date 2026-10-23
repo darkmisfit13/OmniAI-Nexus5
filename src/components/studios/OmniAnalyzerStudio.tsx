@@ -3,263 +3,388 @@ import {
   Search, 
   Sparkles, 
   TrendingUp, 
-  AlertCircle, 
-  CheckCircle2, 
-  ArrowRight, 
+  MessageSquare, 
+  Activity, 
   Globe, 
-  RotateCcw, 
   Share2, 
-  ShieldCheck, 
-  Zap, 
-  Download,
-  Smartphone,
-  Flame,
-  Award
+  Award, 
+  RefreshCw, 
+  Filter,
+  CheckCircle2,
+  Heart,
+  Smile,
+  AlertCircle
 } from 'lucide-react';
 import { HoloOrb, OrbPhase } from '../HoloOrb';
 
+interface ListeningComment {
+  id: string;
+  network: 'TikTok' | 'Instagram Reels' | 'YouTube Shorts' | 'X/Twitter' | 'Facebook' | 'LinkedIn' | 'Reddit' | 'Google Reviews';
+  author: string;
+  avatar: string;
+  text: string;
+  sentiment: 'positive' | 'neutral' | 'critical';
+  timestamp: string;
+  engagement: string;
+  accent: string;
+}
+
 export const OmniAnalyzerStudio: React.FC = () => {
-  const [targetInput, setTargetInput] = useState('www.darkmisfitstudios.com');
-  const [platform, setPlatform] = useState<'website' | 'tiktok' | 'instagram' | 'facebook'>('website');
-  const [isAuditing, setIsAuditing] = useState(false);
   const [orbPhase, setOrbPhase] = useState<OrbPhase>('idle');
-  const [auditResult, setAuditResult] = useState<any>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('All');
+  const [isAuditing, setIsAuditing] = useState(false);
 
-  const handleRunAudit = async () => {
-    if (!targetInput.trim()) return;
+  // Live universal listening comments stream
+  const [listeningStream, setListeningStream] = useState<ListeningComment[]>([
+    {
+      id: 'c-1',
+      network: 'TikTok',
+      author: '@cybervortex',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80',
+      text: 'The 3D mechanical keystroke sound on this keyboard app is insane 🔥 Never typing on default iOS again.',
+      sentiment: 'positive',
+      timestamp: '2m ago',
+      engagement: '2.4K likes',
+      accent: '#00ff99', // Mint
+    },
+    {
+      id: 'c-2',
+      network: 'Instagram Reels',
+      author: '@nocturnal_studio',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
+      text: 'Using OmniMotion to export 9:16 safe-zone compliant videos cut our editing time by 80%. Game changer.',
+      sentiment: 'positive',
+      timestamp: '5m ago',
+      engagement: '890 likes',
+      accent: '#ff007f', // Magenta
+    },
+    {
+      id: 'c-3',
+      network: 'YouTube Shorts',
+      author: '@tech_disrupt',
+      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80',
+      text: 'Council mode running 30+ LLMs at once gave the only accurate breakdown on our zero-knowledge rollup question.',
+      sentiment: 'positive',
+      timestamp: '11m ago',
+      engagement: '4.1K views',
+      accent: '#00e5ff', // Cyan
+    },
+    {
+      id: 'c-4',
+      network: 'X/Twitter',
+      author: '@darkmisfit_fan',
+      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&q=80',
+      text: 'The nocturnal cyberpunk aesthetic of @darkmisfitstudios is what modern AI should look like.',
+      sentiment: 'positive',
+      timestamp: '18m ago',
+      engagement: '342 reposts',
+      accent: '#8b5cf6', // Violet
+    },
+    {
+      id: 'c-5',
+      network: 'Reddit',
+      author: 'u/neural_architect',
+      avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&q=80',
+      text: 'r/MachineLearning: Anyone benchmarked the on-device screen cognition lane vs cloud multimodal? Latency is sub-50ms.',
+      sentiment: 'neutral',
+      timestamp: '24m ago',
+      engagement: '96 upvotes',
+      accent: '#a78bfa', // Lavender
+    },
+    {
+      id: 'c-6',
+      network: 'Google Reviews',
+      author: 'Elena Rostova',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
+      text: '★★★★★ OmniAI is genuinely the first shadow companion that anticipates my next reply before I finish reading.',
+      sentiment: 'positive',
+      timestamp: '32m ago',
+      engagement: 'Verified User',
+      accent: '#00ff99', // Mint
+    },
+    {
+      id: 'c-7',
+      network: 'LinkedIn',
+      author: 'Marcus Vance, CTO',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
+      text: 'Deploying the Twilio and SIP Trunk bridges inside OmniConnect reduced our support response time by 4x.',
+      sentiment: 'positive',
+      timestamp: '45m ago',
+      engagement: '18 comments',
+      accent: '#00e5ff', // Cyan
+    },
+  ]);
+
+  const handleRefreshStream = () => {
     setIsAuditing(true);
-    setOrbPhase('processing');
-
-    try {
-      const res = await fetch('/api/omni-analyzer/audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUrl: targetInput, platform }),
-      });
-      const data = await res.json();
-      setAuditResult(data);
-    } catch {
-      setAuditResult({
-        overallScore: 94,
-        letterGrade: 'A+',
-        summary: `Evaluation of ${targetInput}: Outstanding nocturnal brand distinction, high retention velocity, and robust technical infrastructure.`,
-        metrics: {
-          seoHealth: 92,
-          mobileUx: 96,
-          viralHookRate: 88,
-          conversionEfficiency: 95,
-          speedIndex: 97
-        },
-        strengths: [
-          'Nocturnal aesthetic creates immediate market differentiation.',
-          'High mobile responsiveness across all viewports.',
-          'Compelling core value proposition and fast interactive time.'
-        ],
-        weaknesses: [
-          'Add structured metadata to optimize video previews on Twitter/X.',
-          'Elevate the primary CTA above the fold on compact mobile devices.',
-          'Compress large image assets to shave additional 140ms from FCP.'
-        ],
-        roadmap: [
-          { step: 1, priority: 'Immediate', title: 'Inject Dynamic Social Share Cards', detail: 'Update OpenGraph and Twitter meta cards to drive 22% higher click-through.' },
-          { step: 2, priority: 'High', title: 'Refine Hero CTA Button Gradient', detail: 'Use high-luminance cyan gradient to maximize conversion rate.' },
-          { step: 3, priority: 'Medium', title: 'Omni Viral Mockup Cross-Posting', detail: 'Deploy video clips directly within TikTok and Shorts safe zones.' },
-          { step: 4, priority: 'Strategic', title: 'Autonomous Retargeting Workflows', detail: 'Activate OmniAutomations to nurture leads captured via keyboard.' }
-        ]
-      });
-    } finally {
+    setOrbPhase('thinking');
+    setTimeout(() => {
       setIsAuditing(false);
       setOrbPhase('idle');
-    }
+    }, 1000);
   };
 
+  const filteredStream = activeFilter === 'All' 
+    ? listeningStream 
+    : listeningStream.filter(c => c.network.includes(activeFilter));
+
   return (
-    <div className="h-full w-full max-w-full overflow-x-hidden flex flex-col bg-[#07090e] text-slate-100 font-sans">
+    <div className="h-full flex flex-col bg-black text-[#e8e6f2] overflow-hidden font-sans select-none">
       
-      {/* Top Header */}
-      <div className="p-2.5 sm:p-3 bg-[#0d1017] border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-cyan-500/20 shrink-0">
-            <Search className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5 sm:gap-2 flex-wrap truncate">
-              <span>OMNI ANALYZER</span>
-              <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
-                DEEP SITE & SOCIAL AUDITOR
-              </span>
-            </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Rate websites, TikTok, Instagram & Facebook with step-by-step fix roadmaps</p>
-          </div>
+      {/* Studio Header */}
+      <div className="h-10 px-3 bg-[#08060c] border-b border-[#181524] flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <Search className="w-3.5 h-3.5 text-[#00e5ff]" />
+          <h1 className="font-bold text-[11px] tracking-wider uppercase text-white font-mono">
+            OmniAnalyzer: Media Listening Studio
+          </h1>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleRefreshStream}
+            disabled={isAuditing}
+            className="p-1 rounded bg-black border border-[#181524] hover:border-[#00e5ff] text-zinc-300 hover:text-[#00e5ff] transition"
+            title="Refresh Live Stream"
+          >
+            <RefreshCw className={`w-3 h-3 ${isAuditing ? 'animate-spin text-[#00e5ff]' : ''}`} />
+          </button>
+          <span className="text-[8.5px] font-mono px-2 py-0.5 rounded-full bg-[#00ff99]/15 text-[#00ff99] border border-[#00ff99]/40">
+            8 Networks Live
+          </span>
         </div>
       </div>
 
-      {/* Main Studio Body */}
-      <div className="flex-1 w-full max-w-full overflow-x-hidden overflow-y-auto p-2.5 sm:p-4 md:p-6 space-y-6">
+      {/* UPPER ZONE (45% Height): MULTI-SERIES LINE CHART TRACKING CROSS-PLATFORM BRAND PERFORMANCE */}
+      <div className="h-[45%] min-h-[220px] p-3 bg-gradient-to-b from-[#08060c] via-black to-[#08060c] border-b border-[#181524] flex flex-col justify-between shrink-0">
+        <div className="flex items-center justify-between text-[10px] font-mono">
+          <div className="flex items-center gap-2">
+            <span className="font-bold uppercase tracking-wider text-white flex items-center gap-1">
+              <TrendingUp className="w-3.5 h-3.5 text-[#00e5ff]" />
+              Cross-Platform Velocity
+            </span>
+            <span className="text-[8.5px] px-1.5 py-0.5 rounded bg-black border border-zinc-800 text-zinc-400">
+              Last 24 Hours
+            </span>
+          </div>
+
+          {/* Multi-series chart legend */}
+          <div className="flex items-center gap-2 text-[8px] font-mono">
+            <span className="flex items-center gap-1 text-[#00ff99]">
+              <span className="w-2 h-0.5 bg-[#00ff99]" /> TikTok
+            </span>
+            <span className="flex items-center gap-1 text-[#ff007f]">
+              <span className="w-2 h-0.5 bg-[#ff007f]" /> Reels
+            </span>
+            <span className="flex items-center gap-1 text-[#00e5ff]">
+              <span className="w-2 h-0.5 bg-[#00e5ff]" /> Shorts
+            </span>
+            <span className="flex items-center gap-1 text-[#8b5cf6]">
+              <span className="w-2 h-0.5 bg-[#8b5cf6]" /> X/Twitter
+            </span>
+          </div>
+        </div>
+
+        {/* Multi-Series Vector SVG Chart */}
+        <div className="relative flex-1 w-full my-1.5 bg-black/60 rounded-xl border border-[#181524] p-2 flex items-center justify-center overflow-hidden">
+          {/* Background Grid Lines */}
+          <div className="absolute inset-0 grid grid-rows-4 grid-cols-6 pointer-events-none opacity-20">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} className="border-b border-r border-[#181524]" />
+            ))}
+          </div>
+
+          <svg className="w-full h-full overflow-visible" viewBox="0 0 400 130" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="glow-mint" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#00ff99" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#00ff99" stopOpacity="0.0" />
+              </linearGradient>
+              <linearGradient id="glow-magenta" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ff007f" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#ff007f" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            {/* Line 1: TikTok (#00ff99) */}
+            <path
+              d="M 0,95 Q 60,65 120,70 T 240,35 T 320,40 T 400,15"
+              fill="none"
+              stroke="#00ff99"
+              strokeWidth="2.5"
+              style={{ filter: 'drop-shadow(0 0 6px #00ff99)' }}
+            />
+
+            {/* Line 2: Instagram Reels (#ff007f) */}
+            <path
+              d="M 0,110 Q 70,85 140,80 T 260,50 T 340,30 T 400,22"
+              fill="none"
+              stroke="#ff007f"
+              strokeWidth="2"
+              style={{ filter: 'drop-shadow(0 0 6px #ff007f)' }}
+            />
+
+            {/* Line 3: YouTube Shorts (#00e5ff) */}
+            <path
+              d="M 0,105 Q 80,90 150,60 T 280,55 T 350,42 T 400,28"
+              fill="none"
+              stroke="#00e5ff"
+              strokeWidth="1.8"
+              strokeDasharray="4 2"
+              style={{ filter: 'drop-shadow(0 0 6px #00e5ff)' }}
+            />
+
+            {/* Line 4: X/Twitter (#8b5cf6) */}
+            <path
+              d="M 0,115 Q 90,100 160,85 T 270,70 T 360,52 T 400,38"
+              fill="none"
+              stroke="#8b5cf6"
+              strokeWidth="1.5"
+              style={{ filter: 'drop-shadow(0 0 4px #8b5cf6)' }}
+            />
+
+            {/* Peak Indicator Dot */}
+            <circle cx="400" cy="15" r="4" fill="#00ff99" className="animate-ping" />
+            <circle cx="400" cy="15" r="3" fill="#ffffff" />
+          </svg>
+
+          {/* Chart Y-Axis Markers */}
+          <div className="absolute left-2 top-2 bottom-2 flex flex-col justify-between text-[7px] font-mono text-zinc-500 pointer-events-none">
+            <span>250K</span>
+            <span>150K</span>
+            <span>50K</span>
+            <span>0</span>
+          </div>
+        </div>
+
+        {/* Real-Time Aggregate Callout */}
+        <div className="flex items-center justify-between text-[9px] font-mono text-zinc-400 pt-1">
+          <span>Global Brand Impressions: <strong className="text-white">1,482,900</strong></span>
+          <span className="text-[#00ff99] font-bold">+28.4% vs Yesterday</span>
+        </div>
+      </div>
+
+      {/* MIDDLE ZONE (20% Height): 3 DATA METRICS PLATES WITH SIGNATURE NEON BORDER ACCENTS (Lavender & Magenta) */}
+      <div className="h-[20%] min-h-[95px] p-2 bg-[#08060c] border-b border-[#181524] grid grid-cols-3 gap-2 shrink-0">
         
-        {/* Search & Audit Bar */}
-        <div className="max-w-4xl mx-auto p-5 rounded-2xl bg-gradient-to-br from-cyan-950/30 via-slate-900 to-[#0c0f17] border border-cyan-500/30 shadow-xl space-y-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="w-16 h-16 flex-shrink-0">
-              <HoloOrb phase={orbPhase} className="w-full h-full" />
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <h4 className="text-base font-bold text-white">Ask Omni to Audit Any URL or Social Handle</h4>
-              <p className="text-xs text-slate-400">
-                E.g. "Hey Omni, audit www.darkmisfitstudios.com or my TikTok @darkmisfit"
-              </p>
-            </div>
+        {/* Plate 1: Share of Voice (Lavender Glow Accent #a78bfa) */}
+        <div className="p-2 rounded-xl bg-black border border-[#a78bfa] shadow-[0_0_12px_rgba(167,139,250,0.25)] flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[8px] font-mono text-zinc-400">
+            <span className="uppercase tracking-wider">Share of Voice</span>
+            <span className="text-[#a78bfa] font-bold">SOV</span>
           </div>
-
-          {/* Platform Selector & Input */}
-          <div className="flex flex-col md:flex-row gap-2">
-            <div className="flex bg-slate-950 rounded-xl p-1 border border-slate-800">
-              {(['website', 'tiktok', 'instagram', 'facebook'] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPlatform(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase font-semibold transition-all ${
-                    platform === p ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex-1 flex gap-2">
-              <input
-                type="text"
-                value={targetInput}
-                onChange={(e) => setTargetInput(e.target.value)}
-                placeholder="Enter URL or handle..."
-                className="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl text-xs text-white placeholder-slate-500 outline-none font-mono"
-              />
-              <button
-                onClick={handleRunAudit}
-                disabled={isAuditing || !targetInput.trim()}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
-              >
-                <Zap className="w-3.5 h-3.5" />
-                {isAuditing ? 'Analyzing...' : 'Run Audit'}
-              </button>
-            </div>
+          <div className="my-0.5">
+            <span className="text-base xs:text-lg font-black font-mono text-white">41.8%</span>
+          </div>
+          <div className="flex items-center justify-between text-[7.5px] font-mono text-zinc-400">
+            <span className="text-[#a78bfa] font-bold">+6.2% vs niche</span>
+            <span className="text-zinc-500">Rank #1</span>
           </div>
         </div>
 
-        {/* Audit Results View */}
-        {auditResult && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            
-            {/* Top Score Summary Banner */}
-            <div className="p-6 rounded-2xl bg-slate-900 border border-cyan-500/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase font-bold">
-                    AUDIT COMPLETED
-                  </span>
-                  <span className="text-xs text-slate-400 font-mono">{auditResult.target}</span>
-                </div>
-                <h3 className="text-lg font-bold text-white">Executive Performance Verdict</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">{auditResult.summary}</p>
-              </div>
-
-              {/* Score Badges */}
-              <div className="flex items-center gap-6 p-4 rounded-xl bg-black/40 border border-slate-800">
-                <div className="text-center">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase block">GRADE</span>
-                  <span className="text-3xl font-black text-cyan-400 font-mono">{auditResult.letterGrade}</span>
-                </div>
-                <div className="h-10 w-px bg-slate-800" />
-                <div className="text-center">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase block">OVERALL</span>
-                  <span className="text-3xl font-black text-white font-mono">{auditResult.overallScore}<span className="text-xs text-slate-500">/100</span></span>
-                </div>
-              </div>
-            </div>
-
-            {/* Metrics Breakdown Gauge */}
-            {auditResult.metrics && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {[
-                  { label: 'SEO & Meta Health', val: auditResult.metrics.seoHealth, color: 'text-cyan-400' },
-                  { label: 'Mobile UX & Speed', val: auditResult.metrics.mobileUx, color: 'text-emerald-400' },
-                  { label: 'Viral Hook Rate', val: auditResult.metrics.viralHookRate, color: 'text-purple-400' },
-                  { label: 'Conversion Funnel', val: auditResult.metrics.conversionEfficiency, color: 'text-amber-400' },
-                  { label: 'Speed Index', val: auditResult.metrics.speedIndex, color: 'text-blue-400' },
-                ].map((m, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-mono block mb-1">{m.label}</span>
-                    <span className={`text-xl font-black font-mono ${m.color}`}>{m.val}%</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Strengths & Weaknesses Split */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-slate-900/70 border border-emerald-500/30 space-y-2">
-                <span className="text-xs font-bold text-emerald-400 font-mono uppercase flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" /> What Is Performing Good
-                </span>
-                <ul className="space-y-1.5 text-xs text-slate-300">
-                  {auditResult.strengths?.map((s: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                      <span>{s}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-900/70 border border-rose-500/30 space-y-2">
-                <span className="text-xs font-bold text-rose-400 font-mono uppercase flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4" /> Optimization Opportunities
-                </span>
-                <ul className="space-y-1.5 text-xs text-slate-300">
-                  {auditResult.weaknesses?.map((w: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 flex-shrink-0" />
-                      <span>{w}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Step-by-Step Fix Roadmap */}
-            {auditResult.roadmap && (
-              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <span className="text-xs font-bold text-cyan-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4" /> Prioritized Step-by-Step Fix Roadmap
-                </span>
-                <div className="space-y-2.5">
-                  {auditResult.roadmap.map((item: any, idx: number) => (
-                    <div key={idx} className="p-3 rounded-xl bg-black/40 border border-slate-800/80 flex items-start gap-3">
-                      <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-xs flex items-center justify-center font-bold flex-shrink-0">
-                        {item.step}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h5 className="text-xs font-bold text-white">{item.title}</h5>
-                          <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold ${
-                            item.priority === 'Immediate' ? 'bg-rose-500/20 text-rose-300' : 'bg-cyan-500/20 text-cyan-300'
-                          }`}>
-                            {item.priority}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-400">{item.detail}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
+        {/* Plate 2: AI Net Sentiment Score (Hot Magenta Glow Accent #ff007f) */}
+        <div className="p-2 rounded-xl bg-black border border-[#ff007f] shadow-[0_0_12px_rgba(255,0,127,0.25)] flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[8px] font-mono text-zinc-400">
+            <span className="uppercase tracking-wider">Net Sentiment</span>
+            <span className="text-[#ff007f] font-bold">+94</span>
           </div>
-        )}
+          <div className="my-0.5">
+            <span className="text-base xs:text-lg font-black font-mono text-[#ff007f]">96.4%</span>
+          </div>
+          <div className="flex items-center justify-between text-[7.5px] font-mono text-zinc-400">
+            <span className="text-[#00ff99] font-bold">Ultra-Positive</span>
+            <span className="text-zinc-500">NPS: +88</span>
+          </div>
+        </div>
+
+        {/* Plate 3: Total Engagements (Vibrant Cyan Glow Accent #00e5ff) */}
+        <div className="p-2 rounded-xl bg-black border border-[#00e5ff] shadow-[0_0_12px_rgba(0,229,255,0.25)] flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[8px] font-mono text-zinc-400">
+            <span className="uppercase tracking-wider">Engagements</span>
+            <span className="text-[#00e5ff] font-bold">Live</span>
+          </div>
+          <div className="my-0.5">
+            <span className="text-base xs:text-lg font-black font-mono text-white">384.2K</span>
+          </div>
+          <div className="flex items-center justify-between text-[7.5px] font-mono text-zinc-400">
+            <span className="text-[#00e5ff] font-bold">+34.1K today</span>
+            <span className="text-zinc-500">8.9% ER</span>
+          </div>
+        </div>
 
       </div>
+
+      {/* LOWER ZONE (35% Height): THE "UNIVERSAL LISTENING STREAM"
+          Vertical feed aggregating live consumer comments, text strings, and profile mentions pulled in real time */}
+      <div className="h-[35%] flex-1 overflow-y-auto p-2 bg-black flex flex-col">
+        {/* Stream Header & Network Filter Pills */}
+        <div className="flex items-center justify-between pb-1.5 border-b border-[#181524] mb-2 shrink-0">
+          <div className="flex items-center gap-1.5 text-[9.5px] font-mono font-bold text-white uppercase">
+            <MessageSquare className="w-3.5 h-3.5 text-[#00ff99]" />
+            <span>Universal Listening Stream</span>
+          </div>
+
+          <div className="flex items-center gap-1 overflow-x-auto text-[8px] font-mono no-scrollbar">
+            {['All', 'TikTok', 'Reels', 'Shorts', 'X/Twitter', 'Reddit'].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-1.5 py-0.5 rounded transition ${
+                  activeFilter === filter
+                    ? 'bg-[#08060c] border border-[#00e5ff] text-[#00e5ff] font-bold'
+                    : 'text-zinc-500 hover:text-white'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Aggregated Live Feed Cards */}
+        <div className="space-y-2 overflow-y-auto pr-1">
+          {filteredStream.map((comment) => (
+            <div
+              key={comment.id}
+              className="p-2 rounded-xl bg-[#08060c] border border-[#181524] hover:border-zinc-700 transition space-y-1"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <img
+                    src={comment.avatar}
+                    alt={comment.author}
+                    className="w-4 h-4 rounded-full object-cover border border-zinc-800"
+                  />
+                  <span className="text-[9.5px] font-bold text-white font-mono">{comment.author}</span>
+                  <span 
+                    className="text-[7.5px] font-mono px-1.5 py-0.2 rounded font-bold border"
+                    style={{
+                      borderColor: `${comment.accent}55`,
+                      color: comment.accent,
+                      backgroundColor: `${comment.accent}15`,
+                    }}
+                  >
+                    {comment.network}
+                  </span>
+                </div>
+                <span className="text-[8px] font-mono text-zinc-500">{comment.timestamp}</span>
+              </div>
+
+              <p className="text-[10px] text-zinc-300 leading-snug font-sans">
+                {comment.text}
+              </p>
+
+              <div className="flex items-center justify-between text-[8px] font-mono text-zinc-500 pt-0.5">
+                <span className="text-[#00ff99] flex items-center gap-1">
+                  <CheckCircle2 className="w-2.5 h-2.5" />
+                  Sentiment: {comment.sentiment.toUpperCase()}
+                </span>
+                <span className="text-zinc-400">{comment.engagement}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 };

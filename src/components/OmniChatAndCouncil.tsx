@@ -66,7 +66,7 @@ export interface ChatMessage {
   sender: 'user' | 'omni' | 'council';
   text: string;
   timestamp: string;
-  mode?: 'normal' | 'council';
+  mode?: 'normal' | 'director' | 'council';
   audioTranscribed?: boolean;
   councilData?: {
     question: string;
@@ -86,10 +86,11 @@ export interface ChatMessage {
 interface OmniChatAndCouncilProps {
   onSaveToVault?: (asset: any) => void;
   onInsertToKeyboard?: (text: string) => void;
+  onNavigateToStudio?: (studioId: string) => void;
 }
 
-export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveToVault, onInsertToKeyboard }) => {
-  const [activeMode, setActiveMode] = useState<'normal' | 'council'>('normal');
+export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveToVault, onInsertToKeyboard, onNavigateToStudio }) => {
+  const [activeMode, setActiveMode] = useState<'normal' | 'director' | 'council'>('normal');
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -112,7 +113,7 @@ export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveTo
   const [failedMessage, setFailedMessage] = useState<{
     text: string;
     attachedImage: string | null;
-    mode: 'normal' | 'council';
+    mode: 'normal' | 'director' | 'council';
   } | null>(null);
 
   // Supabase Authentication & Threads State from Shared Context
@@ -439,7 +440,7 @@ export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveTo
     return raw.trim();
   };
 
-  const handleSendMessage = async (retryText?: string, retryImage?: string | null, retryMode?: 'normal' | 'council') => {
+  const handleSendMessage = async (retryText?: string, retryImage?: string | null, retryMode?: 'normal' | 'director' | 'council') => {
     const textToSend = typeof retryText === 'string' ? retryText : inputText;
     const imageToSend = retryImage !== undefined ? retryImage : attachedImage;
     const modeToUse = retryMode || activeMode;
@@ -557,7 +558,7 @@ export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveTo
         body: JSON.stringify({
           threadId: targetThreadId,
           messages: payloadMessages,
-          director: false,
+          director: modeToUse === 'director',
           council: modeToUse === 'council',
         }),
       });
@@ -717,26 +718,40 @@ export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveTo
             <span className={`w-1.5 h-1.5 rounded-full ${cloudSyncState.status === 'syncing' ? 'bg-amber-400 animate-ping' : 'bg-red-500'}`} />
           </button>
 
-          {/* Compact Mode Switcher */}
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5 text-xs font-semibold">
+          {/* 3-Way Mode Switcher ([Normal], [Director], [Council Engine]) */}
+          <div className="flex items-center bg-[#08060c] border border-[#181524] rounded-lg p-0.5 text-xs font-semibold">
             <button
               onClick={() => setActiveMode('normal')}
               className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all ${
                 activeMode === 'normal'
-                  ? 'bg-red-600 text-white font-bold shadow-sm shadow-red-950/40'
+                  ? 'bg-black text-[#00ff99] border border-[#00ff99] font-bold shadow-[0_0_8px_rgba(0,255,153,0.3)]'
                   : 'text-zinc-400 hover:text-white'
               }`}
+              title="Normal Mode: Standard text & voice conversational streams"
             >
               <Bot className="w-3 h-3" />
               <span className="text-[10px]">Normal</span>
             </button>
             <button
+              onClick={() => setActiveMode('director')}
+              className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all ${
+                activeMode === 'director'
+                  ? 'bg-black text-[#ff007f] border border-[#ff007f] font-bold shadow-[0_0_8px_rgba(255,0,127,0.3)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+              title="Director Mode: Autonomous studio navigation, variable injection & asset generation"
+            >
+              <Zap className="w-3 h-3" />
+              <span className="text-[10px]">Director</span>
+            </button>
+            <button
               onClick={() => setActiveMode('council')}
               className={`px-2 py-0.5 rounded-md flex items-center gap-1 transition-all ${
                 activeMode === 'council'
-                  ? 'bg-zinc-800 text-zinc-100 font-bold border border-zinc-700 shadow-sm'
+                  ? 'bg-black text-[#8b5cf6] border border-[#8b5cf6] font-bold shadow-[0_0_8px_rgba(139,92,246,0.3)]'
                   : 'text-zinc-400 hover:text-white'
               }`}
+              title="Council Mode: Multi-proxy routing to all 30+ LLMs with consensus synthesis"
             >
               <Users className="w-3 h-3" />
               <span className="text-[10px]">Council</span>
@@ -850,18 +865,100 @@ export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveTo
         </div>
       )}
 
-      {/* Council Mode Banner */}
-      {activeMode === 'council' && (
-        <div className="px-4 py-2 bg-[#121318] border-b border-zinc-800 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-zinc-200">
-            <Scale className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <span>
-              <strong>Quorum Deliberation:</strong> Gemini 3.5 Pro • Claude 3.5 Sonnet • GPT-4o • DeepSeek R1 • Llama 3.3 • Mistral Large
+      {/* UPPER SECTION (45-55% Height): Large 220px Deep Crimson Red Interactive Orb with particle sparkles */}
+      <div className="py-4 px-3 bg-gradient-to-b from-[#08060c] via-black to-[#08060c] border-b border-[#181524] flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
+        {/* Deep Crimson Ambient Glow */}
+        <div className="absolute w-64 h-64 rounded-full bg-red-600/15 blur-3xl pointer-events-none -top-10" />
+        
+        {/* 220px Container centered at top of OmniAI chat page */}
+        <div className="w-[220px] h-[220px] mx-auto relative flex items-center justify-center select-none">
+          <HoloOrb
+            phase={isGenerating ? 'thinking' : orbPhase}
+            status={isGenerating ? 'thinking' : orbPhase}
+            size="220"
+            className="w-[220px] h-[220px]"
+            onClick={() => {
+              if (omniVoice.getVoiceEnabled()) {
+                omniVoice.speak('OmniAI listening frequency aligned.');
+              }
+            }}
+          />
+        </div>
+
+        {/* Dynamic Status Hook Badge */}
+        <div className="mt-2.5 flex flex-col items-center gap-1 z-10">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/80 border border-[#181524] text-[10.5px] font-mono shadow-lg">
+            <span 
+              className={`w-2 h-2 rounded-full ${
+                isGenerating 
+                  ? 'bg-[#ff007f] shadow-[0_0_8px_#ff007f] animate-ping' 
+                  : orbPhase === 'talking'
+                  ? 'bg-[#00ff99] shadow-[0_0_8px_#00ff99] animate-pulse'
+                  : 'bg-[#dc2626] shadow-[0_0_8px_#dc2626]'
+              }`} 
+            />
+            <span className="font-bold uppercase tracking-wider text-white">
+              {isGenerating 
+                ? 'High-Velocity Sparkle Ring • Thinking' 
+                : orbPhase === 'talking'
+                ? 'Speech Displacement Wave • Talking'
+                : 'Radial Breathing Pulse • Omni Idle'}
             </span>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-zinc-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
-            <span>Consensus Synthesizer Active</span>
+          <span className="text-[9px] font-mono text-zinc-500">
+            Luminescent Deep Crimson Red Orb • Moving Particle Mesh
+          </span>
+        </div>
+      </div>
+
+      {/* Director Mode Banner */}
+      {activeMode === 'director' && (
+        <div className="px-4 py-2 bg-gradient-to-r from-[#ff007f]/15 via-black to-[#8b5cf6]/15 border-b border-[#ff007f]/30 flex flex-wrap items-center justify-between text-xs gap-2">
+          <div className="flex items-center gap-2 text-[#ff007f]">
+            <Zap className="w-4 h-4 text-[#ff007f] animate-pulse" />
+            <span className="text-zinc-200">
+              <strong className="text-[#ff007f]">Director Mode Active:</strong> Autonomous studio navigation, variable auto-fill & batch triggers.
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] font-mono">
+            {onNavigateToStudio && (
+              <>
+                <button
+                  onClick={() => onNavigateToStudio('wave')}
+                  className="px-2 py-0.5 rounded bg-black border border-[#00ff99]/50 text-[#00ff99] hover:bg-[#00ff99]/20 transition"
+                >
+                  → OmniVoice
+                </button>
+                <button
+                  onClick={() => onNavigateToStudio('beat')}
+                  className="px-2 py-0.5 rounded bg-black border border-[#00e5ff]/50 text-[#00e5ff] hover:bg-[#00e5ff]/20 transition"
+                >
+                  → Storyboard
+                </button>
+                <button
+                  onClick={() => onNavigateToStudio('imagine')}
+                  className="px-2 py-0.5 rounded bg-black border border-[#ff007f]/50 text-[#ff007f] hover:bg-[#ff007f]/20 transition"
+                >
+                  → OmniImagine
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Council Mode Banner */}
+      {activeMode === 'council' && (
+        <div className="px-4 py-2 bg-[#08060c] border-b border-[#8b5cf6]/40 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-zinc-200">
+            <Scale className="w-4 h-4 text-[#8b5cf6] flex-shrink-0 animate-pulse" />
+            <span>
+              <strong className="text-[#8b5cf6]">Enterprise Multi-Proxy Quorum:</strong> 30+ Backend LLMs Routed Simultaneously • Contradiction Deciphering Active
+            </span>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-[#a78bfa]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <span>Consensus Engine</span>
           </div>
         </div>
       )}
@@ -1111,36 +1208,43 @@ export const OmniChatAndCouncil: React.FC<OmniChatAndCouncilProps> = ({ onSaveTo
 
         {/* Input Bar */}
         <div className="flex items-center gap-2">
-          {/* Audio Transcribe File Upload */}
-          <input
-            type="file"
-            ref={audioFileInputRef}
-            onChange={handleAudioFileUpload}
-            accept="audio/*"
-            className="hidden"
-          />
-          <button
-            onClick={() => audioFileInputRef.current?.click()}
-            className="p-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center"
-            title="Upload Audio File for Transcription"
-          >
-            <FileAudio className="w-4 h-4" />
-          </button>
-
-          {/* Image Upload */}
+          {/* Universal Multimodal Attachment Upload (+ Button) */}
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleImageUpload}
-            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (file.type.startsWith('image/')) {
+                handleImageUpload(e);
+              } else if (file.type.startsWith('audio/')) {
+                handleAudioFileUpload(e);
+              } else if (file.type.startsWith('video/')) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setAttachedImage(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              } else {
+                // Text/code file
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const content = reader.result as string;
+                  setInputText((prev) => prev ? `${prev}\n\n[File: ${file.name}]\n${content.slice(0, 1500)}` : `[File: ${file.name}]\n${content.slice(0, 1500)}`);
+                };
+                reader.readAsText(file);
+              }
+            }}
+            accept="image/*,video/*,audio/*,.txt,.md,.json,.pdf"
             className="hidden"
           />
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center"
-            title="Attach Image for Vision Analysis"
+            className="p-2.5 rounded-xl border border-[#00e5ff] bg-black text-[#00e5ff] hover:bg-[#00e5ff]/20 hover:shadow-[0_0_12px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center font-bold active:scale-95 shrink-0"
+            title="Add Attachment (+ accepts Text, Audio, Images, and Videos)"
           >
-            <ImageIcon className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#00e5ff]" />
           </button>
 
           {/* Text Input Box */}

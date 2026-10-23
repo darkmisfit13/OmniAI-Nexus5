@@ -57,6 +57,7 @@ import { LiveCallView, CALLER_PRESETS, LiveCallCaller } from './components/LiveC
 import { OmniNexusSetupModel } from './components/OmniNexusSetupModel';
 import { MyAIIdentityView } from './components/MyAIIdentityView';
 import { useSwipeTabs, PRIMARY_TABS } from './hooks/useSwipeTabs';
+import { SwipeOnboardingOverlay } from './components/SwipeOnboardingOverlay';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'keyboard' | 'chat' | 'vision' | 'workspace' | 'extension' | 'studios' | 'sync' | 'setup' | 'admin' | 'identity'>('keyboard');
@@ -1375,6 +1376,9 @@ export default function App() {
           }
         }}
       />
+
+      {/* 12. SWIPE NAVIGATION ONBOARDING GESTURE OVERLAY */}
+      <SwipeOnboardingOverlay />
     </div>
   );
 }

@@ -29,7 +29,7 @@ export interface ChatMessage {
   sender: 'user' | 'omni' | 'council';
   text: string;
   timestamp: string;
-  mode?: 'normal' | 'council';
+  mode?: 'normal' | 'director' | 'council';
   audioTranscribed?: boolean;
   councilData?: {
     question: string;

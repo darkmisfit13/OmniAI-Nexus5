@@ -1748,6 +1748,56 @@ export const OmniMotionStudio: React.FC<OmniMotionStudioProps> = ({
                     <span className="text-[10px]">{superResActive ? 'ON' : 'OFF'}</span>
                   </button>
 
+                  {/* Real-time Motion Blur & Frame Interpolation Card */}
+                  <div className="p-3 rounded-xl bg-black/60 border border-[#00ff99]/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Flame className={`w-4 h-4 ${isMotionBlurEnabled ? 'text-[#00ff99] animate-pulse' : 'text-slate-400'}`} />
+                        <div>
+                          <span className="text-xs font-bold text-white block">Real-time Motion Blur</span>
+                          <span className="text-[9.5px] text-zinc-400 font-mono">Dynamic Frame Interpolation</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !isMotionBlurEnabled;
+                          setIsMotionBlurEnabled(next);
+                          setHandoffToast(next ? `Motion Blur Enabled (${realtimeMotionBlur}%)` : 'Motion Blur Disabled');
+                          setTimeout(() => setHandoffToast(null), 2000);
+                        }}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition ${
+                          isMotionBlurEnabled
+                            ? 'bg-[#00ff99]/20 text-[#00ff99] border border-[#00ff99]/40'
+                            : 'bg-white/10 text-slate-400 border border-white/10'
+                        }`}
+                      >
+                        {isMotionBlurEnabled ? 'ACTIVE' : 'OFF'}
+                      </button>
+                    </div>
+
+                    {isMotionBlurEnabled && (
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between items-center text-xs font-mono">
+                          <span className="text-zinc-300">Interpolation Intensity:</span>
+                          <span className="text-[#00ff99] font-bold">{realtimeMotionBlur}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={realtimeMotionBlur}
+                          onChange={(e) => setRealtimeMotionBlur(Number(e.target.value))}
+                          className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#00ff99]"
+                        />
+                        <div className="flex justify-between text-[8px] font-mono text-zinc-500">
+                          <span>0% Crisp Shutter</span>
+                          <span>100% Hyper-Speed Flow</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Watermark Eraser */}
                   <button
                     onClick={() => {

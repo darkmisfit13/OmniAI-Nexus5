@@ -34,9 +34,11 @@ export const OmniVoiceStudio: React.FC<OmniVoiceStudioProps> = ({ onSaveToVault 
   const [targetLanguage, setTargetLanguage] = useState<'en' | 'es' | 'ja' | 'fr' | 'de' | 'zh' | 'ko'>('en');
   const [scriptText, setScriptText] = useState('In a city consumed by silicon and shadow, our voices will be the only frequency they cannot silence.');
   
-  // 3 Sliders required: Emotional Expressiveness, Stability, Clarity
+  // Dedicated Vocal Naturalness Settings (0-100%)
+  const [stability, setStability] = useState(45);
+  const [styleExaggeration, setStyleExaggeration] = useState(60);
+  const [pacingVariation, setPacingVariation] = useState(35);
   const [emotionalExpressiveness, setEmotionalExpressiveness] = useState(65);
-  const [stability, setStability] = useState(40);
   const [clarity, setClarity] = useState(85);
 
   // Execution & Lip-Sync Processing
@@ -276,43 +278,31 @@ export const OmniVoiceStudio: React.FC<OmniVoiceStudioProps> = ({ onSaveToVault 
         </div>
       </div>
 
-      {/* ZONE 3 (Bottom 40% Height - 3 Sliders + Neon #00ffcc Action Button) */}
-      <div className="h-[40%] min-h-[260px] p-4 bg-black flex flex-col justify-between">
+      {/* ZONE 3 (Bottom 40% Height - Dedicated Vocal Naturalness Settings & Action Button) */}
+      <div className="h-[40%] min-h-[270px] p-3.5 bg-[#08060c] border-t border-zinc-900 flex flex-col justify-between overflow-y-auto">
         
-        {/* 3 Touch-Friendly Sliders */}
-        <div className="space-y-3">
-          
-          {/* Slider 1: Emotional Expressiveness */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-zinc-300 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#00ffcc]" />
-                Emotional Expressiveness
+        {/* Dedicated Vocal Naturalness Settings Section */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between pb-1 border-b border-zinc-900">
+            <div className="flex items-center gap-1.5">
+              <Sliders className="w-3.5 h-3.5 text-[#00ff99]" />
+              <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-white">
+                Vocal Naturalness Settings
               </span>
-              <span className="text-[#00ffcc] font-bold">{emotionalExpressiveness}%</span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={emotionalExpressiveness}
-              onChange={(e) => setEmotionalExpressiveness(Number(e.target.value))}
-              className="w-full h-1.5 bg-[#131024] rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
-            />
-            <div className="flex justify-between text-[8px] font-mono text-zinc-500">
-              <span>Monotone (0%)</span>
-              <span>Dramatic (100%)</span>
-            </div>
+            <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#00ff99]/15 text-[#00ff99] border border-[#00ff99]/30 font-bold">
+              48kHz Neural Dub
+            </span>
           </div>
 
-          {/* Slider 2: Stability */}
+          {/* Slider 1: Stability (0-100%) */}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-zinc-300 flex items-center gap-1">
-                <Sliders className="w-3 h-3 text-[#00ffcc]" />
-                Stability
+              <span className="text-zinc-300 flex items-center gap-1.5">
+                <Sliders className="w-3 h-3 text-[#00ff99]" />
+                <span className="font-bold">Stability</span>
               </span>
-              <span className="text-[#00ffcc] font-bold">{stability}%</span>
+              <span className="text-[#00ff99] font-bold">{stability}%</span>
             </div>
             <input
               type="range"
@@ -320,7 +310,7 @@ export const OmniVoiceStudio: React.FC<OmniVoiceStudioProps> = ({ onSaveToVault 
               max="100"
               value={stability}
               onChange={(e) => setStability(Number(e.target.value))}
-              className="w-full h-1.5 bg-[#131024] rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
+              className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-[#00ff99]"
             />
             <div className="flex justify-between text-[8px] font-mono text-zinc-500">
               <span>Raw Flaws (0%)</span>
@@ -328,26 +318,49 @@ export const OmniVoiceStudio: React.FC<OmniVoiceStudioProps> = ({ onSaveToVault 
             </div>
           </div>
 
-          {/* Slider 3: Clarity */}
+          {/* Slider 2: Style Exaggeration (0-100%) */}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-zinc-300 flex items-center gap-1">
-                <Volume2 className="w-3 h-3 text-[#00ffcc]" />
-                Clarity
+              <span className="text-zinc-300 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-[#ff007f]" />
+                <span className="font-bold">Style Exaggeration</span>
               </span>
-              <span className="text-[#00ffcc] font-bold">{clarity}%</span>
+              <span className="text-[#ff007f] font-bold">{styleExaggeration}%</span>
             </div>
             <input
               type="range"
               min="0"
               max="100"
-              value={clarity}
-              onChange={(e) => setClarity(Number(e.target.value))}
-              className="w-full h-1.5 bg-[#131024] rounded-lg appearance-none cursor-pointer accent-[#00ffcc]"
+              value={styleExaggeration}
+              onChange={(e) => setStyleExaggeration(Number(e.target.value))}
+              className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-[#ff007f]"
             />
             <div className="flex justify-between text-[8px] font-mono text-zinc-500">
-              <span>Atmospheric (0%)</span>
-              <span>Studio Isolated (100%)</span>
+              <span>Subtle Neutral (0%)</span>
+              <span>Dramatic Punch (100%)</span>
+            </div>
+          </div>
+
+          {/* Slider 3: Pacing Variation (0-100%) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-zinc-300 flex items-center gap-1.5">
+                <Activity className="w-3 h-3 text-[#00e5ff]" />
+                <span className="font-bold">Pacing Variation</span>
+              </span>
+              <span className="text-[#00e5ff] font-bold">{pacingVariation}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={pacingVariation}
+              onChange={(e) => setPacingVariation(Number(e.target.value))}
+              className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-[#00e5ff]"
+            />
+            <div className="flex justify-between text-[8px] font-mono text-zinc-500">
+              <span>Metronomic Cadence (0%)</span>
+              <span>Dynamic Human Pauses (100%)</span>
             </div>
           </div>
 
@@ -358,22 +371,22 @@ export const OmniVoiceStudio: React.FC<OmniVoiceStudioProps> = ({ onSaveToVault 
           <div className="space-y-1 py-1 font-mono text-xs">
             <div className="flex justify-between text-[10px]">
               <span className="text-zinc-400">Rendering Visemes & Neural Dub...</span>
-              <span className="text-[#00ffcc] font-bold">{syncProgress}%</span>
+              <span className="text-[#00e5ff] font-bold">{syncProgress}%</span>
             </div>
-            <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-black rounded-full overflow-hidden border border-zinc-900">
               <div 
-                className="h-full bg-gradient-to-r from-[#00d2c4] to-[#00ffcc] transition-all duration-300" 
+                className="h-full bg-gradient-to-r from-[#00ff99] to-[#00e5ff] transition-all duration-300" 
                 style={{ width: `${syncProgress}%` }}
               />
             </div>
           </div>
         )}
 
-        {/* Bottom Full-Width #00ffcc Action Button */}
+        {/* Bottom Full-Width 5-Color Cyber Gradient Action Button */}
         <button
           onClick={handleExecuteVoiceDub}
           disabled={isSynthesizing}
-          className="w-full py-3 rounded-xl bg-[#00ffcc] hover:bg-[#1affd4] text-slate-950 font-black font-mono text-xs tracking-wider uppercase shadow-lg shadow-[#00ffcc]/20 active:scale-98 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00ff99] to-[#00e5ff] hover:opacity-95 text-slate-950 font-black font-mono text-xs tracking-wider uppercase shadow-lg shadow-[#00ff99]/20 active:scale-98 transition flex items-center justify-center gap-2 disabled:opacity-50 mt-1"
         >
           <Mic className="w-4 h-4 text-slate-950 fill-current" />
           <span>Execute Voice Dub & Lip-Sync</span>

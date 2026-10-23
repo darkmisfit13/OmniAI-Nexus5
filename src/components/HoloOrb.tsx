@@ -3,6 +3,7 @@ import * as THREE from 'three';
 
 export type OrbPhase = 
   | 'idle' 
+  | 'thinking'
   | 'observing' 
   | 'analyzing' 
   | 'suggesting' 
@@ -16,7 +17,8 @@ export type OrbPhase =
 
 export interface HoloOrbProps {
   phase?: OrbPhase;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'hero' | string;
+  status?: OrbPhase; // Alias support for status === 'idle' | 'thinking' | 'talking'
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'hero' | '220' | 'chat220' | string;
   className?: string;
   onClick?: () => void;
   showStatusLabel?: boolean;
@@ -52,7 +54,7 @@ float fbm(vec3 p) {
 `;
 
 const vertexShader = /* glsl */ `
-uniform float uTime, uTurbulence, uPulse, uHover;
+uniform float uTime, uTurbulence, uPulse, uHover, uWaveMorph;
 uniform vec2 uPointer;
 varying vec3 vPosition, vNormal, vView;
 ${noiseGLSL}
@@ -62,7 +64,12 @@ void main() {
   float flow = fbm(n * 3.6 + vec3(uTime * 0.18, -uTime * 0.22, uTime * 0.11));
   vec3 pull = vec3(uPointer * 0.85, 0.8);
   float attraction = exp(-length(n.xy - uPointer * 0.75) * 3.2) * uHover;
-  vec3 p = position * (1.0 + flow * uTurbulence * 0.32 + sin(uTime * uPulse) * 0.025);
+  
+  // Audio wave displacement mapping when talking: dynamically morphs shell with speech harmonics
+  float audioWave = sin(n.y * 14.0 + uTime * 8.5) * cos(n.x * 12.0 + uTime * 6.2) * uWaveMorph * 0.16;
+  float pScale = 1.0 + flow * uTurbulence * 0.32 + sin(uTime * uPulse) * 0.035 + audioWave;
+
+  vec3 p = position * pScale;
   p += pull * attraction * 0.2;
   p.xy += vec2(-n.y, n.x) * flow * uHover * 0.14;
   vPosition = p;
@@ -74,9 +81,9 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */ `
-uniform float uTime, uTurbulence, uPulse, uHover;
+uniform float uTime, uTurbulence, uPulse, uHover, uMagentaShift;
 uniform vec2 uPointer;
-uniform vec3 uElectricCyan, uPlasmaViolet, uSapphireBlue;
+uniform vec3 uCrimsonCore, uDeepRuby, uDeepMagenta, uSparkleWhite;
 varying vec3 vPosition, vNormal, vView;
 ${noiseGLSL}
 
@@ -92,54 +99,70 @@ void main() {
   float core = pow(facing, 6.8) * (0.45 + 0.15 * sin(uTime * uPulse));
   float tint = clamp(n * 2.3 + p.x * 0.5 + 0.5, 0.0, 1.0);
 
-  // Clean Premium Dark-Mode Palette: Crimson Red (#dc2626), Deep Ruby (#7f1d1d), High-Contrast Zinc (#f4f4f5)
-  vec3 energy = mix(uPlasmaViolet, uElectricCyan, tint);
-  energy = mix(energy, uSapphireBlue, smoothstep(0.7, 0.95, p.x + n) * 0.4);
+  // Dynamic Shift towards Deep Magenta (#ff007f) when in thinking state
+  vec3 targetCore = mix(uCrimsonCore, uDeepMagenta, uMagentaShift);
+  vec3 targetRuby = mix(uDeepRuby, vec3(0.5, 0.02, 0.35), uMagentaShift);
 
-  vec3 col = energy * (0.12 + ribbon * 2.2 + fine * 0.6 + rim * 1.1);
-  col += uElectricCyan * core * 1.5 + mix(uElectricCyan, uPlasmaViolet, 0.45) * pow(facing, 18.0) * 0.75;
+  vec3 energy = mix(targetRuby, targetCore, tint);
+  energy = mix(energy, uSparkleWhite, smoothstep(0.75, 0.98, p.x + n) * 0.45);
 
-  gl_FragColor = vec4(col, 0.85 + ribbon * 0.15);
+  vec3 col = energy * (0.16 + ribbon * 2.4 + fine * 0.7 + rim * 1.35);
+  col += targetCore * core * 1.8 + mix(targetCore, targetRuby, 0.45) * pow(facing, 18.0) * 0.85;
+
+  gl_FragColor = vec4(col, 0.88 + ribbon * 0.12);
 }
 `;
 
 const particleVertex = /* glsl */ `
-uniform float uTime, uPulse;
+uniform float uTime, uPulse, uRingTightness;
 attribute float aSeed;
 varying float vSeed;
 
 void main() {
   vSeed = aSeed;
   vec3 p = position;
-  float angle = uTime * (0.24 + aSeed * 0.35);
+  
+  // In thinking mode: compress sparkles into a tight high-velocity spinning sparkle ring
+  float spinSpeed = mix(0.25 + aSeed * 0.35, 4.2 + aSeed * 1.5, uRingTightness);
+  float angle = uTime * spinSpeed;
   float c = cos(angle), s = sin(angle);
   p.xz = mat2(c, -s, s, c) * p.xz;
-  p *= 1.0 + sin(uTime * uPulse + aSeed * 6.28) * 0.05;
+
+  // Modulate radius: when uRingTightness is high, sparkles collapse into orbital equator ring
+  float ringRadius = mix(1.0, 0.72 + sin(aSeed * 6.28) * 0.08, uRingTightness);
+  p.xz *= ringRadius;
+  p.y = mix(p.y, sin(angle * 2.0 + aSeed * 3.14) * 0.18, uRingTightness * 0.85);
+
+  p *= 1.0 + sin(uTime * uPulse + aSeed * 6.28) * 0.06;
   vec4 view = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * view;
-  gl_PointSize = (1.6 + aSeed * 2.4) * (3.8 / -view.z);
+  gl_PointSize = mix(2.0 + aSeed * 2.6, 3.2 + aSeed * 3.0, uRingTightness) * (3.8 / -view.z);
 }
 `;
 
 const particleFragment = /* glsl */ `
-uniform vec3 uElectricCyan, uPlasmaViolet;
+uniform vec3 uCrimsonCore, uDeepMagenta, uSparkleWhite;
+uniform float uMagentaShift;
 varying float vSeed;
 
 void main() {
   float d = length(gl_PointCoord - 0.5);
   if (d > 0.5) discard;
-  vec3 c = mix(uPlasmaViolet, uElectricCyan, vSeed);
-  gl_FragColor = vec4(c, (1.0 - smoothstep(0.05, 0.5, d)) * 0.95);
+  vec3 baseColor = mix(uCrimsonCore, uDeepMagenta, uMagentaShift);
+  vec3 c = mix(baseColor, uSparkleWhite, vSeed);
+  gl_FragColor = vec4(c, (1.0 - smoothstep(0.04, 0.5, d)) * 0.95);
 }
 `;
 
 export const HoloOrb: React.FC<HoloOrbProps> = ({
-  phase = 'idle',
+  phase,
+  status,
   size = 'md',
   className = '',
   onClick,
   showStatusLabel = false,
 }) => {
+  const activePhase = (status || phase || 'idle') as OrbPhase;
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasWebGL, setHasWebGL] = useState(true);
 
@@ -149,6 +172,8 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
     md: 'w-11 h-11',
     lg: 'w-20 h-20',
     hero: 'w-60 h-60 sm:w-72 sm:h-72',
+    '220': 'w-[220px] h-[220px]',
+    chat220: 'w-[220px] h-[220px]',
   };
 
   const resolvedSizeClass = className.includes('w-') && className.includes('h-') 
@@ -179,20 +204,26 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       container.appendChild(renderer.domElement);
 
-      // Clean Premium Dark-Mode Palette: Crimson Red, Deep Ruby, Titanium Zinc
-      const uElectricCyan = new THREE.Color('#dc2626');
-      const uPlasmaViolet = new THREE.Color('#7f1d1d');
-      const uSapphireBlue = new THREE.Color('#f4f4f5');
+      // Massive luminescent Deep Crimson Red Orb palette:
+      // Crimson (#e11d48 / #dc2626), Deep Ruby (#881337 / #500724), Deep Magenta (#ff007f), Sparkles (#ffffff)
+      const uCrimsonCore = new THREE.Color('#dc2626');
+      const uDeepRuby = new THREE.Color('#7f1d1d');
+      const uDeepMagenta = new THREE.Color('#ff007f');
+      const uSparkleWhite = new THREE.Color('#ffffff');
 
       const uniforms = {
         uTime: { value: 0 },
-        uTurbulence: { value: 0.18 },
-        uPulse: { value: 1.2 },
+        uTurbulence: { value: 0.16 },
+        uPulse: { value: 1.0 },
         uHover: { value: 0 },
         uPointer: { value: new THREE.Vector2(0, 0) },
-        uElectricCyan: { value: uElectricCyan },
-        uPlasmaViolet: { value: uPlasmaViolet },
-        uSapphireBlue: { value: uSapphireBlue },
+        uCrimsonCore: { value: uCrimsonCore },
+        uDeepRuby: { value: uDeepRuby },
+        uDeepMagenta: { value: uDeepMagenta },
+        uSparkleWhite: { value: uSparkleWhite },
+        uMagentaShift: { value: 0.0 },
+        uRingTightness: { value: 0.0 },
+        uWaveMorph: { value: 0.0 },
       };
 
       const geometry = new THREE.SphereGeometry(1, 48, 36);
@@ -205,7 +236,7 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
       });
       const orbMesh = new THREE.Mesh(geometry, material);
 
-      const particleCount = 520;
+      const particleCount = 580;
       const positions = new Float32Array(particleCount * 3);
       const seeds = new Float32Array(particleCount);
 
@@ -213,7 +244,7 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
         const y = 1 - 2 * (i + 0.5) / particleCount;
         const radius = Math.sqrt(1 - y * y);
         const angle = i * 2.3999632;
-        const shell = 1.08 + 0.18 * (0.5 + 0.5 * Math.sin(i * 18.31));
+        const shell = 1.08 + 0.22 * (0.5 + 0.5 * Math.sin(i * 18.31));
         positions[i * 3] = Math.cos(angle) * radius * shell;
         positions[i * 3 + 1] = y * shell;
         positions[i * 3 + 2] = Math.sin(angle) * radius * shell;
@@ -270,59 +301,71 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
         const delta = Math.min(clock.getDelta(), 0.1);
 
         let speedMultiplier = 1.0;
-        let targetTurbulence = 0.18;
-        let targetPulse = 1.2;
+        let targetTurbulence = 0.16;
+        let targetPulse = 1.0;
+        let targetMagentaShift = 0.0;
+        let targetRingTightness = 0.0;
+        let targetWaveMorph = 0.0;
 
-        if (phase === 'idle') {
-          // Slow, hypnotic, breathing pulse when idle
-          speedMultiplier = 0.42;
+        // Specific status hooks per specification:
+        // 1. status === 'idle' -> Slow radial gradient breathing pulse with floating sparkles
+        // 2. status === 'thinking' -> Tight, high-velocity spinning sparkle ring, shifting toward deep magenta
+        // 3. status === 'talking' -> Audio wave displacement mapping that morphs the crimson orb shell dynamically in sync with the speech stream
+        if (activePhase === 'idle') {
+          speedMultiplier = 0.45;
           targetTurbulence = 0.08;
-          targetPulse = 0.8;
-        } else if (phase === 'analyzing' || phase === 'processing') {
-          // Intense turbulent spinning and neon bursts when thinking/calculating
-          speedMultiplier = 3.2;
-          targetTurbulence = 0.68;
-          targetPulse = 4.2;
-        } else if (phase === 'talking') {
-          // High-frequency sonic harmonic oscillation when OmniAI speaks aloud
-          speedMultiplier = 2.4;
-          targetTurbulence = 0.45;
-          targetPulse = 6.4;
-        } else if (phase === 'listening') {
-          speedMultiplier = 2.0;
-          targetTurbulence = 0.38;
-          targetPulse = 3.2;
-        } else if (phase === 'texting' || phase === 'typing') {
-          // Mechanical staccato ripple & keystroke cadence when user or AI is texting
-          speedMultiplier = 1.9;
-          targetTurbulence = 0.36;
-          targetPulse = 3.4;
-        } else if (phase === 'auto' || phase === 'directAction') {
-          // Autonomous auto-pilot high speed dispatch
+          targetPulse = 0.75;
+          targetMagentaShift = 0.0;
+          targetRingTightness = 0.0;
+          targetWaveMorph = 0.0;
+        } else if (activePhase === 'thinking' || activePhase === 'analyzing' || activePhase === 'processing') {
+          speedMultiplier = 3.8;
+          targetTurbulence = 0.75;
+          targetPulse = 4.5;
+          targetMagentaShift = 1.0; // Shifting toward deep magenta (#ff007f)
+          targetRingTightness = 1.0; // Tight high-velocity spinning sparkle ring
+          targetWaveMorph = 0.2;
+        } else if (activePhase === 'talking') {
+          speedMultiplier = 2.6;
+          targetTurbulence = 0.55;
+          targetPulse = 6.8;
+          targetMagentaShift = 0.3;
+          targetRingTightness = 0.25;
+          targetWaveMorph = 1.0; // Audio wave displacement mapping morphs shell dynamically
+        } else if (activePhase === 'listening') {
+          speedMultiplier = 2.2;
+          targetTurbulence = 0.4;
+          targetPulse = 3.6;
+          targetMagentaShift = 0.4;
+          targetRingTightness = 0.3;
+          targetWaveMorph = 0.5;
+        } else if (activePhase === 'auto' || activePhase === 'directAction') {
           speedMultiplier = 3.6;
-          targetTurbulence = 0.72;
-          targetPulse = 4.6;
-        } else if (phase === 'observing') {
-          speedMultiplier = 1.3;
-          targetTurbulence = 0.22;
-          targetPulse = 1.6;
-        } else if (phase === 'suggesting') {
+          targetTurbulence = 0.7;
+          targetPulse = 4.8;
+          targetMagentaShift = 0.8;
+          targetRingTightness = 0.8;
+          targetWaveMorph = 0.4;
+        } else {
           speedMultiplier = 1.2;
-          targetTurbulence = 0.20;
+          targetTurbulence = 0.22;
           targetPulse = 1.8;
         }
 
         uniforms.uTime.value += delta * speedMultiplier;
         uniforms.uTurbulence.value += (targetTurbulence - uniforms.uTurbulence.value) * 0.12;
         uniforms.uPulse.value += (targetPulse - uniforms.uPulse.value) * 0.12;
+        uniforms.uMagentaShift.value += (targetMagentaShift - uniforms.uMagentaShift.value) * 0.12;
+        uniforms.uRingTightness.value += (targetRingTightness - uniforms.uRingTightness.value) * 0.12;
+        uniforms.uWaveMorph.value += (targetWaveMorph - uniforms.uWaveMorph.value) * 0.15;
 
         currentPointer.lerp(targetPointer, 0.12);
         currentHover += (targetHover - currentHover) * 0.12;
         uniforms.uPointer.value.copy(currentPointer);
         uniforms.uHover.value = currentHover;
 
-        group.rotation.y += delta * 0.45 * speedMultiplier;
-        group.rotation.x += delta * 0.16;
+        group.rotation.y += delta * (0.45 + targetRingTightness * 1.8) * speedMultiplier;
+        group.rotation.x += delta * 0.18;
 
         renderer?.render(scene, camera);
       };
@@ -359,7 +402,7 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
       console.warn('ThreeJS WebGL context init notice:', err);
       setHasWebGL(false);
     }
-  }, [phase]);
+  }, [activePhase]);
 
   const getStatusLabel = () => {
     switch (phase) {
@@ -368,6 +411,7 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
       case 'texting':
       case 'typing':
         return 'Texting Stream';
+      case 'thinking':
       case 'analyzing':
       case 'processing':
         return 'Omni Thinking';

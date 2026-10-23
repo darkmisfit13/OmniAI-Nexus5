@@ -90,6 +90,8 @@ export const studioMeta: Record<StudioId, { name: string; tag: string; icon: any
   connect: { name: 'OmniConnect', tag: 'App Integrations Catalog', icon: Network },
 };
 
+import { OmniPromptHeader } from './OmniPromptHeader';
+
 export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
   onInsertToKeyboard,
   currentScreenName,
@@ -112,29 +114,37 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
     selectedStudio === 'mockup' || 
     selectedStudio === 'forge' || 
     selectedStudio === 'vector' ||
-    selectedStudio === 'yale';
+    selectedStudio === 'yale' ||
+    selectedStudio === 'architect';
 
   return (
-    <div className="omni-mobile-wrapper h-full flex flex-col bg-[#030303] text-slate-100 overflow-hidden font-sans">
+    <div className="omni-mobile-wrapper h-full flex flex-col bg-black text-[#e8e6f2] overflow-hidden font-sans">
       
+      {/* Permanent Floating Text Input Header Across All Studios */}
+      <OmniPromptHeader
+        currentStudioId={selectedStudio}
+        onNavigateStudio={(id) => onSelectStudio?.(id)}
+        onOpenChat={onOpenCompanion}
+      />
+
       {/* Sleek Mobile Studio Top Bar with Back Button (Hidden for OmniMotion which has its own CapCut Top Bar) */}
       {!isMotionStudio && (
-        <div className="h-12 px-3 bg-[#0a0d16] border-b border-white/5 flex items-center justify-between flex-shrink-0">
+        <div className="h-10 px-3 bg-[#08060c] border-b border-[#181524] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             {onBackToHome && (
               <button
                 onClick={onBackToHome}
-                className="p-1.5 -ml-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all flex items-center gap-0.5 text-xs font-semibold"
+                className="p-1 -ml-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center gap-0.5 text-xs font-semibold"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Back</span>
               </button>
             )}
 
-            <div className="flex items-center gap-1.5 pl-1 border-l border-slate-800">
-              <Icon className="w-4 h-4 text-[#00ffcc]" />
+            <div className="flex items-center gap-1.5 pl-1 border-l border-[#181524]">
+              <Icon className="w-3.5 h-3.5 text-[#00e5ff]" />
               <span className="font-bold text-xs text-white">{meta.name}</span>
-              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+              <span className="text-[10px] text-zinc-400 font-mono hidden sm:inline">
                 ({meta.tag})
               </span>
             </div>
@@ -144,10 +154,10 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
             {onOpenCompanion && (
               <button
                 onClick={onOpenCompanion}
-                className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-950/90 to-indigo-950/90 border border-[#00ffcc]/40 hover:border-[#00ffcc] text-cyan-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                className="px-2 py-1 rounded-lg bg-[#08060c] border border-[#00e5ff]/50 hover:border-[#00e5ff] text-[#00e5ff] text-[10px] font-mono font-bold flex items-center gap-1 transition-all shadow-sm active:scale-95"
                 title="Open OmniAI Studio Companion"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <Sparkles className="w-3 h-3 text-[#00e5ff]" />
                 <span>OmniAI</span>
               </button>
             )}
@@ -156,10 +166,10 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
             {onOpenSidebar && (
               <button
                 onClick={onOpenSidebar}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-[#00ffcc]/40 text-[#00ffcc] text-[11px] font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                className="px-2 py-1 rounded-lg bg-black border border-[#181524] hover:border-[#8b5cf6]/60 text-[#a78bfa] text-[10px] font-mono font-bold flex items-center gap-1 transition-all shadow-sm"
               >
-                <Layers className="w-3 h-3 text-[#00ffcc]" />
-                <span>Switch Studio</span>
+                <Layers className="w-3 h-3 text-[#8b5cf6]" />
+                <span>Studios</span>
               </button>
             )}
           </div>
@@ -187,7 +197,14 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
         {selectedStudio === 'spatial' && <OmniSpatial3DStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'mockup' && <OmniViralMockupStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'cosmic' && <OmniCosmicUILab />}
-        {selectedStudio === 'architect' && <OmniArchitectStudio />}
+        {selectedStudio === 'architect' && (
+          <OmniArchitectStudio 
+            onSaveToVault={onSaveToVault}
+            onBackToHome={onBackToHome}
+            onOpenSidebar={onOpenSidebar}
+            onOpenCompanion={onOpenCompanion}
+          />
+        )}
         {selectedStudio === 'automations' && <OmniAutomationsStudio />}
         {selectedStudio === 'connect' && <OmniConnectCatalog />}
       </div>
