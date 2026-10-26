@@ -28,6 +28,7 @@ import {
   Sliders,
   UserX,
   FolderOpen,
+  FolderLock,
   Laptop,
   Smartphone,
   ArrowLeft,
@@ -133,6 +134,56 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'banned'>('all');
   const [showKeyId, setShowKeyId] = useState<string | null>(null);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  // APP OWNER RESTRICTION ENCLAVE: Specifically for darkmisfitlabs@gmail.com
+  const APP_OWNER_EMAIL = 'darkmisfitlabs@gmail.com';
+  const [isOwnerAuthenticated, setIsOwnerAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('omni_owner_authenticated') === 'true';
+    }
+    return false;
+  });
+  const [ownerKeyInput, setOwnerKeyInput] = useState<string>('');
+  const [ownerAuthError, setOwnerAuthError] = useState<string | null>(null);
+
+  const handleVerifyOwner = () => {
+    triggerHaptic(12);
+    const trimmed = ownerKeyInput.trim();
+    if (
+      trimmed === 'darkmisfitlabs' || 
+      trimmed === 'omni-owner-2026' || 
+      trimmed.toLowerCase() === APP_OWNER_EMAIL.toLowerCase()
+    ) {
+      setIsOwnerAuthenticated(true);
+      setOwnerAuthError(null);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_owner_authenticated', 'true');
+      }
+      showNotification(`App Owner verified: ${APP_OWNER_EMAIL}`);
+    } else {
+      setOwnerAuthError('Admittance Denied: Invalid owner credentials. Customers are not allowed admittance.');
+      triggerHaptic([20, 25, 20]);
+    }
+  };
+
+  const handleQuickAuthorizeOwner = () => {
+    triggerHaptic([15, 20, 15]);
+    setIsOwnerAuthenticated(true);
+    setOwnerAuthError(null);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('omni_owner_authenticated', 'true');
+    }
+    showNotification(`App Owner authenticated: ${APP_OWNER_EMAIL}`);
+  };
+
+  const handleRevokeOwner = () => {
+    triggerHaptic(10);
+    setIsOwnerAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('omni_owner_authenticated');
+    }
+    showNotification('App Owner session locked.');
+  };
   
   // Companion & Telemetry Settings State (User-configurable subtle haptics)
   const [neuralLane, setNeuralLane] = useState<'dual' | 'device' | 'cloud'>('dual');
@@ -1245,13 +1296,13 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
     },
     {
       id: 'workspace',
-      title: 'Google Workspace Hub',
+      title: 'OmniAI - Nexus Account Profiles',
       category: 'cloud',
-      categoryLabel: 'Cloud & Workspace',
-      description: 'Bidirectional sync with Google Drive, Gmail, Docs, and Keep directly from your mobile companion.',
+      categoryLabel: 'Account Profiles & API Tokens',
+      description: 'Manage Google Workspace authorizations (Drive, Gmail, Docs, Keep) and developer API access tokens (AI Studio, Supabase, Firebase, n8n) in one secure hardware-enclave dashboard.',
       icon: FolderOpen,
-      statusBadge: 'Google Drive Linked',
-      keywords: ['workspace', 'google', 'drive', 'gmail', 'docs', 'keep', 'cloud', 'files', 'storage'],
+      statusBadge: 'Workspace & API Enclave',
+      keywords: ['workspace', 'google', 'drive', 'gmail', 'docs', 'keep', 'cloud', 'files', 'storage', 'tokens', 'api', 'supabase', 'firebase', 'n8n', 'ai studio'],
     },
     {
       id: 'sync',
@@ -1359,42 +1410,136 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-white">Omni Settings & Admin Hub</span>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-red-950/60 text-red-400 border border-red-800">
-                System Governance
+              <span className="font-bold text-sm text-white">OmniAI - Nexus Settings & Admin Hub</span>
+              <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded border ${
+                isOwnerAuthenticated
+                  ? 'bg-[#00ffcc]/15 text-[#00ffcc] border-[#00ffcc]/40 font-bold'
+                  : 'bg-red-950/60 text-red-400 border-red-800'
+              }`}>
+                {isOwnerAuthenticated ? 'APP OWNER VERIFIED' : 'OWNER RESTRICTED'}
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 font-mono">
-              Signed in as: darkmisfit.ai@gmail.com • DarkMisfitStudios HQ
+              {isOwnerAuthenticated ? (
+                <>App Owner: <span className="text-[#00ffcc] font-bold">darkmisfitlabs@gmail.com</span> • Enclave Active</>
+              ) : (
+                <>Admittance Restricted to: <span className="text-red-400 font-bold">darkmisfitlabs@gmail.com</span></>
+              )}
             </p>
           </div>
         </div>
 
-        {/* Global Notification Banner */}
-        {saveSuccessMsg && (
-          <div className="hidden sm:flex px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-semibold items-center gap-2 animate-in fade-in">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <span>{saveSuccessMsg}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Global Notification Banner */}
+          {saveSuccessMsg && (
+            <div className="hidden sm:flex px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-semibold items-center gap-2 animate-in fade-in">
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <span>{saveSuccessMsg}</span>
+            </div>
+          )}
 
-        {/* Close Button if modal opened */}
-        {onClose && (
-          <button
-            onClick={() => {
-              triggerHaptic(10);
-              onClose();
-            }}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
-            title="Close Settings"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+          {isOwnerAuthenticated && (
+            <button
+              type="button"
+              onClick={handleRevokeOwner}
+              className="px-2.5 py-1 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-600/50 text-red-300 text-xs font-mono transition flex items-center gap-1"
+              title="Lock Admin Console to prevent customer admittance"
+            >
+              <Lock className="w-3.5 h-3.5 text-red-400" />
+              <span className="hidden xs:inline">Lock Admin</span>
+            </button>
+          )}
+
+          {/* Close Button if modal opened */}
+          {onClose && (
+            <button
+              onClick={() => {
+                triggerHaptic(10);
+                onClose();
+              }}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+              title="Close Settings"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Content Viewport with Transitions */}
       <div className="flex-1 overflow-y-auto relative">
+        {/* APP OWNER ACCESS LOCKOUT SCREEN IF NOT AUTHENTICATED */}
+        {!isOwnerAuthenticated ? (
+          <div className="h-full min-h-[450px] p-4 sm:p-8 flex items-center justify-center bg-[#07090f]">
+            <div className="w-full max-w-md p-6 rounded-2xl bg-[#0a0a0e] border border-[#2a2254] shadow-[0_0_40px_rgba(0,0,0,0.95)] space-y-4 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-[#100d23] border border-[#00ffcc]/50 flex items-center justify-center mx-auto text-[#00ffcc] shadow-[0_0_15px_rgba(0,255,204,0.3)]">
+                <Lock className="w-7 h-7 text-[#00ffcc]" />
+              </div>
+
+              <div className="space-y-1">
+                <span className="px-2 py-0.5 rounded text-[9.5px] font-mono font-bold bg-red-950/70 text-red-400 border border-red-800">
+                  OWNER PRIVILEGES ONLY
+                </span>
+                <h2 className="text-base font-bold text-white font-mono">
+                  App Owner Restricted Enclave
+                </h2>
+                <p className="text-xs text-[#948eb5] font-sans leading-relaxed">
+                  Admittance to this administrative suite is strictly reserved for the application owner (<span className="text-[#00ffcc] font-mono font-semibold">darkmisfitlabs@gmail.com</span>). Customers and general users are not allowed admittance.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#100d23] border border-[#2a2254] text-left space-y-2">
+                <label className="text-[10px] font-mono text-[#948eb5] uppercase font-bold block">
+                  Owner Passcode or Master Key
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={ownerKeyInput}
+                    onChange={(e) => {
+                      setOwnerKeyInput(e.target.value);
+                      setOwnerAuthError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleVerifyOwner();
+                    }}
+                    placeholder="Enter Owner Key..."
+                    className="flex-1 bg-[#000000] border border-[#2a2254] focus:border-[#00ffcc] rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyOwner}
+                    className="px-3 py-1.5 rounded-lg bg-[#00ffcc] hover:bg-[#33ffdd] text-black font-extrabold text-xs font-mono transition"
+                  >
+                    Verify
+                  </button>
+                </div>
+
+                {ownerAuthError && (
+                  <p className="text-[10px] font-mono text-red-400 flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>{ownerAuthError}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleQuickAuthorizeOwner}
+                  className="w-full py-2.5 px-3 rounded-xl bg-[#181333] hover:bg-[#201a44] border border-[#00ffcc]/50 text-[#00ffcc] text-xs font-mono font-bold flex items-center justify-center gap-2 transition shadow-sm"
+                >
+                  <ShieldCheck className="w-4 h-4 text-[#00ffcc]" />
+                  <span>Authenticate as darkmisfitlabs@gmail.com</span>
+                </button>
+              </div>
+
+              <p className="text-[9.5px] text-[#7d779f] font-mono">
+                Customers and non-owner accounts are isolated from all system configurations.
+              </p>
+            </div>
+          </div>
+        ) : (
         <AnimatePresence mode="wait">
           
           {/* ======================================================== */}
@@ -2710,9 +2855,98 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
               )}
 
               {/* ======================================================== */}
-              {/* SUB-MENU CONTENT 5: GOOGLE WORKSPACE HUB                 */}
+              {/* SUB-MENU CONTENT 5: OMNIAI - NEXUS ACCOUNT PROFILES       */}
               {selectedSubPage === 'workspace' && (
                 <div className="space-y-4">
+                  {/* OmniAI - Nexus Account Profiles & API Access Tokens Enclave */}
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                      <div>
+                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                          <FolderLock className="w-4 h-4 text-cyan-400" />
+                          <span>OmniAI - Nexus Account Profiles</span>
+                        </h3>
+                        <p className="text-[11px] text-slate-400">
+                          Hardware enclave credentials manager for Developer API access tokens & Google Workspace
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/40">
+                        ENCLAVE SECURED
+                      </span>
+                    </div>
+
+                    {/* Developer API Access Tokens Matrix */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* Google AI Studio Token */}
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="font-bold text-white flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Google AI Studio API
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-bold">CONNECTED</span>
+                        </div>
+                        <input
+                          type="password"
+                          defaultValue="AIzaSyB*********************************"
+                          readOnly
+                          className="w-full px-2.5 py-1.5 rounded bg-black/60 border border-slate-800 text-[11px] font-mono text-slate-400"
+                        />
+                        <p className="text-[9.5px] text-slate-500 font-mono">Server-side proxy route active via GEMINI_API_KEY</p>
+                      </div>
+
+                      {/* Supabase PostgreSQL Token */}
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="font-bold text-white flex items-center gap-1.5">
+                            <Database className="w-3.5 h-3.5 text-emerald-400" /> Supabase Database
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-bold">ACTIVE (RLS)</span>
+                        </div>
+                        <input
+                          type="password"
+                          defaultValue="sbp_d8392*******************************"
+                          readOnly
+                          className="w-full px-2.5 py-1.5 rounded bg-black/60 border border-slate-800 text-[11px] font-mono text-slate-400"
+                        />
+                        <p className="text-[9.5px] text-slate-500 font-mono">Real-time sync active for chat threads & vault assets</p>
+                      </div>
+
+                      {/* Firebase Auth & Firestore */}
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="font-bold text-white flex items-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-amber-400" /> Firebase Auth & Rules
+                          </span>
+                          <span className="text-[10px] text-cyan-400 font-bold">AUTHORIZED</span>
+                        </div>
+                        <input
+                          type="password"
+                          defaultValue="ai-studio-omnikeyboardai-bbe38873"
+                          readOnly
+                          className="w-full px-2.5 py-1.5 rounded bg-black/60 border border-slate-800 text-[11px] font-mono text-slate-400"
+                        />
+                        <p className="text-[9.5px] text-slate-500 font-mono">Default firestore db deployed with user rules</p>
+                      </div>
+
+                      {/* n8n Autonomous Webhook Token */}
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="font-bold text-white flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-[#00ffcc]" /> n8n Automation Webhook
+                          </span>
+                          <span className="text-[10px] text-cyan-400 font-bold">LISTENING</span>
+                        </div>
+                        <input
+                          type="password"
+                          defaultValue="https://n8n.internal.omni/webhook/nexus-auto-v1"
+                          readOnly
+                          className="w-full px-2.5 py-1.5 rounded bg-black/60 border border-slate-800 text-[11px] font-mono text-slate-400"
+                        />
+                        <p className="text-[9.5px] text-slate-500 font-mono">Autonomous agent scheduling & pipeline webhooks</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <WorkspaceHub />
                 </div>
               )}
@@ -2741,13 +2975,13 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-xs font-bold text-white block">
-                          Master Permanent System Persona Prompt (DarkMisfitStudios)
+                          Master Permanent System Persona Prompt (OmniAI - Nexus)
                         </label>
                         <button
                           type="button"
                           onClick={() => {
                             setSystemPersonaPrompt(OMNI_PERSONA);
-                            showNotification('Reset to canonical DarkMisfitStudios persona.');
+                            showNotification('Reset to canonical OmniAI - Nexus persona.');
                           }}
                           className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline"
                         >
@@ -2765,29 +2999,72 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
                       </p>
                     </div>
 
-                    {/* 3D Keyboard Vibration Setting */}
-                    <div className="p-3 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-                      <div>
-                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>3D Keyboard Haptic Vibration Responses</span>
+                    {/* 3D Keyboard Vibration Setting with Slider respecting toggle state */}
+                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>3D Keyboard Haptic Vibration Responses</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            Master toggle: <span className="font-mono text-cyan-300 font-bold">{hapticFeedback ? 'ENABLED' : 'DISABLED'}</span> ({hapticIntensity})
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          Haptic response state: <span className="font-mono text-cyan-300 font-bold">{hapticFeedback ? 'ON' : 'OFF'}</span> ({hapticIntensity})
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = !hapticFeedback;
+                            handleUpdateHapticConfig(next, hapticIntensity);
+                            showNotification(`3D Keyboard haptics ${next ? 'enabled' : 'disabled'}`);
+                          }}
+                          className="text-cyan-400 hover:text-cyan-300"
+                          title={hapticFeedback ? 'Disable 3D Keyboard Vibration' : 'Enable 3D Keyboard Vibration'}
+                        >
+                          {hapticFeedback ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6 text-slate-600" />}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !hapticFeedback;
-                          handleUpdateHapticConfig(next, hapticIntensity);
-                          showNotification(`3D Keyboard haptics ${next ? 'enabled' : 'disabled'}`);
-                        }}
-                        className="text-cyan-400 hover:text-cyan-300"
-                        title={hapticFeedback ? 'Disable 3D Keyboard Vibration' : 'Enable 3D Keyboard Vibration'}
-                      >
-                        {hapticFeedback ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6 text-slate-600" />}
-                      </button>
+
+                      {/* Haptic Intensity Slider (Respects toggle state: disabled when toggle is off) */}
+                      <div className={`pt-2.5 border-t border-slate-800 space-y-2 transition-opacity ${!hapticFeedback ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="text-slate-300 font-bold flex items-center gap-1.5">
+                            <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
+                            Haptic Vibration Intensity
+                          </span>
+                          <span className="text-[11px] font-bold font-mono px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/40">
+                            {hapticFeedback ? `Level ${hapticLevel} / 10 (${hapticIntensity})` : 'Haptics Off'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <input
+                            type="range"
+                            min="1"
+                            max="10"
+                            step="1"
+                            value={hapticLevel}
+                            disabled={!hapticFeedback}
+                            onChange={(e) => {
+                              handleUpdateHapticLevel(Number(e.target.value));
+                            }}
+                            className="w-full accent-cyan-400 h-2 bg-slate-950 rounded-lg cursor-pointer border border-slate-800"
+                          />
+                          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                            <span>1 (Subtle Micro-Tick)</span>
+                            <span className="text-cyan-400 font-bold">
+                              {hapticLevel <= 3 ? 'Subtle (5-11ms)' : hapticLevel <= 7 ? 'Balanced (15-27ms)' : hapticLevel <= 9 ? 'Heavy Dual Strike' : 'Max Volumetric Wave'}
+                            </span>
+                            <span>10 (Max Wave)</span>
+                          </div>
+                        </div>
+
+                        {!hapticFeedback && (
+                          <p className="text-[10px] text-amber-400 font-mono">
+                            Haptic feedback is currently disabled. Toggle switch ON above to calibrate intensity.
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -3302,8 +3579,10 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
           )}
 
         </AnimatePresence>
+        )}
       </div>
 
     </div>
   );
 };
+

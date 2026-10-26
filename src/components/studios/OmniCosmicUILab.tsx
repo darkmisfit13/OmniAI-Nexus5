@@ -60,7 +60,7 @@ export const OmniCosmicUILab: React.FC = () => {
           </div>
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              OMNI COSMIC UI LAB
+              OMNIAI - NEXUS COSMIC UI LAB
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
                 GENERATIVE COMPONENT CANVAS
               </span>
@@ -129,7 +129,7 @@ export const OmniCosmicUILab: React.FC = () => {
               </div>
 
               <div className="space-y-2 text-xs text-slate-300 py-3 border-t border-slate-800">
-                <div className="flex items-center gap-2">✓ All 13 Omni AI Creative Studios</div>
+                <div className="flex items-center gap-2">✓ All 14 OmniAI - Nexus Creative Studios</div>
                 <div className="flex items-center gap-2">✓ Multi-Track CapCut & Suno Engines</div>
                 <div className="flex items-center gap-2">✓ Instant React 19 / Tailwind Export</div>
               </div>
@@ -140,12 +140,26 @@ export const OmniCosmicUILab: React.FC = () => {
                 }}
                 className="w-full mt-4 py-2.5 rounded-xl text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 transition-all"
               >
-                Local Mock Action
+                OmniAI - Nexus Action
               </button>
             </div>
           </div>
 
-          <div className="absolute bottom-4 left-6 text-xs font-mono text-slate-400">
+          {/* Compiling Logs Section */}
+          <div className="w-full max-w-xl mt-4 p-2.5 rounded-xl bg-black/90 border border-slate-800 text-[10px] font-mono text-slate-400 space-y-1">
+            <div className="flex items-center justify-between text-cyan-400 font-bold border-b border-slate-800 pb-1">
+              <span>OmniAI - Nexus Cosmic UI Compiling Logs</span>
+              <span className="text-[9px] text-emerald-400">BUILD: SYNCHRONIZED</span>
+            </div>
+            <div className="space-y-0.5 text-slate-400">
+              <p className="text-emerald-400">[08:14:02] [ARCH] Initializing OmniAI - Nexus wireframe token pipeline...</p>
+              <p>[08:14:03] [VIEWPORT] 3-Pane Viewport Carousel mounted (Advice ◀ • Chat • ▶ Utility).</p>
+              <p>[08:14:04] [ENCLAVE] OmniAI - Nexus Account Profiles authorized for API tokens.</p>
+              <p>[08:14:05] [TOKENS] Obsidian Black (#000000) & Neon Bluish Green (#00ffcc) compiled.</p>
+            </div>
+          </div>
+
+          <div className="absolute bottom-2 left-6 text-[10px] font-mono text-slate-500">
             Viewport: {viewport.toUpperCase()} • Gradient Angle: 135deg • Tailwind v4 Compatible
           </div>
         </div>
@@ -187,7 +201,7 @@ export const OmniCosmicUILab: React.FC = () => {
                 onChange={(e) => setAestheticMood(e.target.value as any)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-cyan-300 font-mono outline-none"
               >
-                <option value="nocturnal_cyber">Nocturnal Cyber (Dark Misfit)</option>
+                <option value="nocturnal_cyber">Nocturnal Cyber (OmniAI - Nexus)</option>
                 <option value="glassmorphism">Glassmorphism Frosted Void</option>
                 <option value="neo_brutalist">Neo-Brutalist Stark Contrast</option>
                 <option value="minimal_dark">Minimalist Stealth Black</option>

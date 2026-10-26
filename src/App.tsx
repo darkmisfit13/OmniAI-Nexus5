@@ -24,12 +24,18 @@ import {
   Bot,
   Vibrate,
   VibrateOff,
-  Cloud
+  Cloud,
+  Sliders,
+  ShieldAlert,
+  Phone,
+  Video
 } from 'lucide-react';
+import { getHapticPattern } from './lib/hapticFeedback';
 import { HoloOrb, OrbPhase } from './components/HoloOrb';
 import { AIKeyboardBar } from './components/AIKeyboardBar';
 import { SoftKeyboard } from './components/SoftKeyboard';
 import { SimulatedAppView, PRESET_SCENARIOS, ScreenScenario } from './components/SimulatedAppView';
+import { ViewportCarousel } from './components/ViewportCarousel';
 import { ScreenVisionHUD } from './components/ScreenVisionHUD';
 import { OmniStudiosView, StudioId, studioMeta } from './components/OmniStudiosView';
 import { OmniStudiosSidebar } from './components/OmniStudiosSidebar';
@@ -79,12 +85,23 @@ export default function App() {
     return true;
   });
 
+  const [hapticLevel, setHapticLevel] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('omni_haptic_level');
+      if (saved) return Math.max(1, Math.min(10, parseInt(saved, 10)));
+    }
+    return 6;
+  });
+
   useEffect(() => {
     const handleHapticChange = (e: any) => {
       if (e?.detail?.enabled !== undefined) {
         setHapticFeedback(Boolean(e.detail.enabled));
       } else if (typeof window !== 'undefined') {
         setHapticFeedback(localStorage.getItem('omni_haptic_enabled') !== 'false');
+      }
+      if (e?.detail?.level !== undefined) {
+        setHapticLevel(Number(e.detail.level));
       }
     };
     window.addEventListener('omni_haptic_changed', handleHapticChange);
@@ -161,7 +178,7 @@ export default function App() {
 
   // Autonomous Auto Mode State
   const [isAutoMode, setIsAutoMode] = useState(false);
-  const [autoPilotTone, setAutoPilotTone] = useState<'rawHonest' | 'witty' | 'directAction'>('directAction');
+  const [autoPilotTone, setAutoPilotTone] = useState<'rawHonest' | 'witty' | 'directAction' | 'flirty'>('directAction');
   const [autoCountdown, setAutoCountdown] = useState<number | null>(null);
   const [autoDispatchTarget, setAutoDispatchTarget] = useState<string>('');
   const [autoDispatchPreviewText, setAutoDispatchPreviewText] = useState<string>('');
@@ -738,17 +755,14 @@ export default function App() {
       <OfflineIndicator />
 
       {/* TOP DESKTOP CONTROLS BAR (Desktop only) */}
-      <div className={`w-full transition-all duration-300 ${phoneFrameMode ? 'max-w-[430px]' : 'max-w-6xl'} hidden sm:flex items-center justify-between mb-2 px-2 text-xs font-mono text-zinc-400`}>
-        <div className="flex flex-col text-left">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
-            <span className="font-bold text-white tracking-wider text-xs">Omni AI</span>
-            <span className="px-1.5 py-0.5 rounded text-[8px] bg-red-950/40 border border-red-600/40 text-red-400 font-bold">
-              PC Sync (⌘⇧K)
-            </span>
-          </div>
-          <span className="text-[8.5px] font-mono text-zinc-400 tracking-wider">
-            Dark Misfit Studios
+      <div className={`w-full transition-all duration-300 ${phoneFrameMode ? 'max-w-[430px]' : 'max-w-6xl'} hidden sm:flex items-center justify-between mb-2 px-2 text-xs font-mono text-[#948eb5]`}>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#00ffcc] animate-pulse shadow-[0_0_8px_#00ffcc]" />
+          <span className="font-bold text-white tracking-wider text-xs">
+            Omni<span className="text-[#00ffcc]">AI</span>
+          </span>
+          <span className="px-1.5 py-0.5 rounded text-[8.5px] bg-[#100d23] border border-[#2a2254] text-[#00ffcc] font-bold">
+            Mobile-First OS
           </span>
         </div>
 
@@ -757,8 +771,8 @@ export default function App() {
             onClick={() => setIsDesktopOverlayActive(!isDesktopOverlayActive)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition ${
               isDesktopOverlayActive
-                ? 'bg-red-600 text-white border-red-500 font-bold shadow-[0_0_12px_rgba(220,38,38,0.5)]'
-                : 'bg-zinc-900 border-zinc-800 hover:border-red-500/40 text-zinc-300 hover:text-white'
+                ? 'bg-[#00ffcc] text-black border-[#00ffcc] font-bold shadow-[0_0_12px_rgba(0,255,204,0.4)]'
+                : 'bg-[#100d23] border-[#2a2254] hover:border-[#00ffcc]/40 text-[#948eb5] hover:text-white'
             }`}
             title="Launch Floating Desktop Companion Overlay (⌘+Shift+K)"
           >
@@ -767,7 +781,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setPhoneFrameMode(!phoneFrameMode)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-red-500/40 text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#100d23] border border-[#2a2254] hover:border-[#00ffcc]/40 text-[#948eb5] hover:text-white transition"
             title="Toggle between phone bezel and full view"
           >
             {phoneFrameMode ? <Maximize2 className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
@@ -779,25 +793,25 @@ export default function App() {
 
       {/* MAIN PHONE CONTAINER - Pure Matte Black (#000000) Foundation */}
       <div
-        className={`w-full flex flex-col bg-[#0b0a14] overflow-hidden transition-all duration-300 ${
+        className={`w-full flex flex-col bg-[#000000] overflow-hidden transition-all duration-300 ${
           phoneFrameMode
-            ? 'sm:max-w-[430px] sm:h-[min(860px,calc(100dvh-44px))] sm:rounded-[44px] sm:border-[8px] sm:border-[#14121f] sm:shadow-[0_0_70px_rgba(108,99,255,0.2)] sm:ring-1 sm:ring-[#211d34]'
-            : 'max-w-6xl w-full h-[100dvh] rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#211d34]'
+            ? 'sm:max-w-[430px] sm:h-[min(860px,calc(100dvh-44px))] sm:rounded-[44px] sm:border-[8px] sm:border-[#100d23] sm:shadow-[0_0_70px_rgba(42,34,84,0.4)] sm:ring-1 sm:ring-[#2a2254]'
+            : 'max-w-6xl w-full h-[100dvh] rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#2a2254]'
         } relative h-[100dvh] text-[#e8e6f2]`}
       >
         {/* 3D Gyro-Responsive UI Overlay Canvas */}
         <OmniVoidBackground />
 
-        {/* 1. NATIVE MOBILE STATUS BAR WITH INTERACTIVE HAPTIC INDICATOR */}
-        <div className={`px-4 sm:px-6 flex items-center justify-between bg-[#0b0a14] font-mono font-semibold text-[#9490ac] shrink-0 z-30 transition-all ${
+        {/* 1. NATIVE MOBILE STATUS BAR */}
+        <div className={`px-4 sm:px-6 flex items-center justify-between bg-[#000000] font-mono font-semibold text-[#948eb5] shrink-0 z-30 transition-all ${
           activeTab === 'studios' && selectedStudio === 'motion' ? 'pt-1 pb-0.5 text-[10px]' : 'pt-2 pb-1 text-[11px]'
         }`}>
           <span className="text-[#e8e6f2]">{currentTime}</span>
 
           {/* Dynamic Island / Hardware Notch */}
-          <div className="w-24 h-4 bg-[#14121f] rounded-full flex items-center justify-center gap-2 border border-[#211d34] shadow-inner px-2">
-            <div className="w-2 h-2 rounded-full bg-[#0b0a14] border border-[#211d34]" />
-            <div className={`w-1.5 h-1.5 rounded-full ${isStreaming ? 'bg-[#8b7fff] animate-pulse' : 'bg-[#211d34]'}`} />
+          <div className="w-24 h-4 bg-[#100d23] rounded-full flex items-center justify-center gap-2 border border-[#2a2254] shadow-inner px-2">
+            <div className="w-2 h-2 rounded-full bg-[#000000] border border-[#2a2254]" />
+            <div className={`w-1.5 h-1.5 rounded-full ${isStreaming ? 'bg-[#00ffcc] animate-pulse' : 'bg-[#2a2254]'}`} />
           </div>
 
           <div className="flex items-center gap-2">
@@ -815,143 +829,81 @@ export default function App() {
               }}
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition ${
                 hapticFeedback
-                  ? 'text-[#00f0ff] bg-[#14121f] border border-[#00f0ff]/50 shadow-[0_0_8px_rgba(0,240,255,0.35)]'
-                  : 'text-[#9490ac] hover:text-[#e8e6f2] border border-transparent'
+                  ? 'text-[#00ffcc] bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.35)]'
+                  : 'text-[#948eb5] hover:text-[#e8e6f2] border border-transparent'
               }`}
               title={hapticFeedback ? '3D Keyboard Haptics: ENABLED (Tap to toggle)' : '3D Keyboard Haptics: DISABLED (Tap to toggle)'}
             >
               {hapticFeedback ? (
-                <Vibrate className="w-3.5 h-3.5 text-[#00f0ff] animate-pulse" />
+                <Vibrate className="w-3.5 h-3.5 text-[#00ffcc] animate-pulse" />
               ) : (
-                <VibrateOff className="w-3.5 h-3.5 text-[#9490ac]" />
+                <VibrateOff className="w-3.5 h-3.5 text-[#948eb5]" />
               )}
-              <span className={`text-[8.5px] font-mono font-bold tracking-tight ${hapticFeedback ? 'text-[#00f0ff]' : 'text-[#9490ac]'}`}>
+              <span className={`text-[8.5px] font-mono font-bold tracking-tight ${hapticFeedback ? 'text-[#00ffcc]' : 'text-[#948eb5]'}`}>
                 {hapticFeedback ? 'ON' : 'OFF'}
               </span>
             </button>
 
-            <Wifi className="w-3 h-3 text-[#9490ac]" />
-            <Battery className="w-3.5 h-3.5 text-[#9490ac]" />
+            <Wifi className="w-3 h-3 text-[#948eb5]" />
+            <Battery className="w-3.5 h-3.5 text-[#948eb5]" />
           </div>
         </div>
 
-        {/* 2. APP HEADER: PERMANENT TOP-LEFT STUDIOS TOGGLE & 3D HOLO ORB & DARK MISFIT STUDIOS BRANDING */}
+        {/* 2. APP HEADER: STATIC PINNED ORB & EXPLICIT OMNIAI - NEXUS BRANDING */}
         {!(activeTab === 'studios' && selectedStudio === 'motion') && (
-        <header className="px-3 py-2 bg-[#0b0a14] border-b border-[#211d34] flex items-center justify-between shrink-0 z-20">
-          <div className="flex items-center gap-2">
-            {/* Permanent top-left studio toggle button */}
-            <button
-              onClick={() => setIsStudiosSidebarOpen(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-[#14121f] border border-[#211d34] text-[#e8e6f2] hover:border-[#00f0ff]/60 hover:text-white transition shadow-sm active:scale-95"
-              title="Open Studios Drawer (14 Creative Engines)"
-            >
-              <Menu className="w-4 h-4 text-[#00f0ff]" />
-              <span className="text-[10px] font-mono font-bold tracking-wider hidden xs:inline">Studios</span>
-            </button>
-
-            {/* Authentic Three.js 3D HoloOrb */}
-            <div className="flex items-center gap-2 pl-0.5">
-              <HoloOrb phase={orbPhase} size="sm" onClick={() => analyzeActiveScreen()} />
-              <div className="flex flex-col text-left">
-                <div className="flex items-center gap-1.5 leading-none">
-                  <h1 className="text-xs font-bold tracking-wider font-mono text-[#e8e6f2]">
-                    Omni <span className="text-[#00f0ff]">AI</span>
-                  </h1>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] shadow-[0_0_6px_#00f0ff] animate-ping" />
-                </div>
-                <span className="text-[8.5px] font-mono tracking-wider text-[#9490ac] mt-0.5">
-                  Dark Misfit Studios
-                </span>
-              </div>
+        <header className="px-3.5 py-2.5 bg-[#000000] border-b border-[#2a2254] flex items-center justify-between shrink-0 z-20">
+          {/* Static Pinned OmniAI Orb anchored to far upper-left directly adjacent to "OmniAI - Nexus" */}
+          <div className="flex items-center gap-2 pl-0.5">
+            <div className="relative flex items-center justify-center shrink-0 w-7 h-7 overflow-hidden rounded-full bg-[#100d23] border border-[#2a2254]">
+              <HoloOrb
+                size="xs"
+                className="w-7 h-7"
+                phase={isAnalyzing ? 'thinking' : isAutoMode ? 'talking' : 'idle'}
+              />
             </div>
+            <span className="text-sm sm:text-base font-bold font-mono tracking-wider text-white">
+              OmniAI<span className="text-[#00ffcc]"> - Nexus</span>
+            </span>
           </div>
 
-          {/* Right Header Action Cockpit */}
-          <div className="flex items-center gap-1">
-            {/* Quick OmniNexus Panel Toggle Button */}
+          {/* Far Top-Right Navigation: OmniAI Companion Toggle & OmniAI Sidebar Navigation Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Real-Time Calling Suite Toggle */}
             <button
-              onClick={() => setIsCompanionOpen(!isCompanionOpen)}
-              className={`flex items-center gap-1 px-1.5 py-1 rounded-lg text-[9.5px] font-mono font-bold transition ${
-                isCompanionOpen
-                  ? 'bg-[#14121f] border border-[#00f0ff] text-[#00f0ff] shadow-[0_0_10px_rgba(0,240,255,0.4)]'
-                  : 'bg-[#14121f] border border-[#211d34] text-[#9490ac] hover:border-[#00f0ff]/40 hover:text-[#e8e6f2]'
-              }`}
-              title="Toggle OmniNexus Panel (Available throughout phone app)"
-            >
-              <Bot className="w-3.5 h-3.5 text-[#00f0ff]" />
-              <span className="hidden xs:inline">NEXUS</span>
-            </button>
-
-            {/* Quick Voice Toggle */}
-            <button
+              type="button"
               onClick={() => {
-                const next = omniVoice.toggleVoice();
-                setIsVoiceEnabled(next);
-                if (next) {
-                  omniVoice.speak('Omni voice link active.');
+                if (hapticFeedback && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                  try { navigator.vibrate(15); } catch {}
                 }
+                setIsLiveCallOpen(true);
               }}
-              className={`flex items-center gap-1 px-1.5 py-1 rounded-lg text-[9.5px] font-mono font-bold transition ${
-                isVoiceEnabled
-                  ? 'bg-[#14121f] border border-[#00f0ff]/50 text-[#00f0ff] shadow-[0_0_10px_rgba(0,240,255,0.3)]'
-                  : 'bg-[#14121f] border border-[#211d34] text-[#9490ac] hover:text-[#e8e6f2]'
-              }`}
-              title={isVoiceEnabled ? 'OmniVoice Active (Click to mute)' : 'OmniVoice Muted (Click to enable)'}
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#100d23] border border-[#00ffcc]/60 text-[#00ffcc] hover:bg-[#181333] hover:border-[#00ffcc] transition-all shadow-[0_0_12px_rgba(0,255,204,0.25)] active:scale-95"
+              title="Launch Real-Time Calling Suite (Audio HUD & Eye-Line Video)"
             >
-              {isVoiceEnabled ? <Volume2 className="w-3 h-3 text-[#00f0ff] animate-pulse" /> : <VolumeX className="w-3 h-3 text-[#9490ac]" />}
-              <span className="hidden xs:inline">{isVoiceEnabled ? 'VOICE' : 'MUTE'}</span>
+              <Phone className="w-3.5 h-3.5 text-[#00ffcc] animate-pulse" />
+              <span className="text-[10px] font-mono font-bold">Call</span>
             </button>
 
-            {/* Live Real-Time Phone Call Button */}
+            {/* OmniAI Companion Toggle */}
             <button
-              onClick={() => setIsLiveCallOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[9.5px] font-mono font-bold bg-[#00f0ff]/15 border border-[#00f0ff]/50 text-[#00f0ff] hover:bg-[#00f0ff]/25 transition shadow-[0_0_10px_rgba(0,240,255,0.25)]"
-              title="Launch Live Phone Call Mode with Voice Cloning Takeover"
+              type="button"
+              onClick={() => setIsCompanionOpen(true)}
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#100d23] border border-[#2a2254] text-[#948eb5] hover:text-[#00ffcc] hover:bg-[#181333] hover:border-[#00ffcc]/50 transition-all shadow-sm active:scale-95"
+              title="Open OmniAI - Nexus Companion"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
-              <span>CALL</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#00ffcc]" />
+              <span className="text-[10px] font-mono font-bold hidden xs:inline">Companion</span>
             </button>
 
-            {/* Quick Auto Mode Toggle */}
+            {/* OmniAI Sidebar Toggle (Far Top-Right) */}
             <button
-              onClick={handleToggleAutoMode}
-              className={`flex items-center gap-1 px-1.5 py-1 rounded-lg text-[9.5px] font-mono font-bold transition ${
-                isAutoMode
-                  ? 'bg-[#14121f] border border-[#00f0ff] text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.4)] animate-pulse'
-                  : 'bg-[#14121f] border border-[#211d34] text-[#9490ac] hover:text-[#e8e6f2]'
-              }`}
-              title="Toggle Autonomous Auto-Pilot Mode (Omni answers for you)"
+              type="button"
+              onClick={() => setIsStudiosSidebarOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#100d23] border border-[#2a2254] text-[#e8e6f2] hover:text-[#00ffcc] hover:border-[#00ffcc]/50 transition-all shadow-sm active:scale-95"
+              title="Open OmniAI - Nexus Navigation Drawer"
             >
-              <Zap className={`w-3 h-3 ${isAutoMode ? 'text-[#00f0ff] animate-bounce' : 'text-[#9490ac]'}`} />
-              <span className="hidden xs:inline">{isAutoMode ? 'AUTO: ON' : 'AUTO'}</span>
-            </button>
-
-            {/* Train Like Me Persona Calibration Button */}
-            <button
-              onClick={() => setIsAutoPilotSetupOpen(true)}
-              className="px-1.5 py-1 rounded-lg text-[9.5px] font-mono font-bold bg-[#14121f] border border-[#211d34] text-[#e8e6f2] hover:border-[#00f0ff]/40 hover:text-white transition"
-              title="Train Like Me: Persona Calibration & Voice Cloning"
-            >
-              <span>TRAIN</span>
-            </button>
-
-            {/* OmniCore HUD Button */}
-            <button
-              onClick={() => setIsTelemetryHUDOpen(!isTelemetryHUDOpen)}
-              className="p-1.5 rounded-lg text-[10px] font-mono font-bold bg-[#14121f] border border-[#211d34] text-[#e8e6f2] hover:text-[#00f0ff] hover:border-[#00f0ff]/40 shadow-sm transition"
-              title="OmniCore Telemetry"
-              aria-label="OmniCore Telemetry"
-            >
-              <Activity className="w-3.5 h-3.5 text-[#00f0ff]" />
-            </button>
-
-            {/* Global Vault Drawer Button */}
-            <button
-              onClick={() => setIsVaultOpen(true)}
-              className="p-1.5 rounded-lg text-[10px] font-mono font-bold bg-[#14121f] border border-[#211d34] text-[#e8e6f2] hover:text-white hover:border-[#00f0ff]/40 transition"
-              title="Open Global Vault Media Library"
-            >
-              <FolderLock className="w-3.5 h-3.5" />
+              <Menu className="w-4 h-4 text-[#00ffcc]" />
+              <span className="text-[10px] font-mono font-bold hidden xs:inline">Menu</span>
             </button>
           </div>
         </header>
@@ -960,15 +912,15 @@ export default function App() {
         {/* 3. MAIN TAB CONTENT AREA */}
         <main 
           {...swipeHandlers}
-          className="flex-1 overflow-hidden relative flex flex-col bg-[#0b0a14] touch-pan-y"
+          className="flex-1 overflow-hidden relative flex flex-col bg-[#000000] touch-pan-y"
         >
           {/* Mobile Horizontal Swipe Gesture Indicator for Primary Tabs */}
           {isPrimaryTab && (
-            <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#14121f]/90 backdrop-blur-md border border-[#211d34] text-[9px] font-mono text-[#9490ac] select-none shadow-sm">
-              <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'keyboard' ? 'bg-[#00f0ff] scale-125 shadow-[0_0_6px_#00f0ff]' : 'bg-[#211d34]'}`} />
-              <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'vision' ? 'bg-[#00f0ff] scale-125 shadow-[0_0_6px_#00f0ff]' : 'bg-[#211d34]'}`} />
-              <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'workspace' ? 'bg-[#00f0ff] scale-125 shadow-[0_0_6px_#00f0ff]' : 'bg-[#211d34]'}`} />
-              <span className="text-[8px] text-[#9490ac] ml-1 hidden xs:inline">⇄ Swipe Tab</span>
+            <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#100d23]/90 backdrop-blur-md border border-[#2a2254] text-[9px] font-mono text-[#948eb5] select-none shadow-sm">
+              <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'keyboard' ? 'bg-[#00ffcc] scale-125 shadow-[0_0_6px_#00ffcc]' : 'bg-[#2a2254]'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'vision' ? 'bg-[#00ffcc] scale-125 shadow-[0_0_6px_#00ffcc]' : 'bg-[#2a2254]'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'workspace' ? 'bg-[#00ffcc] scale-125 shadow-[0_0_6px_#00ffcc]' : 'bg-[#2a2254]'}`} />
+              <span className="text-[8px] text-[#948eb5] ml-1 hidden xs:inline">⇄ Swipe Tab</span>
             </div>
           )}
           {/* SLIDE-UP JARVIS TELEMETRY HUD CARD */}
@@ -984,68 +936,40 @@ export default function App() {
             onClearNotes={() => setAnalysisData(prev => ({ ...prev, telemetryNotes: [] }))}
           />
 
-          {/* TAB 1: THE AUTHENTIC KEYBOARD COMMAND STATION */}
+          {/* TAB 1: THE AUTHENTIC 3-PANE VIEWPORT CAROUSEL COMMAND STATION */}
           {activeTab === 'keyboard' && (
             <div className="flex flex-col h-full justify-between overflow-hidden">
-              {/* Host viewport display where AI watches screen live */}
-              <div className="flex-1 overflow-hidden p-2">
-                <SimulatedAppView
+              {/* 3-Pane Viewport Carousel: Left (Advice) <-> Center (Pure Messaging) <-> Right (Utility Matrix) */}
+              <div className="flex-1 overflow-hidden">
+                <ViewportCarousel
+                  currentDraftText={currentDraftText}
+                  onChangeDraftText={setCurrentDraftText}
+                  onSend={handleEnter}
                   currentScenario={currentScenario}
                   onSelectScenario={handleSelectScenario}
                   customScreenshot={customScreenshot}
                   onUploadScreenshot={handleUploadScreenshot}
                   onClearCustomScreenshot={() => setCustomScreenshot(null)}
-                  isLiveScreenSharing={isStreaming}
-                  onToggleLiveScreenSharing={handleToggleLiveScreenSharing}
-                  currentDraftText={currentDraftText}
-                  onSimulateIncomingMessage={handleSimulateIncomingMessage}
+                  isAnalyzing={isAnalyzing}
+                  onOpenVault={() => setIsVaultOpen(true)}
+                  onOpenCompanion={() => setIsCompanionOpen(true)}
+                  onOpenSidebar={() => setIsStudiosSidebarOpen(true)}
                   isAutoMode={isAutoMode}
-                  onOpenLiveCall={() => setIsLiveCallOpen(true)}
-                  onOpenAutoPilotSetup={() => setIsAutoPilotSetupOpen(true)}
+                  onSimulateIncomingMessage={handleSimulateIncomingMessage}
                 />
               </div>
 
-              {/* Keyboard AI Bar + Volumetric 3D Soft Keyboard */}
+              {/* Volumetric 3D Soft Keyboard Dock (collapsible) */}
               <div className="shrink-0 flex flex-col">
-                <AIKeyboardBar
-                  currentText={currentDraftText}
-                  onChangeText={setCurrentDraftText}
-                  onSend={handleEnter}
-                  suggestedReplies={analysisData.suggestedReplies}
-                  suggestionTrio={analysisData.suggestionTrio}
-                  liveAdvice={analysisData.tacticalAdvice}
-                  onSelectSuggestion={(reply) => setCurrentDraftText(reply)}
-                  onRewrite={handleRewrite}
-                  onRequestInstantAdvice={() => analyzeActiveScreen()}
-                  isAnalyzing={isAnalyzing}
-                  orbPhase={orbPhase}
-                  screenName={activeScreenName}
-                  isOnDeviceMode={isOnDeviceMode}
-                  onToggleOnDeviceMode={() => setIsOnDeviceMode(!isOnDeviceMode)}
-                  localLatencyMs={localLatencyMs}
-                  onOpenTelemetryHUD={() => setIsTelemetryHUDOpen(!isTelemetryHUDOpen)}
-                  telemetryNotesCount={analysisData.telemetryNotes.length}
-                  isAutoMode={isAutoMode}
-                  onToggleAutoMode={handleToggleAutoMode}
-                  autoPilotTone={autoPilotTone}
-                  onChangeAutoPilotTone={setAutoPilotTone}
-                  autoCountdown={autoCountdown}
-                  onCancelAutoDispatch={handleCancelAutoDispatch}
-                  onInstantAutoDispatch={handleInstantAutoDispatch}
-                  autoDispatchTarget={autoDispatchTarget}
-                  autoDispatchPreviewText={autoDispatchPreviewText}
-                  onQuickAction={(actionId) => {
-                    setOrbPhase('typing');
-                    setTimeout(() => setOrbPhase('suggesting'), 800);
-                  }}
-                  onOpenAutoPilotSetup={() => setIsAutoPilotSetupOpen(true)}
-                />
-
                 <SoftKeyboard
                   onKeyPress={handleKeyPress}
                   onBackspace={handleBackspace}
                   onEnter={() => handleEnter()}
                   onSpace={handleSpace}
+                  onSwipeWord={(word) => {
+                    setCurrentDraftText((prev) => (prev ? (prev.endsWith(' ') ? prev + word + ' ' : prev + ' ' + word + ' ') : word + ' '));
+                  }}
+                  currentDraftText={currentDraftText}
                   isCollapsed={isKeyboardCollapsed}
                   onToggleCollapse={() => setIsKeyboardCollapsed(!isKeyboardCollapsed)}
                 />
@@ -1152,7 +1076,7 @@ export default function App() {
 
         {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR (Hidden during OmniMotion studio editing for authentic CapCut full-height experience) */}
         {!(activeTab === 'studios' && selectedStudio === 'motion') && (
-        <nav className="h-14 bg-[#0b0a14] border-t border-[#211d34] flex items-center justify-around px-2 shrink-0 z-30 pb-[env(safe-area-inset-bottom)]">
+        <nav className="h-14 bg-[#000000] border-t border-[#2a2254] flex items-center justify-around px-2 shrink-0 z-30 pb-[env(safe-area-inset-bottom)]">
           {/* Enhanced Keys Button: Toggles Keyboard Show/Hide */}
           <button
             onClick={() => {
@@ -1165,10 +1089,10 @@ export default function App() {
             }}
             className={`flex flex-col items-center justify-center w-14 py-1 rounded-xl transition-all ${
               activeTab === 'keyboard' && !isKeyboardCollapsed
-                ? 'text-[#00f0ff] font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]'
+                ? 'text-[#00ffcc] font-bold drop-shadow-[0_0_8px_rgba(0,255,204,0.7)]'
                 : activeTab === 'keyboard' && isKeyboardCollapsed
-                ? 'text-[#00f0ff]/60 font-semibold'
-                : 'text-[#9490ac] hover:text-[#e8e6f2]'
+                ? 'text-[#00ffcc]/60 font-semibold'
+                : 'text-[#948eb5] hover:text-[#e8e6f2]'
             }`}
             title={
               activeTab === 'keyboard'
@@ -1188,15 +1112,15 @@ export default function App() {
             onClick={() => setActiveTab('vision')}
             className={`flex flex-col items-center justify-center w-14 py-1 rounded-xl transition-all relative ${
               activeTab === 'vision'
-                ? 'text-[#00f0ff] font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]'
-                : 'text-[#9490ac] hover:text-[#e8e6f2]'
+                ? 'text-[#00ffcc] font-bold drop-shadow-[0_0_8px_rgba(0,255,204,0.7)]'
+                : 'text-[#948eb5] hover:text-[#e8e6f2]'
             }`}
             title="Screen Vision Cognition"
           >
             <Eye className="w-4 h-4 mb-0.5" />
             <span className="text-[9px] font-mono">Vision</span>
             {isStreaming && (
-              <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[#00f0ff] shadow-[0_0_8px_#00f0ff] animate-ping" />
+              <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[#00ffcc] shadow-[0_0_8px_#00ffcc] animate-ping" />
             )}
           </button>
 
@@ -1204,8 +1128,8 @@ export default function App() {
             onClick={() => setActiveTab('workspace')}
             className={`flex flex-col items-center justify-center w-14 py-1 rounded-xl transition-all ${
               activeTab === 'workspace'
-                ? 'text-[#00f0ff] font-bold drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]'
-                : 'text-[#9490ac] hover:text-[#e8e6f2]'
+                ? 'text-[#00ffcc] font-bold drop-shadow-[0_0_8px_rgba(0,255,204,0.7)]'
+                : 'text-[#948eb5] hover:text-[#e8e6f2]'
             }`}
             title="Google Workspace (Drive, Gmail, Keep)"
           >
@@ -1213,26 +1137,6 @@ export default function App() {
             <span className="text-[9px] font-mono">Workspace</span>
           </button>
         </nav>
-        )}
-
-        {/* 4.5. PERSISTENT OMNINEXUS PANEL TRIGGER (Available throughout phone app, including inside all 14 studios) */}
-        {activeTab !== 'chat' && !(activeTab === 'studios' && selectedStudio === 'motion') && (
-          <button
-            type="button"
-            onClick={() => setIsCompanionOpen(true)}
-            className="absolute right-3.5 bottom-16 sm:bottom-18 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#6c63ff]/20 via-[#14121f] to-[#00f0ff]/20 border border-[#00f0ff]/50 hover:border-[#00f0ff] text-[#00f0ff] shadow-[0_0_15px_rgba(0,240,255,0.25)] active:scale-95 transition-all group backdrop-blur-md"
-            title="Open OmniNexus Slide-Out Panel"
-          >
-            <div className="w-4 h-4 rounded-full bg-[#0b0a14] flex items-center justify-center shrink-0 border border-[#00f0ff]/40">
-              <Sparkles className="w-2.5 h-2.5 text-[#00f0ff] animate-pulse" />
-            </div>
-            <span className="text-[10px] font-mono font-bold tracking-wider text-[#e8e6f2] group-hover:text-[#00f0ff]">
-              OmniNexus
-            </span>
-            {activeTab === 'studios' && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] shadow-[0_0_6px_#00f0ff] animate-ping" />
-            )}
-          </button>
         )}
 
         {/* Slide-out Persistent OmniNexus Panel with Voice Command Log */}
@@ -1249,13 +1153,13 @@ export default function App() {
 
         {/* 5. NATIVE MOBILE HOME INDICATOR BAR */}
         <div className={`w-full flex justify-center shrink-0 ${
-          activeTab === 'studios' && selectedStudio === 'motion' ? 'pb-0.5 pt-0.5 bg-[#0b0a14]' : 'pb-1 pt-0.5 bg-[#0b0a14]'
+          activeTab === 'studios' && selectedStudio === 'motion' ? 'pb-0.5 pt-0.5 bg-[#000000]' : 'pb-1 pt-0.5 bg-[#000000]'
         }`}>
-          <div className="w-28 h-1 rounded-full bg-[#211d34]" />
+          <div className="w-28 h-1 rounded-full bg-[#2a2254]" />
         </div>
       </div>
 
-      {/* 6. SYSTEM-WIDE FLOATING COMPANION WIDGET (OMNI KEY • DARK MISFIT STUDIOS) */}
+      {/* 6. SYSTEM-WIDE FLOATING COMPANION WIDGET (OMNI KEY) */}
       <DesktopFloatingWidget
         isOpen={isDesktopOverlayActive}
         onToggle={() => setIsDesktopOverlayActive(!isDesktopOverlayActive)}
@@ -1268,7 +1172,7 @@ export default function App() {
         autoPilotTone={autoPilotTone}
       />
 
-      {/* 7. PERMANENT STUDIOS SIDEBAR DRAWER (Accessible anytime from top-left toggle) */}
+      {/* 7. COLLAPSIBLE OMNIAI SIDEBAR DRAWER (Accessible from top-right navigation toggle) */}
       <OmniStudiosSidebar
         isOpen={isStudiosSidebarOpen}
         onClose={() => setIsStudiosSidebarOpen(false)}
@@ -1294,6 +1198,22 @@ export default function App() {
           setIsVaultOpen(true);
           setIsStudiosSidebarOpen(false);
         }}
+        onOpenAutopilot={() => {
+          setIsAutoPilotSetupOpen(true);
+          setIsStudiosSidebarOpen(false);
+        }}
+        onOpenTelemetry={() => {
+          setIsTelemetryHUDOpen(true);
+          setIsStudiosSidebarOpen(false);
+        }}
+        onOpenVision={() => {
+          setActiveTab('vision');
+          setIsStudiosSidebarOpen(false);
+        }}
+        onOpenWorkspace={() => {
+          setActiveTab('workspace');
+          setIsStudiosSidebarOpen(false);
+        }}
       />
 
       {/* 8. GLOBAL VAULT ASSETS DRAWER */}
@@ -1311,15 +1231,16 @@ export default function App() {
 
       {/* 9. SETTINGS & ADMIN CONSOLE MODAL */}
       {isAdminModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center bg-[#0b0a14]/85 backdrop-blur-md p-2 sm:p-6 animate-in fade-in">
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-[#0b0a14] border border-[#211d34] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div className="p-3 bg-[#14121f] border-b border-[#211d34] flex items-center justify-between">
+        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-6 animate-in fade-in">
+          <div className="relative w-full max-w-4xl max-h-[92vh] bg-[#000000] border border-[#2a2254] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div className="p-3 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-[#00f0ff]" />
-                <span className="font-bold text-sm text-[#e8e6f2]">Omni Settings & Admin Hub</span>
-                <span className="text-[10px] font-mono text-[#9490ac]">• Dark Misfit Studios</span>
+                <Settings className="w-4 h-4 text-[#00ffcc]" />
+                <span className="font-bold text-sm text-white">OmniAI<span className="text-[#00ffcc]"> - Nexus</span> Settings & Admin Hub</span>
+                <span className="text-[10px] font-mono text-[#948eb5] hidden sm:inline">• Configuration Matrix</span>
               </div>
               <div className="flex items-center gap-2">
+                {/* Master Haptic Toggle */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1329,19 +1250,66 @@ export default function App() {
                     if (next && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
                       try { navigator.vibrate(14); } catch {}
                     }
-                    window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled: next } }));
+                    window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { enabled: next, level: hapticLevel } }));
                   }}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition ${
                     hapticFeedback
-                      ? 'bg-[#14121f] border-[#00f0ff]/60 text-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.3)]'
-                      : 'bg-[#14121f] border-[#211d34] text-[#9490ac] hover:text-[#e8e6f2]'
+                      ? 'bg-[#15122c] border-[#00ffcc]/60 text-[#00ffcc] shadow-[0_0_8px_rgba(0,255,204,0.3)]'
+                      : 'bg-[#15122c] border-[#2a2254] text-[#948eb5] hover:text-[#e8e6f2]'
                   }`}
                   title={hapticFeedback ? 'Disable 3D Keyboard Vibration' : 'Enable 3D Keyboard Vibration'}
                 >
-                  <Zap className={`w-3.5 h-3.5 ${hapticFeedback ? 'text-[#00f0ff]' : 'text-[#9490ac]'}`} />
+                  <Zap className={`w-3.5 h-3.5 ${hapticFeedback ? 'text-[#00ffcc]' : 'text-[#948eb5]'}`} />
                   <span className="hidden xs:inline">3D Haptics:</span>
                   <span className="font-bold">{hapticFeedback ? 'ON' : 'OFF'}</span>
                 </button>
+
+                {/* Haptic Intensity Slider Control (Persists & Updates Haptic State Immediately) */}
+                <div 
+                  className={`flex items-center gap-2 bg-[#15122c] px-2.5 py-1 rounded-xl border border-[#2a2254] transition ${
+                    hapticFeedback ? 'border-[#00ffcc]/40' : 'opacity-40'
+                  }`}
+                  title="3D Keyboard Haptic Feedback Intensity (1-10)"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-[#00ffcc] shrink-0" />
+                  <span className="text-[10px] font-mono text-[#e8e6f2] font-semibold whitespace-nowrap">
+                    {hapticLevel}/10
+                  </span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    disabled={!hapticFeedback}
+                    value={hapticLevel}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setHapticLevel(val);
+                      localStorage.setItem('omni_haptic_level', String(val));
+                      if (hapticFeedback && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                        try {
+                          navigator.vibrate(getHapticPattern(val, 'tap'));
+                        } catch {}
+                      }
+                      window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { level: val, enabled: hapticFeedback } }));
+                    }}
+                    className="w-16 xs:w-24 accent-[#00ffcc] h-1.5 bg-[#0b0a14] rounded-lg cursor-pointer"
+                  />
+                </div>
+                {/* Relocated Train Your Voice Button (from Top Bar) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAdminModalOpen(false);
+                    setIsAutoPilotSetupOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-[#15122c] border-[#00ffcc]/50 text-[#00ffcc] hover:bg-[#00ffcc]/20 shadow-sm"
+                  title="Train Your Voice: Calibrate AI Voice Clone & Persona"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-[#00ffcc]" />
+                  <span>Train Your Voice</span>
+                </button>
+
                 <button
                   onClick={() => setIsAdminModalOpen(false)}
                   className="p-1 rounded-lg text-[#9490ac] hover:text-[#e8e6f2] hover:bg-[#211d34] transition"

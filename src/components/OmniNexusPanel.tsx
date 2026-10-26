@@ -101,7 +101,8 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
     failedMessage, 
     retryLastMessage, 
     orbPhase,
-    activeThread 
+    activeThread,
+    setMessages
   } = useOmniChat();
 
   const [inputText, setInputText] = useState('');
@@ -115,7 +116,69 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
   const [brightnessLevel, setBrightnessLevel] = useState<number>(100);
   const [quickActionToast, setQuickActionToast] = useState<string | null>(null);
   const [isLogExported, setIsLogExported] = useState<boolean>(false);
+  const [archivedMessageCount, setArchivedMessageCount] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('omni_nexus_archived_messages');
+        if (stored) return JSON.parse(stored).length;
+      } catch {}
+    }
+    return 0;
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-archive cleanup function: Archives messages older than 30 days to local storage to maintain performance on low-memory mobile devices
+  useEffect(() => {
+    if (!isOpen || !messages || messages.length === 0) return;
+
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - THIRTY_DAYS_MS;
+
+    const messagesToArchive: typeof messages = [];
+    const activeMessages: typeof messages = [];
+
+    messages.forEach((msg) => {
+      let msgTime = 0;
+      // Try parsing timestamp string (ISO or locale)
+      const parsedTime = Date.parse(msg.timestamp);
+      if (!isNaN(parsedTime)) {
+        msgTime = parsedTime;
+      } else if (msg.id) {
+        // Parse unix timestamp embedded in message ID
+        const match = msg.id.match(/(\d{10,13})/);
+        if (match) {
+          msgTime = parseInt(match[1], 10);
+          if (msgTime < 10000000000) msgTime *= 1000;
+        }
+      }
+
+      if (msgTime > 0 && msgTime < cutoffTime) {
+        messagesToArchive.push(msg);
+      } else {
+        activeMessages.push(msg);
+      }
+    });
+
+    if (messagesToArchive.length > 0) {
+      try {
+        const existingArchiveRaw = localStorage.getItem('omni_nexus_archived_messages');
+        const existingArchive = existingArchiveRaw ? JSON.parse(existingArchiveRaw) : [];
+        const combinedArchive = [...existingArchive, ...messagesToArchive];
+        localStorage.setItem('omni_nexus_archived_messages', JSON.stringify(combinedArchive));
+        setArchivedMessageCount(combinedArchive.length);
+        setMessages(activeMessages);
+
+        // Update local cache for active thread
+        if (activeThread?.id) {
+          localStorage.setItem(`omni_chat_msgs_cache_${activeThread.id}`, JSON.stringify(activeMessages));
+        }
+
+        console.log(`[OmniNexusPanel] Memory optimization: archived ${messagesToArchive.length} messages older than 30 days to local storage.`);
+      } catch (err) {
+        console.warn('[OmniNexusPanel] Error during 30-day message archiving:', err);
+      }
+    }
+  }, [isOpen, messages, setMessages, activeThread]);
 
   // Load persistent Voice Command Log
   const [voiceLog, setVoiceLog] = useState<VoiceCommandLogItem[]>(() => {
@@ -399,22 +462,27 @@ export const OmniNexusPanel: React.FC<OmniNexusPanelProps> = ({
         </div>
 
         {/* Panel Header */}
-        <div className="px-3.5 py-2.5 bg-[#14121f] border-b border-[#211d34] flex items-center justify-between shrink-0">
+        <div className="px-3.5 py-2.5 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#00f0ff] shadow-[0_0_10px_rgba(0,240,255,0.8)] animate-pulse shrink-0" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.8)] animate-pulse shrink-0" />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-xs text-[#e8e6f2] tracking-wider font-mono truncate">
-                  OmniNexus <span className="text-[#00f0ff]">Panel</span>
+                  OmniAI - Nexus <span className="text-[#00ffcc]">Companion</span>
                 </span>
                 {currentStudioName && (
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#0b0a14] text-[#00f0ff] border border-[#00f0ff]/30 font-mono truncate">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#000000] text-[#00ffcc] border border-[#00ffcc]/30 font-mono truncate">
                     {currentStudioName}
                   </span>
                 )}
+                {archivedMessageCount > 0 && (
+                  <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-[#181333] text-[#00ffcc] border border-[#2a2254] font-mono" title="Older than 30 days stored safely in local storage">
+                    {archivedMessageCount} archived
+                  </span>
+                )}
               </div>
-              <p className="text-[10px] text-[#9490ac] font-mono truncate">
-                {activeThread?.title || 'Dark Misfit Studios • Digital Shadow Nexus'}
+              <p className="text-[10px] text-[#948eb5] font-mono truncate">
+                {activeThread?.title || 'OmniAI - Nexus Core'}
               </p>
             </div>
           </div>

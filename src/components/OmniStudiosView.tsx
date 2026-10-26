@@ -192,7 +192,7 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
         {selectedStudio === 'code' && <OmniCodeStudio />}
         {(selectedStudio === 'forge' || selectedStudio === 'vector') && <OmniVectorBrandLab onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'imagine' && <OmniImagineStudio onSaveToVault={onSaveToVault} />}
-        {selectedStudio === 'analyzer' && <OmniAnalyzerStudio />}
+        {selectedStudio === 'analyzer' && <OmniAnalyzerStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'style' && <OmniStyleStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'spatial' && <OmniSpatial3DStudio onSaveToVault={onSaveToVault} />}
         {selectedStudio === 'mockup' && <OmniViralMockupStudio onSaveToVault={onSaveToVault} />}

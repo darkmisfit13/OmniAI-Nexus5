@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Briefcase, 
   Heart, 
@@ -6,11 +6,10 @@ import {
   Terminal, 
   Upload, 
   Sparkles, 
-  Video, 
-  Activity, 
-  Zap, 
-  Phone, 
-  ShieldCheck 
+  ShieldCheck, 
+  X,
+  ChevronDown,
+  Info
 } from 'lucide-react';
 import { DailyInsightCard } from './DailyInsightCard';
 
@@ -75,7 +74,7 @@ export const PRESET_SCENARIOS: ScreenScenario[] = [
         time: '9:15 PM',
       },
     ],
-    contextHint: 'Maya is testing conversational authenticity. Avoid generic assistant clichés; be specific and magnetic.',
+    contextHint: 'Maya is testing conversational authenticity. Avoid generic assistant clichés; be specific, magnetic, and witty.',
     defaultDraft: 'Cold takeout eaten directly out of the box in the refrigerator light at 1 AM hits different. Fight me.',
   },
   {
@@ -133,8 +132,6 @@ interface SimulatedAppViewProps {
   currentDraftText: string;
   onSimulateIncomingMessage?: () => void;
   isAutoMode?: boolean;
-  onOpenLiveCall?: () => void;
-  onOpenAutoPilotSetup?: () => void;
 }
 
 export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
@@ -147,13 +144,9 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
   onToggleLiveScreenSharing,
   currentDraftText,
   onSimulateIncomingMessage,
-  isAutoMode = false,
-  onOpenLiveCall,
-  onOpenAutoPilotSetup,
 }) => {
-  const [isLiveWatching, setIsLiveWatching] = useState<boolean>(true);
-  const [showCognitionDetail, setShowCognitionDetail] = useState<boolean>(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [showDossierPopover, setShowDossierPopover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -163,148 +156,110 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-black text-zinc-100 rounded-2xl overflow-hidden border border-zinc-800 shadow-[0_0_30px_rgba(0,0,0,0.95)]">
+    <div className="flex flex-col h-full bg-[#000000] text-[#e8e6f2] overflow-hidden select-none relative">
       
-      {/* 1. LIVE SCREEN-WATCHING CONTEXT STREAM HEADER */}
-      <div className="px-3 py-1.5 bg-[#0a0a0c] border-b border-zinc-800 flex items-center justify-between text-xs font-mono shrink-0">
-        <div className="flex items-center gap-2">
-          {/* Toggleable Live Watching Pill */}
-          <button
-            onClick={() => setIsLiveWatching(!isLiveWatching)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-bold transition shadow-md ${
-              isLiveWatching
-                ? 'bg-[#00f0ff]/15 border border-[#00f0ff]/50 text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.25)]'
-                : 'bg-[#14121f] border border-[#211d34] text-[#9490ac] hover:text-[#e8e6f2]'
-            }`}
-            title="Click to toggle real-time live screen cognition stream"
-          >
-            <span className={`w-2 h-2 rounded-full ${isLiveWatching ? 'bg-[#00f0ff] animate-ping' : 'bg-zinc-600'}`} />
-            <span>{isLiveWatching ? 'OmniAI Cognition Active' : 'Watching Paused'}</span>
-          </button>
+      {/* 1. COMPACT SCENARIO & COGNITION BAR */}
+      <div className="px-3 py-1.5 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between text-xs font-mono shrink-0">
+        
+        {/* Scenario Switcher Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {PRESET_SCENARIOS.map((sc) => {
+            const isSelected = !customScreenshot && currentScenario.id === sc.id;
+            const Icon = sc.icon;
+            return (
+              <button
+                key={sc.id}
+                type="button"
+                onClick={() => {
+                  if (customScreenshot) onClearCustomScreenshot();
+                  onSelectScenario(sc);
+                }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10.5px] font-medium transition-all shrink-0 ${
+                  isSelected
+                    ? 'bg-[#1e1940] text-[#00ffcc] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.2)] font-bold'
+                    : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#15122c]'
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                <span>{sc.name}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Compact interactive pill badge pinned to the side: Cognition Dossier */}
-        <div className="flex items-center gap-1.5">
+        {/* Space-Efficient Live Cognition Dossier Icon Button (Redesigned per Blueprint) */}
+        <div className="flex items-center gap-1 shrink-0 ml-1.5 relative">
           <button
             type="button"
-            onClick={() => setShowCognitionDetail(!showCognitionDetail)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold transition shadow-sm ${
-              showCognitionDetail
-                ? 'bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
-                : 'bg-[#14121f] border border-[#211d34] text-[#00f0ff] hover:border-[#00f0ff]/50 hover:text-white'
+            onClick={() => setShowDossierPopover((prev) => !prev)}
+            className={`p-1.5 rounded-lg border transition-all flex items-center gap-1 ${
+              showDossierPopover
+                ? 'bg-[#00ffcc] text-black border-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.4)]'
+                : 'bg-[#15122c] text-[#00ffcc] border-[#2a2254] hover:border-[#00ffcc]/50'
             }`}
-            title="Open Live Cognition Dossier (Speaker & Tactical Strategy)"
+            title="Live Cognition Dossier"
           >
-            <Activity className="w-3 h-3 text-[#00f0ff]" />
-            <span>Cognition Dossier</span>
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold font-mono hidden xs:inline">Dossier</span>
           </button>
-        </div>
-      </div>
 
-      {/* Expandable Cognition Dossier Dropdown */}
-      {showCognitionDetail && (
-        <div className="p-3 bg-[#14121f] border-b border-[#211d34] text-xs font-mono space-y-2 animate-in slide-in-from-top-1">
-          <div className="flex items-center justify-between text-[#00f0ff] font-bold">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Context Stream Cognition Dossier:</span>
-            <button onClick={() => setShowCognitionDetail(false)} className="text-[#9490ac] hover:text-[#e8e6f2]">✕</button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#9490ac]">
-            <div className="p-2 rounded bg-[#0b0a14] border border-[#211d34]">
-              <span className="text-[#9490ac] block text-[9px] uppercase font-bold">Detected Speaker:</span>
-              <strong className="text-[#e8e6f2]">{currentScenario.appHeader.title}</strong>
-            </div>
-            <div className="p-2 rounded bg-[#0b0a14] border border-[#211d34]">
-              <span className="text-[#9490ac] block text-[9px] uppercase font-bold">Tactical Strategy:</span>
-              <span className="text-[#e8e6f2]">{currentScenario.contextHint}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Top scenario selector ribbon */}
-      <div className="flex items-center gap-1.5 p-2 bg-[#0b0a14] border-b border-[#211d34] overflow-x-auto no-scrollbar">
-        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#00f0ff] px-2 shrink-0">
-          HOST VIEWPORT:
-        </span>
-
-        {PRESET_SCENARIOS.map((scenario) => {
-          const isSelected = !customScreenshot && !isLiveScreenSharing && currentScenario.id === scenario.id;
-          const Icon = scenario.icon;
-          return (
-            <button
-              key={scenario.id}
-              onClick={() => {
-                if (customScreenshot) onClearCustomScreenshot();
-                onSelectScenario(scenario);
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium whitespace-nowrap transition-all ${
-                isSelected
-                  ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/50 shadow-[0_0_12px_rgba(0,240,255,0.25)] font-bold'
-                  : 'bg-[#14121f] text-[#9490ac] hover:text-[#e8e6f2] border border-[#211d34]'
-              }`}
-            >
-              <Icon className="w-3 h-3" />
-              <span>{scenario.name}</span>
-            </button>
-          );
-        })}
-
-        {/* Test incoming message trigger for Auto-Mode testing */}
-        {onSimulateIncomingMessage && (
+          {/* Screenshot upload trigger */}
           <button
-            onClick={onSimulateIncomingMessage}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-bold whitespace-nowrap bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/40 hover:bg-[#00f0ff]/20 transition shadow-[0_0_12px_rgba(0,240,255,0.2)]"
-            title="Trigger an incoming message from the counterpart to see OmniAI calculate and answer for you"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-1.5 rounded-lg border border-[#2a2254] bg-[#15122c] text-[#948eb5] hover:text-[#00ffcc] transition-all"
+            title="Upload screenshot"
           >
-            <Zap className="w-3 h-3 text-[#00f0ff] animate-pulse" />
-            <span>+ Incoming Msg</span>
+            <Upload className="w-3.5 h-3.5" />
           </button>
-        )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
 
-        {/* Live screen share toggle button */}
-        <button
-          onClick={onToggleLiveScreenSharing}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium whitespace-nowrap transition-all ${
-            isLiveScreenSharing
-              ? 'bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff] animate-pulse shadow-[0_0_15px_rgba(0,240,255,0.3)] font-bold'
-              : 'bg-[#14121f] text-[#9490ac] hover:text-[#e8e6f2] border border-[#211d34]'
-          }`}
-          title="Share active device screen with system-wide vision"
-        >
-          <Video className="w-3 h-3 text-[#00f0ff]" />
-          <span>{isLiveScreenSharing ? 'Screen Live ●' : 'Live Screen'}</span>
-        </button>
+          {/* Compact Popover for Live Cognition Dossier */}
+          {showDossierPopover && (
+            <div className="absolute top-8 right-0 w-64 bg-[#100d23] border border-[#00ffcc]/50 rounded-xl p-3 shadow-2xl z-40 space-y-2 animate-in fade-in duration-100">
+              <div className="flex items-center justify-between border-b border-[#2a2254] pb-1.5">
+                <span className="text-[11px] font-bold text-[#00ffcc] flex items-center gap-1 font-mono">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Live Cognition Dossier
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowDossierPopover(false)}
+                  className="text-[#948eb5] hover:text-white"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
 
-        {/* Upload custom phone screenshot button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium whitespace-nowrap transition-all ${
-            customScreenshot
-              ? 'bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/50'
-              : 'bg-[#14121f] text-[#9490ac] hover:text-[#e8e6f2] border border-[#211d34]'
-          }`}
-          title="Upload screenshot of any mobile app"
-        >
-          <Upload className="w-3 h-3 text-[#00f0ff]" />
-          <span>{customScreenshot ? 'Image ✓' : 'Upload'}</span>
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+              <div className="space-y-1.5 text-[10.5px] font-mono">
+                <div>
+                  <span className="text-[#948eb5] block text-[9px] uppercase font-bold">Counterpart:</span>
+                  <span className="text-[#e8e6f2] font-semibold">{currentScenario.appHeader.title}</span>
+                </div>
+                <div>
+                  <span className="text-[#948eb5] block text-[9px] uppercase font-bold">Tactical Strategy:</span>
+                  <p className="text-[#e8e6f2] leading-tight">{currentScenario.contextHint}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Screen display container */}
-      <div className="flex-1 relative overflow-y-auto p-3 flex flex-col justify-between min-h-[200px] bg-[#0b0a14] space-y-3">
-        {/* NEW REQUIREMENT: DAILY INSIGHT CARD GROUNDED IN GOOGLE SEARCH */}
+      {/* 2. CHAT STREAM VIEWPORT CONTAINER */}
+      <div className="flex-1 relative overflow-y-auto p-3 flex flex-col justify-between min-h-0 bg-[#000000] space-y-3">
+        
+        {/* Grounded Daily Insight */}
         <DailyInsightCard />
 
         {customScreenshot ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="relative max-h-[220px] rounded-xl overflow-hidden border border-[#211d34] shadow-xl group">
+            <div className="relative max-h-[220px] rounded-xl overflow-hidden border border-[#2a2254] shadow-xl">
               <img
                 src={customScreenshot}
                 alt="Uploaded mobile screen"
@@ -312,23 +267,24 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
               />
               <div className="absolute top-2 right-2">
                 <button
+                  type="button"
                   onClick={onClearCustomScreenshot}
-                  className="px-2 py-1 rounded-md bg-[#0b0a14]/90 text-[#e8e6f2] text-[10px] font-mono hover:bg-[#14121f] transition backdrop-blur-sm border border-[#211d34]"
+                  className="px-2 py-1 rounded-md bg-black/90 text-[#e8e6f2] text-[10px] font-mono hover:bg-[#15122c] transition border border-[#2a2254]"
                 >
                   Clear Screen
                 </button>
               </div>
             </div>
-            <p className="text-[10px] font-mono text-[#00f0ff] mt-2 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> OmniAI Cognition actively parsing uploaded viewport
+            <p className="text-[10px] font-mono text-[#00ffcc] mt-2 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> OmniAI parsing uploaded screen viewport
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {/* Simulated App Header */}
-            <div className="flex items-center justify-between pb-2 border-b border-[#211d34]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#14121f] border border-[#211d34] flex items-center justify-center text-sm shadow-inner">
+          <div className="space-y-2.5">
+            {/* Counterpart Contact Subheader */}
+            <div className="flex items-center justify-between pb-2 border-b border-[#2a2254]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#15122c] border border-[#2a2254] flex items-center justify-center text-xs shadow-inner">
                   {currentScenario.appHeader.avatar}
                 </div>
                 <div>
@@ -337,25 +293,25 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
                       {currentScenario.appHeader.title}
                     </span>
                     {currentScenario.appHeader.badge && (
-                      <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/30">
+                      <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-[#00ffcc]/15 text-[#00ffcc] border border-[#00ffcc]/40">
                         {currentScenario.appHeader.badge}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-[#9490ac] font-mono block leading-tight">
+                  <span className="text-[9.5px] text-[#948eb5] font-mono block leading-none mt-0.5">
                     {currentScenario.appHeader.subtitle}
                   </span>
                 </div>
               </div>
 
-              {/* Viewport Perception Badge */}
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#14121f] border border-[#211d34] text-[9px] font-mono text-[#9490ac]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
-                <span>Viewport Feed</span>
+              {/* Viewport Perception Status */}
+              <div className="flex items-center gap-1 text-[9px] font-mono text-[#948eb5]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00ffcc] animate-ping" />
+                <span>Active</span>
               </div>
             </div>
 
-            {/* Simulated Messages / Host Viewport Stream */}
+            {/* Simulated Messages */}
             <div className="space-y-2 py-1">
               {currentScenario.messages.map((msg, idx) => (
                 <div
@@ -367,15 +323,15 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
                   <div
                     className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed shadow-lg ${
                       msg.sender === 'them'
-                        ? 'bg-[#14121f] text-[#e8e6f2] border border-[#211d34] rounded-tl-sm'
+                        ? 'bg-[#13102b] text-[#e8e6f2] border border-[#2a2254] rounded-tl-sm'
                         : msg.isAutoPilot
-                        ? 'bg-gradient-to-r from-[#6c63ff]/40 to-[#14121f] text-[#e8e6f2] border border-[#00f0ff]/40 rounded-tr-sm shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                        : 'bg-gradient-to-r from-[#6c63ff] to-[#00f0ff] text-black font-semibold rounded-tr-sm border border-[#00f0ff]/50'
+                        ? 'bg-[#181333] text-[#e8e6f2] border border-[#00ffcc]/50 rounded-tr-sm shadow-[0_0_12px_rgba(0,255,204,0.15)]'
+                        : 'bg-[#00ffcc] text-black font-semibold rounded-tr-sm border border-[#00ffcc] shadow-[0_0_15px_rgba(0,255,204,0.2)]'
                     }`}
                   >
                     {msg.text}
                   </div>
-                  <span className="text-[9px] text-[#9490ac] font-mono mt-0.5 px-1">
+                  <span className="text-[9px] text-[#948eb5] font-mono mt-0.5 px-1">
                     {msg.time} {msg.isAutoPilot && '• ⚡ Auto-Pilot'}
                   </span>
                 </div>
@@ -385,13 +341,20 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
         )}
 
         {/* Live typing draft mirror */}
-        <div className="pt-2 border-t border-[#211d34] flex items-center justify-between text-[11px] font-mono text-[#9490ac]">
+        <div className="pt-2 border-t border-[#2a2254] flex items-center justify-between text-[10.5px] font-mono text-[#948eb5]">
           <span className="truncate pr-2">
-            Drafting: <span className="text-[#e8e6f2] font-medium">{currentDraftText || '(typing buffer empty)'}</span>
+            Drafting: <span className="text-[#e8e6f2] font-medium">{currentDraftText || '(empty)'}</span>
           </span>
-          <span className="text-[9px] text-[#00f0ff] shrink-0 font-bold">
-            Live Link Active
-          </span>
+          {onSimulateIncomingMessage && (
+            <button
+              type="button"
+              onClick={onSimulateIncomingMessage}
+              className="text-[9px] text-[#00ffcc] hover:underline font-bold shrink-0"
+              title="Simulate new counterpart message"
+            >
+              + Test Reply
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "OmniExtension - Nexus Companion",
+  "version": "2.4.0",
+  "description": "Obsidian-grade cognitive telemetry, kinetic keyboard friction bridge, and Syndicate Council real-time assistant for Chrome & Edge.",
+  "author": "darkmisfitlabs@gmail.com",
+  "icons": {
+    "16": "../icon.svg",
+    "48": "../icon.svg",
+    "128": "../icon-192.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "OmniAI - Nexus Companion HUD",
+    "default_icon": {
+      "16": "../icon.svg",
+      "48": "../icon.svg",
+      "128": "../icon-192.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background-sync.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup.html",
+        "background-sync.js"
+      ],
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ]
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+O",
+        "mac": "Command+Shift+O"
+      },
+      "description": "Open OmniAI - Nexus Companion HUD"
+    },
+    "quick_council_synthesis": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Trigger Syndicate Council Response Synthesis on Active Text Field"
+    }
+  }
+}

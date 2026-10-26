@@ -32,12 +32,12 @@ export const OmniKeyboardCompanion: React.FC<OmniKeyboardCompanionProps> = ({
   onSaveToVault,
 }) => {
   const [typedText, setTypedText] = useState(
-    'Assembling the unified intelligence matrix for darkmisfit studios'
+    'Assembling the unified intelligence matrix for OmniAI'
   );
   const [selectedTone, setSelectedTone] = useState<'nocturnal_cool' | 'darkmisfit' | 'punchy' | 'diplomatic' | 'deep_technical'>('nocturnal_cool');
   const [activeLane, setActiveLane] = useState<'dual' | 'device' | 'cloud'>('dual');
   const [orbPhase, setOrbPhase] = useState<OrbPhase>('idle');
-  const [screenContext, setScreenContext] = useState<string>('Visualizing DarkMisfitStudios web layout & live telemetry');
+  const [screenContext, setScreenContext] = useState<string>('Visualizing OmniAI web layout & live telemetry');
   const [suggestions, setSuggestions] = useState<string[]>([
     '⚡ Execute Multi-LLM Quorum',
     '🎬 Render OmniMotion Timeline',
@@ -95,7 +95,7 @@ export const OmniKeyboardCompanion: React.FC<OmniKeyboardCompanionProps> = ({
       if (tone === 'nocturnal_cool') {
         transformed = `🌙 [Nocturnal]: ${typedText.trim()} — calibrated for shadow velocity.`;
       } else if (tone === 'darkmisfit') {
-        transformed = `⚡ [DarkMisfit]: ${typedText.trim()} // Unapologetic power, zero compromises.`;
+        transformed = `⚡ [OmniAI]: ${typedText.trim()} // Unapologetic power, zero compromises.`;
       } else if (tone === 'punchy') {
         transformed = `🔥 ${typedText.trim().toUpperCase()} — Instant impact, maximum retention.`;
       } else if (tone === 'diplomatic') {
@@ -213,7 +213,7 @@ export const OmniKeyboardCompanion: React.FC<OmniKeyboardCompanionProps> = ({
             {(
               [
                 { id: 'nocturnal_cool', label: '🌙 Nocturnal Cool' },
-                { id: 'darkmisfit', label: '⚡ DarkMisfit' },
+                { id: 'darkmisfit', label: '⚡ OmniAI Core' },
                 { id: 'punchy', label: '🔥 Punchy & Viral' },
                 { id: 'diplomatic', label: '🤝 Diplomatic' },
                 { id: 'deep_technical', label: '🛠️ Deep Technical' },

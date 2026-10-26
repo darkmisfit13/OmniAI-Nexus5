@@ -22,10 +22,12 @@ import {
   MessageSquare,
   Bot,
   Cloud,
-  Tv
+  Tv,
+  Activity,
+  Eye,
+  Sliders
 } from 'lucide-react';
 import { StudioId } from './OmniStudiosView';
-import { HoloOrb } from './HoloOrb';
 
 interface OmniStudiosSidebarProps {
   isOpen: boolean;
@@ -37,6 +39,9 @@ interface OmniStudiosSidebarProps {
   onOpenIdentity?: () => void;
   onOpenVault?: () => void;
   onOpenWorkspace?: () => void;
+  onOpenAutopilot?: () => void;
+  onOpenTelemetry?: () => void;
+  onOpenVision?: () => void;
 }
 
 export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
@@ -49,25 +54,28 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
   onOpenIdentity,
   onOpenVault,
   onOpenWorkspace,
+  onOpenAutopilot,
+  onOpenTelemetry,
+  onOpenVision,
 }) => {
   if (!isOpen) return null;
 
   const studios = [
-    { id: 'motion', name: 'OmniMotion', tag: 'CapCut Video Studio', icon: Video, color: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
-    { id: 'beat', name: 'Omni Storyboard', tag: 'Script & Character Anchor Engine', icon: Film, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'motion', name: 'OmniMotion', tag: 'CapCut Video Studio', icon: Video, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'beat', name: 'Omni Storyboard', tag: 'Character Anchor Engine', icon: Film, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
     { id: 'wave', name: 'OmniVoice Studio', tag: 'Voice Dub & Lip-Sync', icon: Music, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'yale', name: 'OmniYale Studio', tag: 'Multi-Cam Broadcast & Slides', icon: Tv, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'forge', name: 'Vector and Brand Lab', tag: 'Raster to Vector Studio', icon: Hammer, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'code', name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code, color: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' },
-    { id: 'imagine', name: 'OmniImagine', tag: 'Mobile Canvas & Magic Eraser Suite', icon: Wand2, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'analyzer', name: 'OmniAnalyzer', tag: 'Site & Social Auditor', icon: Search, color: 'text-blue-400 bg-blue-500/20 border-blue-500/30' },
+    { id: 'yale', name: 'OmniYale Studio', tag: 'Broadcast & Slides', icon: Tv, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'forge', name: 'Vector Brand Lab', tag: 'Raster to Vector Studio', icon: Hammer, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'code', name: 'OmniCode', tag: 'Full-Stack App Scaffold', icon: Code, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'imagine', name: 'OmniImagine', tag: 'Mobile Canvas & Magic Eraser', icon: Wand2, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'analyzer', name: 'OmniAnalyzer', tag: 'Site & Social Auditor', icon: Search, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
     { id: 'style', name: 'OmniStyle Studio', tag: 'Wardrobe Try-On Engine', icon: Shirt, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'spatial', name: 'Omnispacial 3D Studio', tag: 'WebGL 3D Engine', icon: Rotate3d, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'mockup', name: 'Viral Mockup Studio', tag: 'Social Feed Safe Zones', icon: Smartphone, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
-    { id: 'cosmic', name: 'Cosmic UI Lab', tag: 'Generative Components', icon: Palette, color: 'text-fuchsia-400 bg-fuchsia-500/20 border-fuchsia-500/30' },
-    { id: 'architect', name: 'OmniArchitect', tag: 'Database & API Schemas', icon: Database, color: 'text-sky-400 bg-sky-500/20 border-sky-500/30' },
-    { id: 'automations', name: 'Automations', tag: 'AI Autonomous Agents', icon: Workflow, color: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30' },
-    { id: 'connect', name: 'OmniConnect', tag: 'App Integrations Catalog', icon: Network, color: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' },
+    { id: 'spatial', name: 'Omnispacial 3D', tag: 'WebGL 3D Engine', icon: Rotate3d, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'mockup', name: 'Viral Mockup', tag: 'Social Feed Safe Zones', icon: Smartphone, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'cosmic', name: 'Cosmic UI Lab', tag: 'Generative Components', icon: Palette, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'architect', name: 'OmniArchitect', tag: 'Database & API Schemas', icon: Database, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'automations', name: 'Automations', tag: 'AI Autonomous Agents', icon: Workflow, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
+    { id: 'connect', name: 'OmniConnect', tag: 'Integrations Catalog', icon: Network, color: 'text-[#00ffcc] bg-[#00ffcc]/10 border-[#00ffcc]/30' },
   ];
 
   return (
@@ -79,69 +87,159 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
       />
 
       {/* Slide-over Drawer from Left */}
-      <div className="relative w-80 max-w-[85vw] bg-[#0a0a0c] border-r border-zinc-800 h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+      <div className="relative w-84 max-w-[85vw] bg-[#000000] border-r border-[#2a2254] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
         
         {/* Drawer Header */}
-        <div className="p-3.5 border-b border-zinc-800 bg-[#121318] flex items-center justify-between">
+        <div className="p-3.5 border-b border-[#2a2254] bg-[#100d23] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.6)]" />
-            <h3 className="font-bold text-xs font-mono uppercase tracking-widest text-zinc-300">
-              Navigation Drawer
+            <span className="w-2 h-2 rounded-full bg-[#00ffcc] animate-pulse shadow-[0_0_8px_#00ffcc]" />
+            <h3 className="font-bold text-xs font-mono tracking-widest text-[#e8e6f2]">
+              OmniAI<span className="text-[#00ffcc]"> - Nexus</span> Navigation
             </h3>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+            className="p-1.5 rounded-lg text-[#948eb5] hover:text-white hover:bg-[#1a1638] transition-all"
             title="Close Drawer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* TOP PROMINENT BUTTON: OmniAI - Your Digital Shadow */}
-        <div className="p-3 border-b border-zinc-800 bg-[#0a0a0c]">
+        {/* PRIMARY ITEM: OmniAI - Nexus Chat */}
+        <div className="p-3 border-b border-[#2a2254] bg-[#080614]">
           <button
             onClick={() => {
               onOpenOmniAIChat?.();
               onClose();
             }}
-            className="w-full p-3 rounded-2xl bg-[#121318] border border-red-600/40 hover:border-red-500 text-left transition-all shadow-[0_0_20px_rgba(220,38,38,0.15)] group relative overflow-hidden active:scale-[0.98]"
+            className="w-full p-2.5 rounded-xl bg-[#13102b] border border-[#00ffcc]/40 hover:border-[#00ffcc] text-left transition-all shadow-[0_0_15px_rgba(0,255,204,0.15)] group relative overflow-hidden active:scale-[0.98]"
           >
-            <div className="absolute inset-0 bg-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            
-            <div className="flex items-center gap-3 relative z-10">
-              <div className="w-10 h-10 rounded-xl bg-black border border-red-600/40 flex items-center justify-center shrink-0 shadow-inner">
-                <HoloOrb phase="idle" size="xs" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#000000] border border-[#00ffcc]/40 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-[#00ffcc]" />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-bold text-sm text-white tracking-wide group-hover:text-red-400 transition-colors">
-                    OmniAI Chat
+                  <h2 className="font-bold text-xs text-white tracking-wide group-hover:text-[#00ffcc] transition-colors">
+                    OmniAI - Nexus Chat
                   </h2>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-950/60 text-red-400 border border-red-600/40 font-mono font-bold">
-                    DEDICATED
+                  <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-[#00ffcc]/15 text-[#00ffcc] border border-[#00ffcc]/40 font-mono font-bold">
+                    COUNCIL
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 tracking-wide font-sans mt-0.5">
+                <p className="text-[10px] text-[#948eb5] truncate mt-0.5">
                   Full-Page Chat & Multi-LLM Council
                 </p>
               </div>
 
-              <ChevronRight className="w-4 h-4 text-red-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <ChevronRight className="w-3.5 h-3.5 text-[#00ffcc] group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>
           </button>
         </div>
 
+        {/* SYSTEM MIGRATION HUBS (Autopilot, Telemetry, Vision, Vault, Workspace) */}
+        <div className="p-3 border-b border-[#2a2254] space-y-1.5 bg-[#0a0718]">
+          <span className="text-[9.5px] font-mono uppercase text-[#7d779f] font-bold block mb-1">
+            System Intelligence
+          </span>
+
+          {/* Autonomous Autopilot */}
+          {onOpenAutopilot && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenAutopilot();
+              }}
+              className="w-full p-2 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc]/40 flex items-center justify-between transition-all text-left text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Bot className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span className="text-[#e8e6f2] font-medium">Autonomous Autopilot</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#00ffcc]">Configure</span>
+            </button>
+          )}
+
+          {/* OmniCore Telemetry */}
+          {onOpenTelemetry && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenTelemetry();
+              }}
+              className="w-full p-2 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc]/40 flex items-center justify-between transition-all text-left text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span className="text-[#e8e6f2] font-medium">OmniCore Telemetry</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#948eb5]">Live HUD</span>
+            </button>
+          )}
+
+          {/* OmniVision / Real-Time Screen Cognition */}
+          {onOpenVision && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenVision();
+              }}
+              className="w-full p-2 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc]/40 flex items-center justify-between transition-all text-left text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Eye className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span className="text-[#e8e6f2] font-medium">OmniVision Cognition</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#948eb5]">Screen Stream</span>
+            </button>
+          )}
+
+          {/* Global Vault Media Library */}
+          {onOpenVault && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenVault();
+              }}
+              className="w-full p-2 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc]/40 flex items-center justify-between transition-all text-left text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <FolderLock className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span className="text-[#e8e6f2] font-medium">OpenGlobalVault Library</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#948eb5]">Assets</span>
+            </button>
+          )}
+
+          {/* Google Workspace Authorization */}
+          {onOpenWorkspace && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenWorkspace();
+              }}
+              className="w-full p-2 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc]/40 flex items-center justify-between transition-all text-left text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Cloud className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span className="text-[#e8e6f2] font-medium">Google Workspace Auth</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#948eb5]">Drive • Gmail</span>
+            </button>
+          )}
+        </div>
+
         {/* Studios Section Header */}
-        <div className="px-3 pt-3 pb-1 flex items-center justify-between text-[10px] font-mono uppercase text-zinc-500 font-bold">
-          <span>CREATIVE STUDIOS ({studios.length})</span>
-          <span className="text-[9px] text-red-400/80 lowercase">spur-of-moment ready</span>
+        <div className="px-3 pt-2.5 pb-1 flex items-center justify-between text-[10px] font-mono uppercase text-[#7d779f] font-bold">
+          <span>Creative Studios ({studios.length})</span>
+          <span className="text-[8.5px] text-[#00ffcc]">v4</span>
         </div>
 
         {/* Studios List */}
-        <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1.5 no-scrollbar">
+        <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1 no-scrollbar">
           {studios.map((st) => {
             const Icon = st.icon;
             const isSelected = selectedStudio === st.id;
@@ -153,29 +251,29 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
                   onSelectStudio(st.id as StudioId);
                   onClose();
                 }}
-                className={`w-full p-2.5 rounded-xl border flex items-center gap-3 transition-all text-left ${
+                className={`w-full p-2 rounded-xl border flex items-center gap-2.5 transition-all text-left ${
                   isSelected
-                    ? 'bg-gradient-to-r from-cyan-950/60 to-indigo-950/60 border-cyan-500/50 shadow-md shadow-cyan-500/10'
-                    : 'bg-slate-900/40 border-slate-800/60 hover:bg-slate-800/60 hover:border-slate-700'
+                    ? 'bg-[#1e1940] border-[#00ffcc]/60 shadow-sm'
+                    : 'bg-[#100d23]/80 border-[#2a2254] hover:bg-[#16122e] hover:border-[#00ffcc]/30'
                 }`}
               >
-                <div className={`p-2 rounded-lg border flex-shrink-0 ${st.color}`}>
-                  <Icon className="w-4 h-4" />
+                <div className="p-1.5 rounded-lg border border-[#00ffcc]/30 bg-[#00ffcc]/10 flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-[#00ffcc]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-white truncate">{st.name}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="font-bold text-xs text-[#e8e6f2] truncate">{st.name}</span>
+                    <ChevronRight className="w-3 h-3 text-[#7d779f]" />
                   </div>
-                  <p className="text-[10px] text-slate-400 truncate">{st.tag}</p>
+                  <p className="text-[9.5px] text-[#948eb5] truncate">{st.tag}</p>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* BOTTOM SECTION: SETTINGS BLOCK & GLOBAL VAULT */}
-        <div className="p-3 border-t border-slate-800 bg-[#07090f] space-y-2">
+        {/* BOTTOM SECTION: SETTINGS & IDENTITY */}
+        <div className="p-3 border-t border-[#2a2254] bg-[#0a0718] space-y-1.5">
           {/* My AI Identity Button */}
           {onOpenIdentity && (
             <button
@@ -183,85 +281,32 @@ export const OmniStudiosSidebar: React.FC<OmniStudiosSidebarProps> = ({
                 onClose();
                 onOpenIdentity();
               }}
-              className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#6c63ff]/20 via-[#14121f] to-[#00f0ff]/20 border border-[#211d34] hover:border-[#00f0ff] text-[#e8e6f2] hover:text-white text-xs font-semibold flex items-center justify-between transition-all group active:scale-[0.98] shadow-sm"
+              className="w-full py-2 px-3 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc] text-[#e8e6f2] text-xs font-semibold flex items-center justify-between transition-all"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-[#00f0ff]/10 border border-[#00f0ff]/40 text-[#00f0ff] group-hover:text-white">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div className="text-left">
-                  <span className="block font-bold text-xs text-[#e8e6f2]">My AI Identity</span>
-                  <span className="text-[9.5px] text-[#9490ac] block font-normal">
-                    Voice Cloning Matrix & Text Persona
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <Bot className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span>My AI Identity & Voice</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#9490ac] group-hover:text-[#00f0ff]" />
+              <ChevronRight className="w-3.5 h-3.5 text-[#7d779f]" />
             </button>
           )}
 
-          {/* Settings block/button moved from upper right corner */}
-          <button
-            onClick={() => {
-              onClose();
-              onOpenSettings?.();
-            }}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-slate-900 via-slate-800/80 to-slate-900 border border-slate-700/80 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center justify-between transition-all group active:scale-[0.98] shadow-md"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-cyan-950/70 border border-cyan-800/60 text-cyan-400 group-hover:text-cyan-300">
-                <Settings className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <span className="block font-bold text-xs">Settings & Admin</span>
-                <span className="text-[9.5px] text-slate-400 block font-normal">
-                  Preferences, Workspace, PC Sync, Admin & Billing
-                </span>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400" />
-          </button>
-
-          {/* Google Workspace Authorization Workflow Dock */}
-          {onOpenWorkspace && (
+          {/* Settings block/button */}
+          {onOpenSettings && (
             <button
               onClick={() => {
                 onClose();
-                onOpenWorkspace();
+                onOpenSettings();
               }}
-              className="w-full py-2 px-3 rounded-xl bg-blue-950/20 border border-blue-800/30 hover:border-blue-500/50 text-blue-300 text-xs font-medium flex items-center justify-between transition-all"
+              className="w-full py-2 px-3 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc] text-[#e8e6f2] text-xs font-semibold flex items-center justify-between transition-all"
             >
               <div className="flex items-center gap-2">
-                <Cloud className="w-3.5 h-3.5 text-blue-400" />
-                <span>Google Workspace Auth</span>
+                <Settings className="w-3.5 h-3.5 text-[#00ffcc]" />
+                <span>Settings & Admin Hub</span>
               </div>
-              <span className="text-[9px] font-mono text-blue-400/80">Drive • Mail • Keep</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#7d779f]" />
             </button>
           )}
-
-          {/* Vault Quick Access */}
-          {onOpenVault && (
-            <button
-              onClick={() => {
-                onClose();
-                onOpenVault();
-              }}
-              className="w-full py-2 px-3 rounded-xl bg-purple-950/20 border border-purple-800/30 hover:border-purple-500/50 text-purple-300 text-xs font-medium flex items-center justify-between transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <FolderLock className="w-3.5 h-3.5 text-purple-400" />
-                <span>Global Vault Media Library</span>
-              </div>
-              <span className="text-[9px] font-mono text-purple-400/80">Shared</span>
-            </button>
-          )}
-
-          {/* Corporate Attribution Baseline Indicator */}
-          <div className="pt-2.5 pb-1 text-center border-t border-zinc-800/80">
-            <span className="text-[10px] font-mono text-zinc-400 tracking-wider">
-              Powered by Dark Misfit Studios
-            </span>
-          </div>
         </div>
 
       </div>

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniExtension - Nexus Companion</title>
+  <style>
+    :root {
+      --bg-canvas: #000000;
+      --bg-card: #100d23;
+      --bg-card-hover: #15122c;
+      --bg-panel: #181333;
+      --border-obsidian: #2a2254;
+      --accent-neon: #00ffcc;
+      --accent-purple: #6c63ff;
+      --accent-pink: #ff007f;
+      --accent-rose: #f43f5e;
+      --text-main: #f1f5f9;
+      --text-muted: #948eb5;
+      --text-dim: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 390px;
+      min-height: 590px;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Pinned Obsidian Header */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: linear-gradient(180deg, #181333 0%, #100d23 100%);
+      border-bottom: 1px solid var(--border-obsidian);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 13.5px;
+    }
+
+    .brand-title .neon-tag {
+      color: var(--accent-neon);
+      text-shadow: 0 0 10px rgba(0, 255, 204, 0.45);
+    }
+
+    .status-orb {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-neon);
+      box-shadow: 0 0 8px var(--accent-neon);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .badge-pill {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2.5px 8px;
+      border-radius: 9999px;
+      background: rgba(0, 255, 204, 0.1);
+      border: 1px solid rgba(0, 255, 204, 0.35);
+      color: var(--accent-neon);
+      letter-spacing: 0.05em;
+    }
+
+    /* Status Monitoring Loop Banner */
+    .status-banner {
+      background: #080614;
+      border-bottom: 1px solid var(--border-obsidian);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    .status-pulse-track {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-neon);
+      box-shadow: 0 0 6px var(--accent-neon);
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: #0b0819;
+      border-bottom: 1px solid var(--border-obsidian);
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 7px 2px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--accent-neon);
+      border: 1px solid var(--border-obsidian);
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.15);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 12px 14px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .obsidian-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-obsidian);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .card-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Quick Text Input Layout */
+    .quick-input-box {
+      width: 100%;
+      background: #070512;
+      border: 1px solid var(--border-obsidian);
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 10px;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .quick-input-box:focus {
+      border-color: var(--accent-neon);
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+    }
+
+    .quick-actions-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background: #14102c;
+      border: 1px solid var(--border-obsidian);
+      color: var(--text-muted);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .btn-secondary:hover {
+      background: #1d183f;
+      color: #fff;
+      border-color: var(--accent-purple);
+    }
+
+    .btn-primary {
+      flex: 1.5;
+      background: linear-gradient(135deg, rgba(0, 255, 204, 0.2), rgba(108, 99, 255, 0.3));
+      border: 1px solid var(--accent-neon);
+      color: var(--accent-neon);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-neon);
+      color: #000;
+      box-shadow: 0 0 14px rgba(0, 255, 204, 0.4);
+    }
+
+    /* Sliders */
+    .slider-group {
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .slider-val {
+      font-family: "JetBrains Mono", monospace;
+      color: var(--accent-neon);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #2a2254;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-neon);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--accent-neon);
+    }
+
+    /* Council Tracks */
+    .council-track {
+      background: #0d0a1d;
+      border: 1px solid #1f183d;
+      border-radius: 8px;
+      padding: 9px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .council-track:hover {
+      border-color: var(--accent-purple);
+      background: #14102c;
+    }
+
+    .track-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-family: "JetBrains Mono", monospace;
+      margin-bottom: 4px;
+    }
+
+    .track-name-strategist { color: #60a5fa; }
+    .track-name-empath { color: #f472b6; }
+    .track-name-ghost { color: #34d399; }
+
+    .track-text {
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.35;
+    }
+
+    /* Footer */
+    .footer-bar {
+      padding: 10px 16px;
+      background: #070510;
+      border-top: 1px solid var(--border-obsidian);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-dim);
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .hud-stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #15112e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #231b46;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="header-bar">
+    <div class="brand-title">
+      <div class="status-orb" id="connection-orb"></div>
+      <span>OmniAI <span class="neon-tag">- Nexus</span></span>
+    </div>
+    <span class="badge-pill" id="owner-status">COMPANION v2.4</span>
+  </header>
+
+  <!-- Live Status Monitoring Banner -->
+  <div class="status-banner">
+    <div class="status-pulse-track">
+      <span class="status-dot"></span>
+      <span>[OmniCore Telemetry: Active Script Monitoring Loop]</span>
+    </div>
+    <span id="latency-tag" style="color: var(--accent-neon);">12ms</span>
+  </div>
+
+  <!-- Viewport Switcher -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" data-tab="tab-input">Quick Input</button>
+    <button class="tab-btn" data-tab="tab-council">Council</button>
+    <button class="tab-btn" data-tab="tab-physics">Physics</button>
+    <button class="tab-btn" data-tab="tab-telemetry">Monitoring</button>
+  </nav>
+
+  <!-- TAB 1: QUICK TEXT INPUT & DIRECT INJECTION -->
+  <main class="tab-content active" id="tab-input">
+    <div class="obsidian-card">
+      <div class="card-label">
+        <span>Instant Draft Beam</span>
+        <span style="color: var(--accent-neon)">HOTKEY: Ctrl+Shift+Y</span>
+      </div>
+      
+      <textarea 
+        id="quick-input-text" 
+        class="quick-input-box" 
+        placeholder="Type or paste text to beam directly into active browser input or mobile keyboard..."
+      ></textarea>
+
+      <div class="quick-actions-bar">
+        <button class="btn-secondary" id="btn-clear-input">
+          <span>Clear</span>
+        </button>
+        <button class="btn-secondary" id="btn-copy-input">
+          <span>Copy</span>
+        </button>
+        <button class="btn-primary" id="btn-beam-input">
+          <span>Beam to Tab</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Snippets Bank -->
+    <div class="obsidian-card">
+      <div class="card-label">
+        <span>Pre-Calibrated Anchors</span>
+        <span>FAST SELECT</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <button class="btn-secondary" style="text-align: left; justify-content: flex-start;" onclick="fillAndBeam('Understood. Deployment regression checks passed; rolling out staging now.')">
+          ⚡ "Understood. Regression checks passed; rolling out staging now."
+        </button>
+        <button class="btn-secondary" style="text-align: left; justify-content: flex-start;" onclick="fillAndBeam('Let us confirm the scope bounds before final sign-off.')">
+          🎯 "Let's confirm scope bounds before final sign-off."
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 2: COUNCIL ADVISEMENT -->
+  <main class="tab-content" id="tab-council">
+    <div class="obsidian-card">
+      <div class="card-label">
+        <span>Tri-Agent Cognitive Stream</span>
+        <span style="color: var(--accent-neon)">LIVE SYNDICATE</span>
+      </div>
+      
+      <div class="council-track" id="track-strategist">
+        <div class="track-meta">
+          <span class="track-name-strategist">THE STRATEGIST (94% FIT)</span>
+          <span>TACTICAL PIN</span>
+        </div>
+        <p class="track-text">"Let's confirm the scope bounds before final deployment. Are we targeting enterprise or creator tier first?"</p>
+      </div>
+
+      <div class="council-track" id="track-empath">
+        <div class="track-meta">
+          <span class="track-name-empath">THE EMPATH (88% FIT)</span>
+          <span>TRUST ANCHOR</span>
+        </div>
+        <p class="track-text">"I completely get where you're coming from with this timeline. Let's make sure you feel 100% comfortable with the rollout."</p>
+      </div>
+
+      <div class="council-track" id="track-ghost">
+        <div class="track-meta">
+          <span class="track-name-ghost">THE GHOST (91% FIT)</span>
+          <span>HIGH TENSION</span>
+        </div>
+        <p class="track-text">"Noted. We can keep this on ice until the Q3 budget cycle unlocks if you'd prefer."</p>
+      </div>
+
+      <button class="btn-primary" id="btn-inject-synthesis" style="width: 100%; margin-top: 8px;">
+        <span>Inject Council Synthesis</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- TAB 3: KEYBOARD PHYSICS & HAPTICS -->
+  <main class="tab-content" id="tab-physics">
+    <div class="obsidian-card">
+      <div class="card-label">
+        <span>Haptic & Tactile Motor</span>
+        <span id="haptic-val-indicator" style="color: var(--accent-neon)">LVL 6 / 10</span>
+      </div>
+      
+      <div class="slider-group">
+        <div class="slider-header">
+          <span>Haptic Feedback Intensity</span>
+          <span class="slider-val" id="val-haptic">6</span>
+        </div>
+        <input type="range" id="input-haptic" min="1" max="10" value="6">
+      </div>
+    </div>
+
+    <div class="obsidian-card">
+      <div class="card-label">
+        <span>Dynamic Touch Geometry</span>
+        <span style="color: #60a5fa">PHYSICS ENGAGED</span>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span>Kinetic Friction Dampener</span>
+          <span class="slider-val" id="val-friction">48%</span>
+        </div>
+        <input type="range" id="input-friction" min="0" max="100" value="48">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span>Predictive Grip Hitbox Scaling</span>
+          <span class="slider-val" id="val-grip">62%</span>
+        </div>
+        <input type="range" id="input-grip" min="10" max="100" value="62">
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 4: STATUS MONITORING & TELEMETRY HUD -->
+  <main class="tab-content" id="tab-telemetry">
+    <div class="obsidian-card">
+      <div class="card-label">
+        <span>Real-Time Script Telemetry</span>
+        <span class="hud-stat-pill" style="color: var(--accent-neon)">ENGAGED</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+        <div style="background: #090714; padding: 8px; border-radius: 6px; border: 1px solid #1c1538;">
+          <div style="font-size: 9px; color: var(--text-dim); font-family: monospace;">COMMITMENT</div>
+          <div style="font-size: 15px; font-weight: 800; color: #34d399;" id="stat-commitment">84%</div>
+        </div>
+        <div style="background: #090714; padding: 8px; border-radius: 6px; border: 1px solid #1c1538;">
+          <div style="font-size: 9px; color: var(--text-dim); font-family: monospace;">RISK DELTA</div>
+          <div style="font-size: 15px; font-weight: 800; color: #f43f5e;" id="stat-risk">12%</div>
+        </div>
+      </div>
+
+      <div style="background: #090714; padding: 8px; border-radius: 6px; border: 1px solid #1c1538; margin-bottom: 10px;">
+        <div style="font-size: 9px; color: var(--text-dim); font-family: monospace;">ACTIVE EMOTION VECTOR</div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--accent-neon); margin-top: 2px;" id="stat-emotion">Analytical Receptivity</div>
+      </div>
+
+      <div style="background: #090714; padding: 8px; border-radius: 6px; border: 1px solid #1c1538; margin-bottom: 10px;">
+        <div style="font-size: 9px; color: var(--text-dim); font-family: monospace;">CALL PIPELINE LINK</div>
+        <div style="font-size: 11px; font-mono; color: #a5b4fc; margin-top: 2px;">Audio/Video Enclave: Standby / Ready</div>
+      </div>
+
+      <button class="btn-secondary" id="btn-sync-telemetry" style="width: 100%;">
+        <span>Refresh Cognitive Telemetry</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer-bar">
+    <span>AUTH: darkmisfitlabs@gmail.com</span>
+    <span>SYNAPSE v2.4</span>
+  </footer>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+      });
+    });
+
+    const quickInput = document.getElementById('quick-input-text');
+    const hapticInput = document.getElementById('input-haptic');
+    const hapticVal = document.getElementById('val-haptic');
+    const hapticIndicator = document.getElementById('haptic-val-indicator');
+    const frictionInput = document.getElementById('input-friction');
+    const frictionVal = document.getElementById('val-friction');
+    const gripInput = document.getElementById('input-grip');
+    const gripVal = document.getElementById('val-grip');
+
+    // Storage restore
+    chrome.storage.local.get(['omni_haptic_level', 'omni_kinetic_friction', 'omni_grip_factor', 'omni_quick_draft'], (res) => {
+      if (res.omni_haptic_level) {
+        hapticInput.value = res.omni_haptic_level;
+        hapticVal.textContent = res.omni_haptic_level;
+        hapticIndicator.textContent = `LVL ${res.omni_haptic_level} / 10`;
+      }
+      if (res.omni_kinetic_friction) {
+        frictionInput.value = res.omni_kinetic_friction;
+        frictionVal.textContent = `${res.omni_kinetic_friction}%`;
+      }
+      if (res.omni_grip_factor) {
+        gripInput.value = res.omni_grip_factor;
+        gripVal.textContent = `${res.omni_grip_factor}%`;
+      }
+      if (res.omni_quick_draft) {
+        quickInput.value = res.omni_quick_draft;
+      }
+    });
+
+    // Auto-save draft
+    quickInput.addEventListener('input', (e) => {
+      chrome.storage.local.set({ omni_quick_draft: e.target.value });
+    });
+
+    document.getElementById('btn-clear-input').addEventListener('click', () => {
+      quickInput.value = '';
+      chrome.storage.local.set({ omni_quick_draft: '' });
+      quickInput.focus();
+    });
+
+    document.getElementById('btn-copy-input').addEventListener('click', () => {
+      navigator.clipboard.writeText(quickInput.value);
+    });
+
+    // Inject text into active browser tab
+    function injectText(text) {
+      if (!text) return;
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0] || !tabs[0].id) return;
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: (contentToInsert) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+              if (activeEl.isContentEditable) {
+                document.execCommand('insertText', false, contentToInsert);
+              } else {
+                const start = activeEl.selectionStart || 0;
+                const end = activeEl.selectionEnd || 0;
+                const val = activeEl.value || '';
+                activeEl.value = val.substring(0, start) + contentToInsert + val.substring(end);
+                activeEl.selectionStart = activeEl.selectionEnd = start + contentToInsert.length;
+                activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+            }
+          },
+          args: [text]
+        });
+      });
+    }
+
+    document.getElementById('btn-beam-input').addEventListener('click', () => {
+      injectText(quickInput.value);
+    });
+
+    window.fillAndBeam = function(text) {
+      quickInput.value = text;
+      chrome.storage.local.set({ omni_quick_draft: text });
+      injectText(text);
+    };
+
+    hapticInput.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      hapticVal.textContent = val;
+      hapticIndicator.textContent = `LVL ${val} / 10`;
+      chrome.storage.local.set({ omni_haptic_level: val });
+      chrome.runtime.sendMessage({ type: 'HAPTIC_UPDATE', level: val });
+      if (navigator.vibrate) navigator.vibrate(val * 4);
+    });
+
+    frictionInput.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      frictionVal.textContent = `${val}%`;
+      chrome.storage.local.set({ omni_kinetic_friction: val });
+      chrome.runtime.sendMessage({ type: 'PHYSICS_UPDATE', friction: val });
+    });
+
+    gripInput.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      gripVal.textContent = `${val}%`;
+      chrome.storage.local.set({ omni_grip_factor: val });
+      chrome.runtime.sendMessage({ type: 'PHYSICS_UPDATE', grip: val });
+    });
+
+    document.getElementById('track-strategist').addEventListener('click', () => {
+      injectText("Let's confirm the scope bounds before final deployment. Are we targeting enterprise or creator tier first?");
+    });
+
+    document.getElementById('track-empath').addEventListener('click', () => {
+      injectText("I completely get where you're coming from with this timeline. Let's make sure you feel 100% comfortable with the rollout.");
+    });
+
+    document.getElementById('track-ghost').addEventListener('click', () => {
+      injectText("Noted. We can keep this on ice until the Q3 budget cycle unlocks if you'd prefer.");
+    });
+
+    document.getElementById('btn-inject-synthesis').addEventListener('click', () => {
+      const hybrid = "I hear your priorities on the timeline. Let's lock in the core tier first so you feel confident, and we can revisit secondary modules next quarter.";
+      injectText(hybrid);
+    });
+
+    document.getElementById('btn-sync-telemetry').addEventListener('click', () => {
+      chrome.runtime.sendMessage({ type: 'TRIGGER_TELEMETRY_REFRESH' });
+      document.getElementById('connection-orb').style.background = '#6c63ff';
+      setTimeout(() => {
+        document.getElementById('connection-orb').style.background = '#00ffcc';
+      }, 400);
+    });
+  </script>
+</body>
+</html>

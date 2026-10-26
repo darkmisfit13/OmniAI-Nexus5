@@ -81,9 +81,9 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */ `
-uniform float uTime, uTurbulence, uPulse, uHover, uMagentaShift;
+uniform float uTime, uTurbulence, uPulse, uHover, uColorShift;
 uniform vec2 uPointer;
-uniform vec3 uCrimsonCore, uDeepRuby, uDeepMagenta, uSparkleWhite;
+uniform vec3 uBluishWhite, uCyanGlow, uVioletAccent, uSparkleWhite;
 varying vec3 vPosition, vNormal, vView;
 ${noiseGLSL}
 
@@ -99,15 +99,16 @@ void main() {
   float core = pow(facing, 6.8) * (0.45 + 0.15 * sin(uTime * uPulse));
   float tint = clamp(n * 2.3 + p.x * 0.5 + 0.5, 0.0, 1.0);
 
-  // Dynamic Shift towards Deep Magenta (#ff007f) when in thinking state
-  vec3 targetCore = mix(uCrimsonCore, uDeepMagenta, uMagentaShift);
-  vec3 targetRuby = mix(uDeepRuby, vec3(0.5, 0.02, 0.35), uMagentaShift);
+  // Dynamic legacy shift: bluish-white core with shifting multi-color accents (cyan, violet, electric blue)
+  vec3 shiftingAccent = mix(uVioletAccent, vec3(0.0, 0.9, 1.0), sin(uTime * 1.5) * 0.5 + 0.5);
+  vec3 targetCore = mix(uBluishWhite, shiftingAccent, uColorShift * 0.4);
+  vec3 targetRim = mix(uCyanGlow, uVioletAccent, uColorShift * 0.7);
 
-  vec3 energy = mix(targetRuby, targetCore, tint);
-  energy = mix(energy, uSparkleWhite, smoothstep(0.75, 0.98, p.x + n) * 0.45);
+  vec3 energy = mix(targetRim, targetCore, tint);
+  energy = mix(energy, uSparkleWhite, smoothstep(0.72, 0.98, p.x + n) * 0.6);
 
-  vec3 col = energy * (0.16 + ribbon * 2.4 + fine * 0.7 + rim * 1.35);
-  col += targetCore * core * 1.8 + mix(targetCore, targetRuby, 0.45) * pow(facing, 18.0) * 0.85;
+  vec3 col = energy * (0.2 + ribbon * 2.2 + fine * 0.75 + rim * 1.4);
+  col += targetCore * core * 2.0 + mix(targetCore, targetRim, 0.4) * pow(facing, 18.0) * 0.9;
 
   gl_FragColor = vec4(col, 0.88 + ribbon * 0.12);
 }
@@ -141,15 +142,15 @@ void main() {
 `;
 
 const particleFragment = /* glsl */ `
-uniform vec3 uCrimsonCore, uDeepMagenta, uSparkleWhite;
-uniform float uMagentaShift;
+uniform vec3 uCyanGlow, uVioletAccent, uSparkleWhite;
+uniform float uColorShift;
 varying float vSeed;
 
 void main() {
   float d = length(gl_PointCoord - 0.5);
   if (d > 0.5) discard;
-  vec3 baseColor = mix(uCrimsonCore, uDeepMagenta, uMagentaShift);
-  vec3 c = mix(baseColor, uSparkleWhite, vSeed);
+  vec3 baseColor = mix(uCyanGlow, uVioletAccent, uColorShift);
+  vec3 c = mix(baseColor, uSparkleWhite, vSeed * 0.75);
   gl_FragColor = vec4(c, (1.0 - smoothstep(0.04, 0.5, d)) * 0.95);
 }
 `;
@@ -204,11 +205,11 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       container.appendChild(renderer.domElement);
 
-      // Massive luminescent Deep Crimson Red Orb palette:
-      // Crimson (#e11d48 / #dc2626), Deep Ruby (#881337 / #500724), Deep Magenta (#ff007f), Sparkles (#ffffff)
-      const uCrimsonCore = new THREE.Color('#dc2626');
-      const uDeepRuby = new THREE.Color('#7f1d1d');
-      const uDeepMagenta = new THREE.Color('#ff007f');
+      // Legacy bluish-white orb palette with shifting multi-color accents:
+      // Bluish-white (#e2f1ff), Electric Cyan (#00e5ff), Cyber Violet (#8b5cf6), Sparkles (#ffffff)
+      const uBluishWhite = new THREE.Color('#e2f1ff');
+      const uCyanGlow = new THREE.Color('#00e5ff');
+      const uVioletAccent = new THREE.Color('#8b5cf6');
       const uSparkleWhite = new THREE.Color('#ffffff');
 
       const uniforms = {
@@ -217,11 +218,11 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
         uPulse: { value: 1.0 },
         uHover: { value: 0 },
         uPointer: { value: new THREE.Vector2(0, 0) },
-        uCrimsonCore: { value: uCrimsonCore },
-        uDeepRuby: { value: uDeepRuby },
-        uDeepMagenta: { value: uDeepMagenta },
+        uBluishWhite: { value: uBluishWhite },
+        uCyanGlow: { value: uCyanGlow },
+        uVioletAccent: { value: uVioletAccent },
         uSparkleWhite: { value: uSparkleWhite },
-        uMagentaShift: { value: 0.0 },
+        uColorShift: { value: 0.0 },
         uRingTightness: { value: 0.0 },
         uWaveMorph: { value: 0.0 },
       };
@@ -303,59 +304,60 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
         let speedMultiplier = 1.0;
         let targetTurbulence = 0.16;
         let targetPulse = 1.0;
-        let targetMagentaShift = 0.0;
+        let targetColorShift = 0.0;
         let targetRingTightness = 0.0;
         let targetWaveMorph = 0.0;
 
-        // Specific status hooks per specification:
-        // 1. status === 'idle' -> Slow radial gradient breathing pulse with floating sparkles
-        // 2. status === 'thinking' -> Tight, high-velocity spinning sparkle ring, shifting toward deep magenta
-        // 3. status === 'talking' -> Audio wave displacement mapping that morphs the crimson orb shell dynamically in sync with the speech stream
+        // Specific status hooks for legacy bluish-white palette:
+        // 1. status === 'idle' -> Slow radial gradient breathing pulse with floating iridescent sparkles
+        // 2. status === 'thinking' -> Tight, high-velocity spinning sparkle ring, shifting toward multi-color accents
+        // 3. status === 'talking' -> Audio wave displacement mapping that morphs the orb shell dynamically in sync with speech
         if (activePhase === 'idle') {
           speedMultiplier = 0.45;
           targetTurbulence = 0.08;
           targetPulse = 0.75;
-          targetMagentaShift = 0.0;
+          targetColorShift = 0.0;
           targetRingTightness = 0.0;
           targetWaveMorph = 0.0;
         } else if (activePhase === 'thinking' || activePhase === 'analyzing' || activePhase === 'processing') {
           speedMultiplier = 3.8;
           targetTurbulence = 0.75;
           targetPulse = 4.5;
-          targetMagentaShift = 1.0; // Shifting toward deep magenta (#ff007f)
+          targetColorShift = 1.0; // Shifting toward vibrant multi-color accents
           targetRingTightness = 1.0; // Tight high-velocity spinning sparkle ring
           targetWaveMorph = 0.2;
         } else if (activePhase === 'talking') {
           speedMultiplier = 2.6;
           targetTurbulence = 0.55;
           targetPulse = 6.8;
-          targetMagentaShift = 0.3;
+          targetColorShift = 0.4;
           targetRingTightness = 0.25;
           targetWaveMorph = 1.0; // Audio wave displacement mapping morphs shell dynamically
         } else if (activePhase === 'listening') {
           speedMultiplier = 2.2;
           targetTurbulence = 0.4;
           targetPulse = 3.6;
-          targetMagentaShift = 0.4;
+          targetColorShift = 0.3;
           targetRingTightness = 0.3;
           targetWaveMorph = 0.5;
         } else if (activePhase === 'auto' || activePhase === 'directAction') {
           speedMultiplier = 3.6;
           targetTurbulence = 0.7;
           targetPulse = 4.8;
-          targetMagentaShift = 0.8;
+          targetColorShift = 0.8;
           targetRingTightness = 0.8;
           targetWaveMorph = 0.4;
         } else {
           speedMultiplier = 1.2;
           targetTurbulence = 0.22;
           targetPulse = 1.8;
+          targetColorShift = 0.2;
         }
 
         uniforms.uTime.value += delta * speedMultiplier;
         uniforms.uTurbulence.value += (targetTurbulence - uniforms.uTurbulence.value) * 0.12;
         uniforms.uPulse.value += (targetPulse - uniforms.uPulse.value) * 0.12;
-        uniforms.uMagentaShift.value += (targetMagentaShift - uniforms.uMagentaShift.value) * 0.12;
+        uniforms.uColorShift.value += (targetColorShift - uniforms.uColorShift.value) * 0.12;
         uniforms.uRingTightness.value += (targetRingTightness - uniforms.uRingTightness.value) * 0.12;
         uniforms.uWaveMorph.value += (targetWaveMorph - uniforms.uWaveMorph.value) * 0.15;
 
@@ -436,30 +438,30 @@ export const HoloOrb: React.FC<HoloOrbProps> = ({
       className={`relative inline-flex items-center justify-center select-none cursor-pointer ${resolvedSizeClass} ${className}`}
       title={`OmniAI Orb — ${getStatusLabel()}`}
     >
-      {/* Matte black foundation with Deep Crimson & Ruby pulsing box-shadow halo */}
+      {/* Matte black foundation with bluish-white and cyan-violet pulsing box-shadow halo */}
       <div 
-        className="absolute inset-0 rounded-full bg-[#000000] shadow-[0_0_16px_rgba(220,38,38,0.35),0_0_24px_rgba(127,29,29,0.3),inset_0_0_10px_rgba(220,38,38,0.25)] transition-all duration-500 border border-red-600/40"
+        className="absolute inset-0 rounded-full bg-[#000000] shadow-[0_0_16px_rgba(0,229,255,0.4),0_0_24px_rgba(139,92,246,0.25),inset_0_0_10px_rgba(0,229,255,0.2)] transition-all duration-500 border border-[#00e5ff]/50"
       />
 
       {/* 3D WebGL Canvas */}
       {hasWebGL ? (
         <div ref={containerRef} className="w-full h-full relative z-10 rounded-full overflow-hidden" />
       ) : (
-        <div className="w-full h-full rounded-full bg-[#000000] border border-red-600/60 flex items-center justify-center relative z-10">
-          <div className="w-2/3 h-2/3 rounded-full bg-gradient-to-tr from-red-700 via-red-600 to-red-500 animate-pulse" />
+        <div className="w-full h-full rounded-full bg-[#000000] border border-[#00e5ff]/60 flex items-center justify-center relative z-10">
+          <div className="w-2/3 h-2/3 rounded-full bg-gradient-to-tr from-[#6c63ff] via-[#00f0ff] to-white animate-pulse" />
         </div>
       )}
 
       {/* Active Phase Ping Badge */}
       {(phase === 'analyzing' || phase === 'processing') && (
         <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 z-20">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-85" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00f0ff] opacity-85" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00f0ff]" />
         </span>
       )}
 
       {showStatusLabel && (
-        <span className="absolute -bottom-5 text-[10px] text-red-400 font-mono tracking-wider whitespace-nowrap drop-shadow-[0_0_6px_rgba(220,38,38,0.6)]">
+        <span className="absolute -bottom-5 text-[10px] text-[#00e5ff] font-mono tracking-wider whitespace-nowrap drop-shadow-[0_0_6px_rgba(0,229,255,0.6)]">
           {getStatusLabel()}
         </span>
       )}

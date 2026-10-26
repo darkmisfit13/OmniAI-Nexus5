@@ -235,18 +235,33 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
     };
     animate();
 
-    // 8. Resize Handler
+    // 8. Resize Handler & Structural Layout Recalculation Loop
     const handleResize = () => {
       if (!mountRef.current || !rendererRef.current) return;
       const w = mountRef.current.clientWidth || 398;
-      const h = mountRef.current.clientHeight || 380;
+      const h = mountRef.current.clientHeight || 340;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       rendererRef.current.setSize(w, h);
     };
+
+    // Force structural layout recalculation script upon initialization to auto-fit viewport
+    handleResize();
+    const initTimer1 = setTimeout(handleResize, 50);
+    const initTimer2 = setTimeout(handleResize, 250);
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    if (container) {
+      resizeObserver.observe(container);
+    }
     window.addEventListener('resize', handleResize);
 
     return () => {
+      clearTimeout(initTimer1);
+      clearTimeout(initTimer2);
+      resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
       domElement.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
@@ -458,33 +473,35 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
     <div className="w-full flex items-center justify-center p-0 sm:p-2 bg-black font-sans select-none overflow-hidden box-border">
       
       {/* ========================================================= */}
-      {/* RIGID VIEWPORT LAYER: w-full max-w-[400px] h-[850px] mx-auto */}
+      {/* MOBILE VIEWPORT CONTAINER: Sit strictly beneath top header */}
       {/* ========================================================= */}
       <div 
-        className="w-full max-w-[400px] h-[850px] mx-auto overflow-hidden relative flex flex-col justify-between bg-black text-white border-x border-zinc-900 shadow-2xl box-border"
+        className="w-full max-w-[420px] h-full mx-auto overflow-hidden relative flex flex-col bg-[#000000] text-white border-x border-[#1a1630] box-border"
         style={{ boxSizing: 'border-box' }}
       >
         
         {/* ========================================================= */}
-        {/* BRANDING: Omnispacial 3D Studio Title Bar                  */}
+        {/* ABSOLUTE TOP SAFE-AREA BOUNDARY ANCHOR                     */}
+        {/* Sits strictly beneath OmniAI header with safe-area padding */}
         {/* ========================================================= */}
-        <div className="h-11 px-3 bg-[#0b0816] border-b border-zinc-900 flex items-center justify-between shrink-0 z-30 box-border">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#131024] border border-[#00ffcc]/50 flex items-center justify-center text-[#00ffcc] shadow-[0_0_8px_rgba(0,255,204,0.3)]">
-              <Rotate3d className="w-3.5 h-3.5 text-[#00ffcc]" />
+        <div className="pt-[max(env(safe-area-inset-top,0px),2px)] bg-[#0b0816] border-b border-[#2a2254] shrink-0 z-30 box-border">
+          <div className="h-10 px-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-[#131024] border border-[#00ffcc]/50 flex items-center justify-center text-[#00ffcc] shadow-[0_0_8px_rgba(0,255,204,0.3)]">
+                <Rotate3d className="w-3.5 h-3.5 text-[#00ffcc]" />
+              </div>
+              <div>
+                <h1 className="text-xs font-black tracking-wider text-white flex items-center gap-1.5 uppercase font-mono">
+                  Omnispacial 3D Studio
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00ffcc] animate-pulse" />
+                </h1>
+              </div>
             </div>
-            <div>
-              {/* Exact Branding Title: Omnispacial 3D Studio */}
-              <h1 className="text-xs font-black tracking-wider text-white flex items-center gap-1.5 uppercase font-mono">
-                Omnispacial 3D Studio
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00ffcc] animate-pulse" />
-              </h1>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-1">
-            <div className="px-2 py-0.5 rounded-full bg-[#131024] border border-[#00ffcc]/30 text-[9px] font-mono text-[#00ffcc]">
-              WebGL 2.0 PBR
+            <div className="flex items-center gap-1">
+              <div className="px-2 py-0.5 rounded-full bg-[#131024] border border-[#00ffcc]/40 text-[9px] font-mono text-[#00ffcc] font-bold">
+                WebGL 2.0 PBR
+              </div>
             </div>
           </div>
         </div>
@@ -498,10 +515,11 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
         )}
 
         {/* ========================================================= */}
-        {/* ZONE 1 (Top 45% - Live Spatial Viewport)                  */}
+        {/* ZONE 1: VERTICAL FOV SCALED 3D VIEWPORT CONTAINER         */}
+        {/* Restricted bounds prevent overflowing upwards into notch  */}
         {/* ========================================================= */}
         <div 
-          className="w-full h-[45%] relative bg-[#0b0816] overflow-hidden border-b border-zinc-900 box-border"
+          className="w-full h-[310px] xs:h-[340px] max-h-[44vh] min-h-[220px] relative bg-[#0b0816] overflow-hidden border-b border-[#2a2254] shrink-0 box-border"
           style={{ boxSizing: 'border-box' }}
         >
           {/* Top-Left Corner: Compact [Wireframe Toggle Switch] styled in neon #00ffcc */}
@@ -550,7 +568,7 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
           {/* Center Viewport: Responsive WebGL canvas holding placeholder spinning 3D mesh model */}
           <div 
             ref={mountRef} 
-            className="w-full h-full cursor-grab active:cursor-grabbing flex items-center justify-center"
+            className="w-full h-full cursor-grab active:cursor-grabbing flex items-center justify-center relative z-10"
           />
 
           {/* Spatial Interaction HUD Overlay Info */}
@@ -565,18 +583,19 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
         </div>
 
         {/* ========================================================= */}
-        {/* ZONE 2 (Middle 15% - Model Constructor & Export Deck)     */}
+        {/* ZONE 2: DEDICATED BOTTOM DASHBOARD CONTROL LANE           */}
+        {/* Pinned cleanly BELOW the 3D canvas container              */}
         {/* ========================================================= */}
         <div 
-          className="w-full h-[15%] flex flex-col justify-center gap-1.5 px-3 bg-[#131024] border-b border-zinc-900 box-border shrink-0 py-1"
+          className="w-full py-2 px-3 bg-[#131024] border-b border-[#2a2254] shrink-0 space-y-1.5 z-20 box-border"
           style={{ boxSizing: 'border-box' }}
         >
           {/* Row 1: Mesh Styles Tabs: [Quad Mesh], [Triangular Mesh], [Point Cloud] */}
           <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider shrink-0">
-              Mesh Style:
+            <span className="text-[9px] font-mono text-[#00ffcc] uppercase tracking-wider shrink-0 font-bold">
+              Mesh Topology:
             </span>
-            <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap no-scrollbar">
               {[
                 { id: 'quad', label: 'Quad Mesh' },
                 { id: 'triangular', label: 'Triangular Mesh' },
@@ -593,7 +612,7 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
                     className={`px-2 py-0.5 rounded-md text-[9px] font-mono transition-all active:scale-95 ${
                       isSelected
                         ? 'bg-[#00ffcc] text-black font-bold shadow-[0_0_10px_rgba(0,255,204,0.45)]'
-                        : 'bg-[#0b0816] text-zinc-400 hover:text-white border border-zinc-800'
+                        : 'bg-[#0b0816] text-zinc-400 hover:text-white border border-[#2a2254]'
                     }`}
                   >
                     {m.label}
@@ -604,10 +623,10 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
           </div>
 
           {/* Row 2: Export Formats: [.obj], [.glTF], [.usdz] */}
-          <div className="flex items-center justify-between gap-1.5 pt-0.5 border-t border-zinc-800/60">
+          <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-[#2a2254]">
             <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
               <Download className="w-2.5 h-2.5 text-[#00ffcc]" />
-              Export:
+              Export Model:
             </span>
             <div className="flex items-center gap-1.5">
               {(['.obj', '.glTF', '.usdz'] as const).map((fmt) => (
@@ -625,10 +644,10 @@ export const OmniSpatial3DStudio: React.FC<OmniSpatial3DStudioProps> = ({ onSave
         </div>
 
         {/* ========================================================= */}
-        {/* ZONE 3 (Bottom 40% - Texture & Inpainting Deck)           */}
+        {/* ZONE 3: TEXTURE & INPAINTING DECK (SCROLLABLE LOWER DECK) */}
         {/* ========================================================= */}
         <div 
-          className="w-full h-[40%] bg-black p-3 flex flex-col justify-between overflow-y-auto box-border shrink-0 space-y-2"
+          className="w-full flex-1 min-h-0 bg-[#000000] p-3 flex flex-col justify-between overflow-y-auto box-border space-y-2.5"
           style={{ boxSizing: 'border-box' }}
         >
           {/* Prompt Section: Compact Material Prompt text field, log, and AI wand */}

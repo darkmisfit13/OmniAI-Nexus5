@@ -333,7 +333,7 @@ export const OmniAIChatRoom: React.FC<OmniAIChatRoomProps> = ({
               }`} />
             </div>
             <span className="text-[8.5px] font-mono text-slate-400 tracking-wider">
-              Your Digital Shadow • DarkMisfit
+              OmniAI - Nexus Core
             </span>
           </div>
         </div>
@@ -373,7 +373,7 @@ export const OmniAIChatRoom: React.FC<OmniAIChatRoomProps> = ({
                   <span className={`w-1.5 h-1.5 rounded-full ${isCouncil ? 'bg-purple-400' : 'bg-cyan-400'}`} />
                 )}
                 <span className="font-bold">
-                  {isUser ? 'You' : isCouncil ? 'Unified Council Verdict' : 'OmniAI (Digital Shadow)'}
+                  {isUser ? 'You' : isCouncil ? 'Unified Council Verdict' : 'OmniAI - Nexus'}
                 </span>
                 <span>• {msg.timestamp}</span>
               </div>

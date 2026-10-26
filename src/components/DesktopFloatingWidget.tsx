@@ -30,7 +30,7 @@ interface DesktopFloatingWidgetProps {
   activeScreenName: string;
   isAutoMode?: boolean;
   onToggleAutoMode?: () => void;
-  autoPilotTone?: 'rawHonest' | 'witty' | 'directAction';
+  autoPilotTone?: 'rawHonest' | 'witty' | 'directAction' | 'flirty';
 }
 
 export const DesktopFloatingWidget: React.FC<DesktopFloatingWidgetProps> = ({
@@ -254,17 +254,17 @@ export const DesktopFloatingWidget: React.FC<DesktopFloatingWidgetProps> = ({
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-1.5 leading-none">
               <span className="text-xs font-bold font-mono tracking-wider text-white">
-                OMNI <span className="text-red-500">AI</span>
+                Omni<span className="text-[#00ffcc]">AI</span>
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00ffcc] animate-pulse" />
             </div>
-            <span className="text-[8px] font-mono tracking-wider text-zinc-400 mt-0.5">
-              Dark Misfit Studios
+            <span className="text-[8px] font-mono tracking-wider text-[#948eb5] mt-0.5">
+              PC Companion
             </span>
           </div>
 
           <div className="hidden sm:flex items-center gap-1 pl-1 border-l border-zinc-800 text-[9px] font-mono text-zinc-400">
-            <span className="px-1.5 py-0.5 rounded bg-black border border-zinc-800 text-red-400">⌘⇧K</span>
+            <span className="px-1.5 py-0.5 rounded bg-black border border-zinc-800 text-[#00ffcc]">⌘⇧K</span>
           </div>
         </div>
       </div>
@@ -282,26 +282,26 @@ export const DesktopFloatingWidget: React.FC<DesktopFloatingWidgetProps> = ({
 
       {/* Floating System-Wide Dock */}
       <div 
-        className="relative w-full max-w-xl bg-[#0a0a0c]/95 backdrop-blur-2xl border border-zinc-800 rounded-3xl shadow-[0_0_50px_rgba(220,38,38,0.2),0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden pointer-events-auto flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-xl bg-[#000000]/95 backdrop-blur-2xl border border-[#2a2254] rounded-3xl shadow-[0_0_50px_rgba(0,255,204,0.15),0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden pointer-events-auto flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200"
       >
-        {/* Deep Crimson Halo line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-red-600 via-red-500 to-zinc-800" />
+        {/* Neon Cyan Halo line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#00ffcc] via-[#2a2254] to-transparent" />
 
         {/* 1. DOCK HEADER WITH EXPLICIT BRANDING */}
-        <div className="px-4 py-3 bg-[#121318] border-b border-zinc-800 flex items-center justify-between">
+        <div className="px-4 py-3 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <HoloOrb phase={desktopOrbPhase} size="sm" onClick={() => triggerLaptopAnalysis()} />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold font-mono tracking-wider text-white">
-                  OMNI <span className="text-red-500">AI</span>
+                  OmniAI<span className="text-[#00ffcc]"> - Nexus</span>
                 </h2>
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-red-950/60 text-red-400 border border-red-800/40">
-                  SHADOW COMPANION
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-[#00ffcc]/15 text-[#00ffcc] border border-[#00ffcc]/40">
+                  DESKTOP COMPANION
                 </span>
               </div>
-              <p className="text-[9.5px] font-mono tracking-widest text-zinc-400 uppercase font-semibold">
-                Dark Misfit Studios
+              <p className="text-[9.5px] font-mono tracking-widest text-[#948eb5] uppercase font-semibold">
+                Autonomous Screen Intelligence
               </p>
             </div>
           </div>

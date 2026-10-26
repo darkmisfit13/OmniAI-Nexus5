@@ -100,12 +100,12 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
   if (!insight) return null;
 
   return (
-    <div className={`rounded-xl bg-[#121318] border border-zinc-800 shadow-lg text-zinc-100 overflow-hidden transition-all duration-200 ${className}`}>
+    <div className={`rounded-xl bg-[#100d23] border border-[#2a2254] shadow-lg text-[#e8e6f2] overflow-hidden transition-all duration-200 ${className}`}>
       {/* Top Header Row */}
-      <div className="px-3 py-2 bg-black/60 border-b border-zinc-800/80 flex items-center justify-between">
+      <div className="px-3 py-2 bg-[#000000] border-b border-[#2a2254] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {/* Deep crimson icon badge */}
-          <div className="w-5 h-5 rounded-md bg-red-600/15 border border-red-500/30 flex items-center justify-center text-red-400">
+          {/* Neon cyan icon badge */}
+          <div className="w-5 h-5 rounded-md bg-[#00ffcc]/15 border border-[#00ffcc]/30 flex items-center justify-center text-[#00ffcc]">
             {insight.type === 'quote' ? (
               <Quote className="w-3 h-3" />
             ) : (
@@ -117,7 +117,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
             <span className="text-[11px] font-mono font-bold tracking-wider text-white uppercase">
               Daily Insight
             </span>
-            <span className="px-1.5 py-0.2 rounded text-[8.5px] font-mono font-semibold bg-red-600/20 text-red-400 border border-red-600/30">
+            <span className="px-1.5 py-0.2 rounded text-[8.5px] font-mono font-semibold bg-[#00ffcc]/15 text-[#00ffcc] border border-[#00ffcc]/30">
               {insight.tag || 'AI & Tech'}
             </span>
           </div>
@@ -128,10 +128,10 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
           {/* Google Search Grounding Indicator */}
           {insight.grounded && (
             <span 
-              className="hidden xs:flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-mono bg-zinc-800 border border-zinc-700 text-zinc-300"
+              className="hidden xs:flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-mono bg-[#15122c] border border-[#2a2254] text-[#948eb5]"
               title="Verified via real-time Google Search grounding"
             >
-              <Search className="w-2.5 h-2.5 text-red-400" />
+              <Search className="w-2.5 h-2.5 text-[#00ffcc]" />
               <span>Grounded</span>
             </span>
           )}
@@ -140,16 +140,16 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
           <button
             onClick={() => fetchDailyInsight(true)}
             disabled={isLoading}
-            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition active:scale-95 disabled:opacity-50"
+            className="p-1 rounded-md text-[#948eb5] hover:text-white hover:bg-[#1a1638] transition active:scale-95 disabled:opacity-50"
             title="Fetch Fresh Industry Trend or Quote"
           >
-            <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin text-red-400' : ''}`} />
+            <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin text-[#00ffcc]' : ''}`} />
           </button>
 
           {/* Collapse/Expand Toggle */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+            className="p-1 rounded-md text-[#948eb5] hover:text-white hover:bg-[#1a1638] transition"
             title={isExpanded ? 'Collapse Insight Card' : 'Expand Insight Card'}
           >
             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -165,19 +165,19 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
             <h4 className="text-xs font-bold text-white tracking-wide leading-tight">
               {insight.headline}
             </h4>
-            <span className="text-[9px] font-mono text-zinc-500 shrink-0">
+            <span className="text-[9px] font-mono text-[#7d779f] shrink-0">
               {insight.type === 'quote' ? 'Mindset' : 'Trend'}
             </span>
           </div>
 
           {/* Body */}
-          <p className="text-[11px] leading-relaxed text-zinc-300 font-sans">
+          <p className="text-[11px] leading-relaxed text-[#c6c1e1] font-sans">
             {insight.type === 'quote' ? `"${insight.insight}"` : insight.insight}
           </p>
 
           {/* Author/Source & Footer Controls */}
-          <div className="pt-2 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono text-zinc-400">
-            <span className="text-zinc-400 font-medium truncate max-w-[190px]">
+          <div className="pt-2 border-t border-[#2a2254] flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono text-[#948eb5]">
+            <span className="text-[#948eb5] font-medium truncate max-w-[190px]">
               — {insight.authorOrSource}
             </span>
 
@@ -185,10 +185,10 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
               {/* Copy Quote Button */}
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition active:scale-95 border border-zinc-700"
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#15122c] hover:bg-[#1a1638] text-[#c6c1e1] hover:text-white transition active:scale-95 border border-[#2a2254]"
                 title="Copy insight"
               >
-                {copied ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                {copied ? <Check className="w-2.5 h-2.5 text-[#00ffcc]" /> : <Copy className="w-2.5 h-2.5" />}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
 
@@ -196,10 +196,10 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
               {onInsertToDraft && (
                 <button
                   onClick={() => onInsertToDraft(insight.insight)}
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-600/20 hover:bg-red-600/30 text-red-300 hover:text-white transition active:scale-95 border border-red-500/30 font-semibold"
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#00ffcc]/15 hover:bg-[#00ffcc]/25 text-[#00ffcc] hover:text-white transition active:scale-95 border border-[#00ffcc]/30 font-semibold"
                   title="Insert into current typing draft"
                 >
-                  <CornerDownLeft className="w-2.5 h-2.5 text-red-400" />
+                  <CornerDownLeft className="w-2.5 h-2.5 text-[#00ffcc]" />
                   <span>Use in Draft</span>
                 </button>
               )}
@@ -208,9 +208,9 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
 
           {/* Grounding Source Links */}
           {insight.sources && insight.sources.length > 0 && (
-            <div className="pt-1.5 flex flex-wrap items-center gap-1.5 text-[9px] font-mono text-zinc-500">
-              <span className="text-zinc-500 flex items-center gap-1">
-                <Search className="w-2.5 h-2.5 text-red-400" />
+            <div className="pt-1.5 flex flex-wrap items-center gap-1.5 text-[9px] font-mono text-[#7d779f]">
+              <span className="text-[#7d779f] flex items-center gap-1">
+                <Search className="w-2.5 h-2.5 text-[#00ffcc]" />
                 <span>Search Grounding:</span>
               </span>
               {insight.sources.map((s, idx) => (
@@ -219,7 +219,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/60 text-zinc-300 hover:text-red-300 border border-zinc-800 hover:border-red-500/30 transition truncate max-w-[140px]"
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-black/60 text-[#c6c1e1] hover:text-[#00ffcc] border border-[#2a2254] hover:border-[#00ffcc]/30 transition truncate max-w-[140px]"
                 >
                   <span className="truncate">{s.title}</span>
                   <ExternalLink className="w-2 h-2 shrink-0 opacity-70" />
