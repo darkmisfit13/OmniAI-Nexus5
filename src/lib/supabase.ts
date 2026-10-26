@@ -342,3 +342,123 @@ export async function deleteVaultAsset(userId: string, assetId: string): Promise
   }
 }
 
+// -------------------------------------------------------------
+// Nexus Call Active State Realtime Sync (nexus_active_state_sync)
+// -------------------------------------------------------------
+
+export interface NexusActiveStateRecord {
+  id?: string;
+  user_id?: string | null;
+  caller_name: string;
+  caller_role?: string;
+  speech_to_text: string;
+  active_tone: 'Professional' | 'Casual' | 'Flirty' | 'Funny';
+  strategist_response: string;
+  empath_response: string;
+  ghost_response: string;
+  synthesis_response: string;
+  subtext_hidden_intent?: string;
+  subtext_friction?: string;
+  subtext_leverage?: string;
+  catch_me_up?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Initializes a persistent WebSocket Realtime subscription to the nexus_active_state_sync table.
+ */
+export function subscribeToNexusActiveStateSync(
+  callerName: string,
+  onRecord: (record: NexusActiveStateRecord) => void,
+  onStatusChange?: (status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR', err?: any) => void
+) {
+  const channelTopic = `nexus_call_sync_${callerName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}`;
+  const channel = supabase
+    .channel(channelTopic)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'nexus_active_state_sync',
+      },
+      (payload) => {
+        if (payload.new && typeof payload.new === 'object') {
+          const rec = payload.new as any;
+          // Filter by caller name if specified, or emit all records for the session
+          if (!callerName || rec.caller_name === callerName || rec.caller_name === '*' || !rec.caller_name) {
+            onRecord({
+              id: rec.id,
+              user_id: rec.user_id,
+              caller_name: rec.caller_name,
+              caller_role: rec.caller_role,
+              speech_to_text: rec.speech_to_text,
+              active_tone: rec.active_tone || 'Professional',
+              strategist_response: rec.strategist_response,
+              empath_response: rec.empath_response,
+              ghost_response: rec.ghost_response,
+              synthesis_response: rec.synthesis_response,
+              subtext_hidden_intent: rec.subtext_hidden_intent,
+              subtext_friction: rec.subtext_friction,
+              subtext_leverage: rec.subtext_leverage,
+              catch_me_up: Array.isArray(rec.catch_me_up) ? rec.catch_me_up : undefined,
+              created_at: rec.created_at,
+              updated_at: rec.updated_at,
+            });
+          }
+        }
+      }
+    )
+    .subscribe((status, err) => {
+      if (onStatusChange) {
+        onStatusChange(status as any, err);
+      }
+    });
+
+  return channel;
+}
+
+/**
+ * Writes or patches a new sync row into public.nexus_active_state_sync.
+ */
+export async function pushNexusActiveState(
+  state: Partial<NexusActiveStateRecord>
+): Promise<NexusActiveStateRecord | null> {
+  const row = {
+    id: state.id || `nexus-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    user_id: state.user_id || null,
+    caller_name: state.caller_name || 'Active Caller',
+    caller_role: state.caller_role || 'Contact',
+    speech_to_text: state.speech_to_text || '',
+    active_tone: state.active_tone || 'Professional',
+    strategist_response: state.strategist_response || '',
+    empath_response: state.empath_response || '',
+    ghost_response: state.ghost_response || '',
+    synthesis_response: state.synthesis_response || '',
+    subtext_hidden_intent: state.subtext_hidden_intent || null,
+    subtext_friction: state.subtext_friction || null,
+    subtext_leverage: state.subtext_leverage || null,
+    catch_me_up: state.catch_me_up || [],
+    created_at: state.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('nexus_active_state_sync')
+      .upsert(row, { onConflict: 'id' })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[Supabase Nexus Sync] push error (falling back to local):', error.message);
+      return row as NexusActiveStateRecord;
+    }
+    return (data || row) as NexusActiveStateRecord;
+  } catch (err: any) {
+    console.warn('[Supabase Nexus Sync] Network error pushing state:', err?.message || err);
+    return row as NexusActiveStateRecord;
+  }
+}
+

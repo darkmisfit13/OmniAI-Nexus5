@@ -145,7 +145,8 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
   // Viewport defaults to Center Pane ('center')
   const [activePane, setActivePane] = useState<PaneType>('center');
   const [activeTone, setActiveTone] = useState<InteractionTone>('flirty');
-  const [activeCouncilAgent, setActiveCouncilAgent] = useState<CouncilAgentType>('synthesis');
+  const [isCouncilSynthesisEnabled, setIsCouncilSynthesisEnabled] = useState<boolean>(true);
+  const [activeCouncilAgent, setActiveCouncilAgent] = useState<'strategist' | 'empath' | 'ghost'>('strategist');
   const [showDossierPopover, setShowDossierPopover] = useState(false);
   const [quickActionNotice, setQuickActionNotice] = useState<string | null>(null);
   const [mockupPlatform, setMockupPlatform] = useState<'tiktok' | 'reels' | 'shorts'>('tiktok');
@@ -557,18 +558,24 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
             </div>
 
             {/* Master Council Synthesis Toggle Switch */}
-            <div className="p-2.5 rounded-xl bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_12px_rgba(0,255,204,0.15)] flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_12px_rgba(0,255,204,0.15)] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#00ffcc]" />
                 <div>
                   <div className="text-xs font-bold text-white font-mono flex items-center gap-1.5">
                     <span>Council Synthesis</span>
-                    <span className="px-1.5 py-0.2 rounded text-[8px] font-bold bg-[#00ffcc]/20 text-[#00ffcc] border border-[#00ffcc]/40">
-                      TRI-AGENT
+                    <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold ${
+                      isCouncilSynthesisEnabled 
+                        ? 'bg-[#00ffcc]/20 text-[#00ffcc] border border-[#00ffcc]/40' 
+                        : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                    }`}>
+                      {isCouncilSynthesisEnabled ? 'HYBRID ACTIVE' : 'SEPARATE TRACKS'}
                     </span>
                   </div>
                   <span className="text-[9.5px] text-[#948eb5] font-mono">
-                    Merge Strategist + Empath + Ghost into 1 hybrid suggestion
+                    {isCouncilSynthesisEnabled 
+                      ? 'Strategist + Empath + Ghost merged into single high-converting suggestion' 
+                      : 'Showing individual agent suggestion tracks'}
                   </span>
                 </div>
               </div>
@@ -578,53 +585,22 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                 type="button"
                 onClick={() => {
                   triggerHaptic(12);
-                  setActiveCouncilAgent(activeCouncilAgent === 'synthesis' ? 'strategist' : 'synthesis');
+                  setIsCouncilSynthesisEnabled(!isCouncilSynthesisEnabled);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
-                  activeCouncilAgent === 'synthesis'
+                  isCouncilSynthesisEnabled
                     ? 'bg-[#00ffcc] text-black shadow-[0_0_12px_rgba(0,255,204,0.4)]'
                     : 'bg-[#181333] text-[#948eb5] border border-[#2a2254] hover:text-white'
                 }`}
-                title="Toggle Master Council Synthesis"
+                title="Toggle Council Synthesis"
               >
-                <span className={`w-2 h-2 rounded-full ${activeCouncilAgent === 'synthesis' ? 'bg-black animate-ping' : 'bg-zinc-600'}`} />
-                <span>{activeCouncilAgent === 'synthesis' ? 'SYNTHESIS ON' : 'SEPARATE TRACKS'}</span>
+                <span className={`w-2 h-2 rounded-full ${isCouncilSynthesisEnabled ? 'bg-black animate-ping' : 'bg-zinc-600'}`} />
+                <span>{isCouncilSynthesisEnabled ? 'SYNTHESIS ON' : 'SYNTHESIS OFF'}</span>
               </button>
             </div>
 
-            {/* Horizontal Carousel Switcher for the Tri-Agent Core */}
-            <div className="grid grid-cols-4 gap-1 p-1 bg-[#100d23] rounded-xl border border-[#2a2254]">
-              {[
-                { id: 'synthesis', label: 'Synthesis', icon: Sparkles, color: 'text-[#00ffcc]' },
-                { id: 'strategist', label: 'Strategist', icon: Target, color: 'text-indigo-400' },
-                { id: 'empath', label: 'Empath', icon: Heart, color: 'text-rose-400' },
-                { id: 'ghost', label: 'Ghost', icon: Ghost, color: 'text-emerald-400' },
-              ].map((agent) => {
-                const Icon = agent.icon;
-                const isSelected = activeCouncilAgent === agent.id;
-                return (
-                  <button
-                    key={agent.id}
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic(10);
-                      setActiveCouncilAgent(agent.id as CouncilAgentType);
-                    }}
-                    className={`py-1.5 px-1 rounded-lg text-center font-mono transition-all flex flex-col items-center justify-center gap-0.5 ${
-                      isSelected
-                        ? 'bg-[#00ffcc] text-black font-bold shadow-[0_0_10px_rgba(0,255,204,0.3)]'
-                        : 'bg-[#181333] text-[#948eb5] hover:text-white border border-[#2a2254]'
-                    }`}
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-black' : agent.color}`} />
-                    <span className="text-[9px] truncate">{agent.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Active Council Agent Display Surface */}
-            {activeCouncilAgent === 'synthesis' && (
+            {/* When Council Synthesis is ON: Show ONLY the single high-converting hybrid suggestion, REPLACING individual agent suggestions */}
+            {isCouncilSynthesisEnabled ? (
               <div className="p-3.5 rounded-xl bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_15px_rgba(0,255,204,0.15)] space-y-3 animate-in fade-in">
                 <div className="flex items-center justify-between pb-1.5 border-b border-[#2a2254]">
                   <div className="flex items-center gap-2">
@@ -632,12 +608,12 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                       <Sparkles className="w-3.5 h-3.5 text-[#00ffcc]" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-white font-mono block">Council Synthesis Mode</span>
-                      <span className="text-[9px] text-[#00ffcc] font-mono">Blended Tri-Agent Hybrid Architecture</span>
+                      <span className="text-xs font-bold text-white font-mono block">Council Synthesis Suggestion</span>
+                      <span className="text-[9px] text-[#00ffcc] font-mono">Tri-Agent Merged High-Converting Stream</span>
                     </div>
                   </div>
                   <span className="px-1.5 py-0.5 rounded text-[8.5px] font-mono font-bold bg-[#00ffcc]/20 text-[#00ffcc] border border-[#00ffcc]/40">
-                    HYBRID 100%
+                    CONVERSION: 98.4%
                   </span>
                 </div>
 
@@ -662,13 +638,13 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   {councilIntelligence.synthesis.rationale}
                 </div>
 
-                {/* Unified High-Converting Phrasing */}
+                {/* Single Consolidated High-Converting Hybrid Suggestion */}
                 <div className="p-3 rounded-xl bg-[#0b0a14] border border-[#00ffcc]/60 shadow-inner space-y-2">
                   <div className="flex items-center justify-between text-[9px] font-mono text-[#00ffcc]">
                     <span className="font-bold flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-[#00ffcc]" /> Recommended Hybrid Phrasing
+                      <Zap className="w-3 h-3 text-[#00ffcc]" /> Single High-Converting Hybrid Suggestion
                     </span>
-                    <span className="text-[#948eb5]">Conversion Score: 98%</span>
+                    <span className="text-emerald-400 font-bold">Replaces Individual Suggestions</span>
                   </div>
                   <p className="text-xs text-white leading-relaxed font-sans font-medium">
                     "{councilIntelligence.synthesis.suggestedPrompt}"
@@ -702,7 +678,38 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   </div>
                 </div>
               </div>
-            )}
+            ) : (
+              /* When Council Synthesis is OFF: Show individual agent suggestion tracks */
+              <div className="space-y-3">
+                {/* Horizontal Carousel Switcher for the Individual Agent Tracks */}
+                <div className="grid grid-cols-3 gap-1 p-1 bg-[#100d23] rounded-xl border border-[#2a2254]">
+                  {[
+                    { id: 'strategist', label: 'Strategist', icon: Target, color: 'text-indigo-400' },
+                    { id: 'empath', label: 'Empath', icon: Heart, color: 'text-rose-400' },
+                    { id: 'ghost', label: 'Ghost', icon: Ghost, color: 'text-emerald-400' },
+                  ].map((agent) => {
+                    const Icon = agent.icon;
+                    const isSelected = activeCouncilAgent === agent.id;
+                    return (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(10);
+                          setActiveCouncilAgent(agent.id as any);
+                        }}
+                        className={`py-1.5 px-1 rounded-lg text-center font-mono transition-all flex flex-col items-center justify-center gap-0.5 ${
+                          isSelected
+                            ? 'bg-[#00ffcc] text-black font-bold shadow-[0_0_10px_rgba(0,255,204,0.3)]'
+                            : 'bg-[#181333] text-[#948eb5] hover:text-white border border-[#2a2254]'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-black' : agent.color}`} />
+                        <span className="text-[9px] truncate">{agent.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
             {/* TRACK 1: THE STRATEGIST */}
             {activeCouncilAgent === 'strategist' && (
@@ -878,6 +885,8 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                     <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
+              </div>
+            )}
               </div>
             )}
 
