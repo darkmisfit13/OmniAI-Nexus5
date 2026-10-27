@@ -14,7 +14,7 @@
   }
 }
 
-/* Global scrollbar: sleek obsidian void */
+/* Global scrollbar: Pure Velvet Black track with Obsidian-Purple thumb */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -23,35 +23,35 @@
   background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #181524;
+  background: #1e1642;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #8b5cf6;
+  background: #6366f1;
 }
 
 :root {
-  /* Exact Calibrated Cyber-Grid Palette */
-  --omni-bg: #000000;
-  --omni-panel: #08060c;
-  --omni-border: #181524;
-  --omni-text: #e8e6f2;
-  --omni-muted: #9490ac;
+  /* Obsidian Cyberpunk Global Design Tokens */
+  --omni-bg: #000000;          /* Canvas Base: Pure Velvet Black */
+  --omni-surface: #0a071b;     /* Card & Container Layers: Deep Obsidian-Purple */
+  --omni-panel: #0a071b;
+  --omni-card: #0a071b;
+  --omni-border: #1e1642;      /* Structural Obsidian Border */
+  --omni-border-highlight: #2a2254;
+  --omni-text: #f1f5f9;
+  --omni-muted: #948eb5;
 
-  /* The 5 Cyber Accents */
-  --cyber-mint: #00ff99;
-  --cyber-violet: #8b5cf6;
-  --cyber-cyan: #00e5ff;
-  --cyber-lavender: #a78bfa;
+  /* Primary Button & Navigation Accents (Purplish-Blue / Electric Indigo) */
+  --omni-primary: #6366f1;
+  --omni-primary-hover: #797ef9;
+  --omni-accent: #6366f1;
+
+  /* Diagnostic Metrics & Status Text (Vibrant Neon Green) */
+  --omni-neon-green: #00ffcc;
+  --cyber-mint: #00ffcc;
+  --cyber-cyan: #00ffcc;
+  --cyber-violet: #6366f1;
   --cyber-magenta: #ff007f;
-
-  /* Primary active indicators & glowing highlights */
-  --omni-accent: #00e5ff;
-  --omni-cyan: #00e5ff;
-  --omni-purple: #8b5cf6;
-  --omni-black: #000000;
-  --omni-charcoal: #08060c;
-  --omni-card: #08060c;
 }
 
 html, body, #root {
@@ -59,7 +59,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   background-color: #000000;
-  color: #e8e6f2;
+  color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,104 +69,144 @@ html, body, #root {
   overflow-x: hidden;
 }
 
+/* Active Text Focus Borders with glowing Purplish-Blue boundary halo */
+input:focus, textarea:focus, select:focus {
+  border-color: #0C00CA !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(12, 0, 202, 0.35), 0 0 16px rgba(12, 0, 202, 0.5) !important;
+}
+
+/* Range Slider Progress Tracks & Thumb: Signature Purplish-Blue (#0C00CA) */
+input[type="range"] {
+  accent-color: #0C00CA;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #1e1642;
+  border-radius: 9999px;
+  height: 6px;
+  border: 1px solid #2a2254;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0C00CA;
+  border: 2px solid #8b80f9;
+  box-shadow: 0 0 12px rgba(12, 0, 202, 0.85);
+  cursor: pointer;
+  margin-top: -5px;
+  transition: all 0.15s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb,
+input[type="range"]:active::-webkit-slider-thumb {
+  box-shadow: 0 0 20px rgba(12, 0, 202, 0.95);
+  transform: scale(1.18);
+}
+
+input[type="range"]::-moz-range-track {
+  background: #1e1642;
+  border-radius: 9999px;
+  height: 6px;
+  border: 1px solid #2a2254;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0C00CA;
+  border: 2px solid #8b80f9;
+  box-shadow: 0 0 12px rgba(12, 0, 202, 0.85);
+  cursor: pointer;
+}
+
 /* Glassmorphism Hull: Translucent dark containers over pure obsidian void */
 .glass-hull {
-  background: rgba(8, 6, 12, 0.92);
+  background: rgba(10, 7, 27, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #181524;
+  border: 1px solid #1e1642;
 }
 
 .glass-card {
-  background: rgba(8, 6, 12, 0.96);
+  background: rgba(10, 7, 27, 0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid #181524;
+  border: 1px solid #1e1642;
 }
 
-/* 5 Cyber Accent Glowing Halos */
-.neon-halo-mint {
-  box-shadow: 0 0 16px rgba(0, 255, 153, 0.4), inset 0 0 10px rgba(0, 255, 153, 0.15);
-  border: 1px solid rgba(0, 255, 153, 0.6);
-}
-
+/* Primary Purplish-Blue Boundary Halo */
+.halo-purplish-blue,
 .neon-halo-violet {
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.45), inset 0 0 10px rgba(139, 92, 246, 0.18);
-  border: 1px solid rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 16px rgba(12, 0, 202, 0.5), inset 0 0 10px rgba(12, 0, 202, 0.2);
+  border: 1px solid rgba(12, 0, 202, 0.7);
 }
 
-.neon-halo-cyan {
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.45), inset 0 0 10px rgba(0, 229, 255, 0.18);
-  border: 1px solid rgba(0, 229, 255, 0.6);
+/* Diagnostic Baby Blue / Light Blue Halo */
+.neon-halo-mint,
+.neon-halo-cyan,
+.neon-halo-accent {
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.45), inset 0 0 10px rgba(0, 255, 255, 0.18);
+  border: 1px solid rgba(0, 255, 255, 0.65);
 }
 
-.neon-halo-lavender {
-  box-shadow: 0 0 16px rgba(167, 139, 250, 0.45), inset 0 0 10px rgba(167, 139, 250, 0.18);
-  border: 1px solid rgba(167, 139, 250, 0.6);
-}
-
-.neon-halo-magenta {
-  box-shadow: 0 0 16px rgba(255, 0, 127, 0.45), inset 0 0 10px rgba(255, 0, 127, 0.18);
-  border: 1px solid rgba(255, 0, 127, 0.6);
-}
-
-.neon-halo-accent, .neon-halo-crimson {
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.15);
-  border: 1px solid rgba(0, 229, 255, 0.5);
-}
-
-/* Volumetric 3D Keycap Stencil: Obsidian & Cyber Accents */
+/* Volumetric 3D Keycap Stencil: Obsidian & Purplish-Blue Accents */
 .keycap-3d {
-  background: linear-gradient(180deg, #13101c 0%, #08060c 100%);
-  border: 1px solid rgba(232, 230, 242, 0.08);
-  border-bottom: 2px solid rgba(0, 229, 255, 0.45);
+  background: linear-gradient(180deg, #181333 0%, #0a071b 100%);
+  border: 1px solid rgba(241, 245, 249, 0.08);
+  border-bottom: 2px solid rgba(12, 0, 202, 0.7);
   box-shadow: 
     0 3px 0 0 #000000,
     0 4px 6px -1px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 0 rgba(232, 230, 242, 0.12);
+    inset 0 1px 0 0 rgba(241, 245, 249, 0.12);
   transform: translateY(0);
   transition: all 0.07s cubic-bezier(0.2, 0.8, 0.2, 1);
-  color: #e8e6f2;
+  color: #f1f5f9;
 }
 
 .keycap-3d:hover {
-  border-color: rgba(0, 229, 255, 0.75);
+  border-color: rgba(12, 0, 202, 0.9);
   box-shadow: 
     0 3px 0 0 #000000,
-    0 0 14px rgba(0, 229, 255, 0.4),
-    inset 0 1px 0 0 rgba(232, 230, 242, 0.2);
+    0 0 18px rgba(12, 0, 202, 0.55),
+    inset 0 1px 0 0 rgba(241, 245, 249, 0.2);
 }
 
 .keycap-3d:active, .keycap-3d.depressed {
   transform: translateY(3px);
   box-shadow: 
     0 0 0 0 #000000,
-    0 0 18px rgba(0, 229, 255, 0.8),
+    0 0 18px rgba(12, 0, 202, 0.85),
     inset 0 2px 4px rgba(0, 0, 0, 0.9);
-  border-color: #00e5ff;
-  background: #08060c;
+  border-color: #0C00CA;
+  background: #0a071b;
 }
 
 /* Primary Action / Special Keys */
 .keycap-action {
-  background: linear-gradient(180deg, #25203a 0%, #171426 100%);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  border-bottom: 2px solid #00f0ff;
-  color: #e8e6f2;
+  background: linear-gradient(180deg, #180bb8 0%, #0C00CA 100%);
+  border: 1px solid rgba(12, 0, 202, 0.6);
+  border-bottom: 2px solid #0C00CA;
+  color: #f1f5f9;
 }
 
 .keycap-action:hover {
-  border-color: #00f0ff;
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.55);
+  border-color: #0C00CA;
+  box-shadow: 0 0 16px rgba(12, 0, 202, 0.65);
 }
 
 .keycap-primary-3d {
-  background: linear-gradient(180deg, #6c63ff 0%, #00f0ff 100%);
-  border: 1px solid rgba(0, 240, 255, 0.6);
-  border-bottom: 2px solid #00f0ff;
+  background: linear-gradient(180deg, #1b0fd6 0%, #0C00CA 100%);
+  border: 1px solid rgba(12, 0, 202, 0.85);
+  border-bottom: 2px solid #0C00CA;
   box-shadow: 
-    0 3px 0 0 #0b0a14,
-    0 0 16px rgba(0, 240, 255, 0.5);
+    0 3px 0 0 #000000,
+    0 0 16px rgba(12, 0, 202, 0.6);
   color: #ffffff;
 }
 
@@ -177,10 +217,10 @@ html, body, #root {
   height: 100%;
   width: 100%;
   max-width: 100%;
-  background-color: #0b0a14;
-  color: #e8e6f2;
+  background-color: #000000;
+  color: #f1f5f9;
   overflow: hidden;
-  font-family: 'SF Pro Display', -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Studio Canvas Container */
@@ -193,7 +233,7 @@ html, body, #root {
   flex-direction: column;
   gap: 14px;
   padding-bottom: 84px;
-  background-color: #0b0a14;
+  background-color: #000000;
 }
 
 .studio-canvas.studio-canvas-motion {
@@ -207,8 +247,8 @@ html, body, #root {
 
 /* Unified Card Component for Mobile Viewports */
 .omni-studio-card {
-  background: #14121f;
-  border: 1px solid #211d34;
+  background: #0a071b;
+  border: 1px solid #1e1642;
   border-radius: 14px;
   padding: 16px;
   display: flex;
@@ -219,11 +259,11 @@ html, body, #root {
 .studio-preview-viewport {
   width: 100%;
   aspect-ratio: 16 / 9;
-  background-color: #0b0a14;
+  background-color: #000000;
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-  border: 1px solid #211d34;
+  border: 1px solid #1e1642;
 }
 
 .omni-control-row {
@@ -234,10 +274,10 @@ html, body, #root {
 
 .omni-mobile-btn {
   height: 48px;
-  background-color: #14121f;
-  border: 1px solid #211d34;
+  background-color: #0a071b;
+  border: 1px solid #1e1642;
   border-radius: 8px;
-  color: #e8e6f2;
+  color: #f1f5f9;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -245,7 +285,9 @@ html, body, #root {
   transition: all 0.15s ease;
 }
 
-.omni-mobile-btn:active {
-  background-color: #211d34;
-  border-color: #6c63ff;
+.omni-mobile-btn:active,
+.omni-mobile-btn:hover {
+  background-color: #151033;
+  border-color: #6366f1;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
 }

@@ -550,7 +550,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
               <button
                 type="button"
                 onClick={() => goToPane('center')}
-                className="px-2 py-1 rounded-lg bg-[#100d23] border border-[#00ffcc]/50 text-[#00ffcc] text-[10px] font-mono font-bold flex items-center gap-1 hover:bg-[#181333] transition"
+                className="px-2 py-1 rounded-lg bg-[#0a071b] border border-[#00ffcc]/50 text-[#00ffcc] text-[10px] font-mono font-bold flex items-center gap-1 hover:bg-[#130d2d] transition"
               >
                 <span>Chat</span>
                 <ChevronRight className="w-3 h-3" />
@@ -558,7 +558,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
             </div>
 
             {/* Master Council Synthesis Toggle Switch */}
-            <div className="p-3 rounded-xl bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_12px_rgba(0,255,204,0.15)] flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-[#0a071b] border border-[#00ffcc]/50 shadow-[0_0_12px_rgba(0,255,204,0.15)] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#00ffcc]" />
                 <div>
@@ -590,7 +590,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
                   isCouncilSynthesisEnabled
                     ? 'bg-[#00ffcc] text-black shadow-[0_0_12px_rgba(0,255,204,0.4)]'
-                    : 'bg-[#181333] text-[#948eb5] border border-[#2a2254] hover:text-white'
+                    : 'bg-[#0a071b] text-[#948eb5] border border-[#2a2254] hover:text-white'
                 }`}
                 title="Toggle Council Synthesis"
               >
@@ -601,7 +601,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
 
             {/* When Council Synthesis is ON: Show ONLY the single high-converting hybrid suggestion, REPLACING individual agent suggestions */}
             {isCouncilSynthesisEnabled ? (
-              <div className="p-3.5 rounded-xl bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_15px_rgba(0,255,204,0.15)] space-y-3 animate-in fade-in">
+              <div className="p-3.5 rounded-xl bg-[#0a071b] border border-[#00ffcc]/50 shadow-[0_0_15px_rgba(0,255,204,0.15)] space-y-3 animate-in fade-in">
                 <div className="flex items-center justify-between pb-1.5 border-b border-[#2a2254]">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg bg-[#00ffcc]/20 border border-[#00ffcc] flex items-center justify-center">
@@ -619,32 +619,32 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
 
                 {/* Synthesis Breakdown Matrix */}
                 <div className="grid grid-cols-3 gap-1.5 py-1 text-[9px] font-mono">
-                  <div className="p-1.5 rounded-lg bg-[#181333] border border-[#2a2254] text-center">
-                    <span className="text-indigo-300 block font-bold">35% Leverage</span>
+                  <div className="p-1.5 rounded-lg bg-[#0a071b] border border-[#2a2254] text-center">
+                    <span className="text-[#00ffcc] block font-bold">35% Leverage</span>
                     <span className="text-[#948eb5] text-[8px]">The Strategist</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-[#181333] border border-[#2a2254] text-center">
-                    <span className="text-rose-300 block font-bold">35% Softening</span>
+                  <div className="p-1.5 rounded-lg bg-[#0a071b] border border-[#2a2254] text-center">
+                    <span className="text-[#00ffcc] block font-bold">35% Softening</span>
                     <span className="text-[#948eb5] text-[8px]">The Empath</span>
                   </div>
-                  <div className="p-1.5 rounded-lg bg-[#181333] border border-[#2a2254] text-center">
-                    <span className="text-emerald-300 block font-bold">30% Cadence</span>
+                  <div className="p-1.5 rounded-lg bg-[#0a071b] border border-[#2a2254] text-center">
+                    <span className="text-[#00ffcc] block font-bold">30% Cadence</span>
                     <span className="text-[#948eb5] text-[8px]">The Ghost</span>
                   </div>
                 </div>
 
-                <div className="text-[10px] text-[#948eb5] font-mono leading-relaxed bg-[#14102c] p-2 rounded-lg border border-[#2a2254]">
+                <div className="text-[10px] text-[#948eb5] font-mono leading-relaxed bg-[#0a071b] p-2 rounded-lg border border-[#2a2254]">
                   <span className="text-[#00ffcc] font-bold block mb-0.5">Council Alignment Rationale:</span>
                   {councilIntelligence.synthesis.rationale}
                 </div>
 
                 {/* Single Consolidated High-Converting Hybrid Suggestion */}
-                <div className="p-3 rounded-xl bg-[#0b0a14] border border-[#00ffcc]/60 shadow-inner space-y-2">
+                <div className="p-3 rounded-xl bg-[#000000] border border-[#00ffcc]/60 shadow-inner space-y-2">
                   <div className="flex items-center justify-between text-[9px] font-mono text-[#00ffcc]">
                     <span className="font-bold flex items-center gap-1">
                       <Zap className="w-3 h-3 text-[#00ffcc]" /> Single High-Converting Hybrid Suggestion
                     </span>
-                    <span className="text-emerald-400 font-bold">Replaces Individual Suggestions</span>
+                    <span className="text-[#00ffcc] font-bold">Replaces Individual Suggestions</span>
                   </div>
                   <p className="text-xs text-white leading-relaxed font-sans font-medium">
                     "{councilIntelligence.synthesis.suggestedPrompt}"
@@ -658,7 +658,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                         onChangeDraftText(councilIntelligence.synthesis.suggestedPrompt);
                         goToPane('center');
                       }}
-                      className="flex-1 py-1.5 rounded-lg bg-[#181333] hover:bg-[#201a44] border border-[#00ffcc]/60 text-[#00ffcc] text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition"
+                      className="flex-1 py-1.5 rounded-lg bg-[#0a071b] hover:bg-[#130d2d] border border-[#00ffcc]/60 text-[#00ffcc] text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition"
                     >
                       <Copy className="w-3 h-3" />
                       <span>Insert into Draft</span>
@@ -670,7 +670,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                         onSend(councilIntelligence.synthesis.suggestedPrompt);
                         goToPane('center');
                       }}
-                      className="py-1.5 px-3 rounded-lg bg-[#00ffcc] hover:bg-[#33ffdd] text-black text-[10px] font-mono font-extrabold flex items-center justify-center gap-1 shadow-[0_0_10px_rgba(0,255,204,0.4)] transition"
+                      className="py-1.5 px-3 rounded-lg bg-[#6366f1] hover:bg-[#797ef9] text-white text-[10px] font-mono font-extrabold flex items-center justify-center gap-1 shadow-[0_0_12px_rgba(99,102,241,0.5)] transition"
                     >
                       <Send className="w-3 h-3" />
                       <span>Deploy to Chat</span>
@@ -951,7 +951,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
           <div className="w-full h-full flex flex-col bg-[#000000] overflow-hidden relative">
             
             {/* Sub-Header Line: Scenario Selector & Live Cognition Dossier Indicator */}
-            <div className="px-3 py-1.5 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between text-xs font-mono shrink-0">
+            <div className="px-3 py-1.5 bg-[#0a071b] border-b border-[#2a2254] flex items-center justify-between text-xs font-mono shrink-0">
               {/* Scenario Switcher Tabs */}
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 {PRESET_SCENARIOS.map((sc) => {
@@ -967,8 +967,8 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                       }}
                       className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10.5px] font-medium transition-all shrink-0 ${
                         isSelected
-                          ? 'bg-[#181333] text-[#00ffcc] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.2)] font-bold'
-                          : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#15122c]'
+                          ? 'bg-[#0a071b] text-[#00ffcc] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.2)] font-bold'
+                          : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#130d2d]'
                       }`}
                     >
                       <Icon className="w-3 h-3" />
@@ -986,7 +986,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   className={`p-1.5 rounded-lg border transition-all flex items-center gap-1 ${
                     showDossierPopover
                       ? 'bg-[#00ffcc] text-black border-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.4)]'
-                      : 'bg-[#15122c] text-[#00ffcc] border-[#2a2254] hover:border-[#00ffcc]/50'
+                      : 'bg-[#0a071b] text-[#00ffcc] border-[#2a2254] hover:border-[#00ffcc]/50'
                   }`}
                   title="Live Cognition Dossier Indicator"
                 >
@@ -996,7 +996,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
 
                 {/* Compact Popover */}
                 {showDossierPopover && (
-                  <div className="absolute top-8 right-0 w-64 bg-[#100d23] border border-[#00ffcc]/50 rounded-xl p-3 shadow-2xl z-40 space-y-2 animate-in fade-in duration-100">
+                  <div className="absolute top-8 right-0 w-64 bg-[#0a071b] border border-[#00ffcc]/50 rounded-xl p-3 shadow-2xl z-40 space-y-2 animate-in fade-in duration-100">
                     <div className="flex items-center justify-between border-b border-[#2a2254] pb-1.5">
                       <span className="text-[11px] font-bold text-[#00ffcc] flex items-center gap-1 font-mono">
                         <ShieldCheck className="w-3.5 h-3.5" /> Live Cognition Dossier
@@ -1041,7 +1041,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                       <button
                         type="button"
                         onClick={onClearCustomScreenshot}
-                        className="px-2 py-1 rounded-md bg-black/90 text-[#e8e6f2] text-[10px] font-mono hover:bg-[#15122c] transition border border-[#2a2254]"
+                        className="px-2 py-1 rounded-md bg-black/90 text-[#e8e6f2] text-[10px] font-mono hover:bg-[#0a071b] transition border border-[#2a2254]"
                       >
                         Clear Screen
                       </button>
@@ -1053,7 +1053,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   {/* Counterpart Contact Profile */}
                   <div className="flex items-center justify-between pb-2 border-b border-[#2a2254]">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#15122c] border border-[#2a2254] flex items-center justify-center text-xs shadow-inner">
+                      <div className="w-7 h-7 rounded-full bg-[#0a071b] border border-[#2a2254] flex items-center justify-center text-xs shadow-inner">
                         {currentScenario.appHeader.avatar}
                       </div>
                       <div>
@@ -1091,10 +1091,10 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                         <div
                           className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed shadow-lg ${
                             msg.sender === 'them'
-                              ? 'bg-[#100d23] text-[#e8e6f2] border border-[#2a2254] rounded-tl-sm'
+                              ? 'bg-[#0a071b] text-[#e8e6f2] border border-[#2a2254] rounded-tl-sm'
                               : msg.isAutoPilot
-                              ? 'bg-[#181333] text-[#e8e6f2] border border-[#00ffcc]/50 rounded-tr-sm shadow-[0_0_12px_rgba(0,255,204,0.15)]'
-                              : 'bg-[#00ffcc] text-black font-semibold rounded-tr-sm border border-[#00ffcc] shadow-[0_0_15px_rgba(0,255,204,0.2)]'
+                              ? 'bg-[#130d2d] text-[#e8e6f2] border border-[#00ffcc]/50 rounded-tr-sm shadow-[0_0_12px_rgba(0,255,204,0.15)]'
+                              : 'bg-[#6366f1] text-white font-medium rounded-tr-sm border border-[#6366f1] shadow-[0_0_12px_rgba(99,102,241,0.4)]'
                           }`}
                         >
                           {msg.text}
@@ -1222,7 +1222,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   triggerHaptic(12);
                   onOpenVault();
                 }}
-                className="w-9 h-9 rounded-xl bg-[#100d23] border border-[#2a2254] hover:border-[#00ffcc] hover:bg-[#181333] text-[#00ffcc] flex items-center justify-center transition active:scale-95 shrink-0"
+                className="w-9 h-9 rounded-xl bg-[#0a071b] border border-[#2a2254] hover:border-[#6366f1] hover:bg-[#130d2d] text-[#00ffcc] flex items-center justify-center transition active:scale-95 shrink-0"
                 title="Upload media asset from Global Vault (+)"
               >
                 <Plus className="w-5 h-5 text-[#00ffcc] stroke-[2.5]" />
@@ -1241,7 +1241,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                     }
                   }}
                   placeholder="Type with OmniAI - Nexus..."
-                  className="w-full rounded-xl bg-[#100d23] border border-[#2a2254] px-3.5 py-2 text-xs text-[#e8e6f2] placeholder-[#7d779f] focus:outline-none focus:border-[#00ffcc] focus:ring-1 focus:ring-[#00ffcc]/40 font-mono transition-all pr-8 shadow-inner"
+                  className="w-full rounded-xl bg-[#0a071b] border border-[#2a2254] px-3.5 py-2 text-xs text-[#e8e6f2] placeholder-[#7d779f] focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]/50 font-mono transition-all pr-8 shadow-inner"
                 />
                 {currentDraftText && (
                   <button
@@ -1259,23 +1259,23 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
               <button
                 type="button"
                 onClick={() => goToPane('left')}
-                className="px-2 py-2 rounded-xl bg-[#100d23] border border-[#2a2254] text-[#00ffcc] hover:border-[#00ffcc]/50 transition text-[10px] font-mono font-bold shrink-0 capitalize"
+                className="px-2 py-2 rounded-xl bg-[#0a071b] border border-[#2a2254] text-[#00ffcc] hover:border-[#00ffcc]/50 transition text-[10px] font-mono font-bold shrink-0 capitalize"
                 title="Council Synthesis (Tap to open Advice Workspace)"
               >
                 Council
               </button>
 
-              {/* Send Button */}
+              {/* Send Button: Purplish-Blue (#6366f1 / Electric Indigo) */}
               <button
                 type="button"
                 onClick={() => {
                   if (currentDraftText.trim()) onSend(currentDraftText);
                 }}
                 disabled={!currentDraftText.trim()}
-                className="w-9 h-9 rounded-xl bg-[#00ffcc] hover:bg-[#33ffdd] text-black font-extrabold border border-[#00ffcc] shadow-[0_0_15px_rgba(0,255,204,0.35)] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-xl bg-[#6366f1] hover:bg-[#797ef9] text-white font-extrabold border border-[#6366f1] shadow-[0_0_15px_rgba(99,102,241,0.45)] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center shrink-0"
                 title="Send message"
               >
-                <Send className="w-4 h-4 text-black stroke-[2.5]" />
+                <Send className="w-4 h-4 text-white stroke-[2.5]" />
               </button>
             </div>
           </div>
@@ -1316,7 +1316,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
             )}
 
             {/* KEYBOARD PHYSICS SUB-PANEL */}
-            <div className="p-3.5 rounded-xl bg-[#100d23] border border-[#00ffcc]/40 space-y-3.5 shadow-[0_0_15px_rgba(0,255,204,0.1)]">
+            <div className="p-3.5 rounded-xl bg-[#0a071b] border border-[#1e1642] space-y-3.5 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
               <div className="flex items-center justify-between pb-1.5 border-b border-[#2a2254]">
                 <div className="flex items-center gap-1.5">
                   <Cpu className="w-3.5 h-3.5 text-[#00ffcc]" />
@@ -1329,7 +1329,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                 </span>
               </div>
 
-              {/* Slider 1: Kinetic Friction */}
+              {/* Slider 1: Kinetic Friction (Purplish-Blue progress track #6366f1) */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-[#e8e6f2] font-semibold flex items-center gap-1">
@@ -1343,14 +1343,14 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   max="100"
                   value={kineticFriction}
                   onChange={(e) => updateKineticFriction(parseInt(e.target.value, 10))}
-                  className="w-full accent-[#00ffcc] bg-[#000000] h-2 rounded-lg cursor-pointer"
+                  className="w-full accent-[#6366f1] bg-[#1e1642] h-2 rounded-lg cursor-pointer"
                 />
                 <p className="text-[9.5px] text-[#948eb5] font-mono leading-tight">
                   Creates micro-haptic dampening on the mobile screen if typing with an erratic or angry cadence.
                 </p>
               </div>
 
-              {/* Slider 2: Predictive Grip Factor */}
+              {/* Slider 2: Predictive Grip Factor (Purplish-Blue progress track #6366f1) */}
               <div className="space-y-1.5 pt-1">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-[#e8e6f2] font-semibold flex items-center gap-1">
@@ -1364,7 +1364,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                   max="100"
                   value={predictiveGripFactor}
                   onChange={(e) => updatePredictiveGrip(parseInt(e.target.value, 10))}
-                  className="w-full accent-[#00ffcc] bg-[#000000] h-2 rounded-lg cursor-pointer"
+                  className="w-full accent-[#6366f1] bg-[#1e1642] h-2 rounded-lg cursor-pointer"
                 />
                 <p className="text-[9.5px] text-[#948eb5] font-mono leading-tight">
                   Calculates next-character mathematical probability and dynamically scales touch boundaries to fit your thumbs.
@@ -1375,7 +1375,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
               <div className="p-2 rounded-lg bg-[#000000] border border-[#2a2254] flex items-center justify-between text-[10px] font-mono">
                 <div>
                   <span className="text-[#948eb5] block text-[8.5px]">Cadence Telemetry:</span>
-                  <span className="text-white font-bold">Stable Rhythm (62 WPM)</span>
+                  <span className="text-[#00ffcc] font-bold">Stable Rhythm (62 WPM)</span>
                 </div>
                 <div className="text-right">
                   <span className="text-[#948eb5] block text-[8.5px]">Dampening Threshold:</span>
@@ -1385,7 +1385,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
             </div>
 
             {/* Consolidated Quick Actions */}
-            <div className="p-3 rounded-xl bg-[#100d23] border border-[#2a2254] space-y-2">
+            <div className="p-3 rounded-xl bg-[#0a071b] border border-[#2a2254] space-y-2">
               <div className="flex items-center justify-between text-[10.5px] font-mono">
                 <span className="font-bold text-white flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-[#00ffcc]" />
@@ -1408,7 +1408,7 @@ export const ViewportCarousel: React.FC<ViewportCarouselProps> = ({
                       key={act.id}
                       type="button"
                       onClick={() => handleRunQuickAction(act.id as any)}
-                      className="p-2 rounded-lg bg-[#181333] border border-[#2a2254] hover:border-[#00ffcc]/60 text-left transition flex items-center gap-2 group"
+                      className="p-2 rounded-lg bg-[#0a071b] border border-[#2a2254] hover:border-[#6366f1]/60 text-left transition flex items-center gap-2 group"
                     >
                       <Icon className="w-3.5 h-3.5 text-[#00ffcc] group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-mono font-semibold text-[#e8e6f2] group-hover:text-white">

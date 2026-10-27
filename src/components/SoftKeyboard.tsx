@@ -388,7 +388,7 @@ export const SoftKeyboard: React.FC<SoftKeyboardProps> = ({
 
   if (isCollapsed) {
     return (
-      <div className="bg-[#0b0a14] px-4 py-2 flex items-center justify-between border-t border-[#211d34] text-xs text-[#9490ac]">
+      <div className="bg-[#0a071b] px-4 py-2 flex items-center justify-between border-t border-[#1e1642] text-xs text-[#9490ac]">
         <div className="flex items-center gap-2">
           <Fingerprint className="w-3.5 h-3.5 text-[#00ffcc]" />
           <span className="font-mono text-[11px] text-[#9490ac]">Biometric Kinetic Keyboard Docked</span>
@@ -414,7 +414,7 @@ export const SoftKeyboard: React.FC<SoftKeyboardProps> = ({
   return (
     <div 
       ref={keyboardContainerRef}
-      className="bg-[#0b0a14] select-none border-t border-[#211d34] p-1.5 pb-2 touch-none relative overflow-hidden"
+      className="bg-[#000000] select-none border-t border-[#1e1642] p-1.5 pb-2 touch-none relative overflow-hidden"
       onTouchStart={(e) => {
         const touch = e.touches[0];
         handleGestureStart(touch.clientX, touch.clientY);
@@ -496,7 +496,7 @@ export const SoftKeyboard: React.FC<SoftKeyboardProps> = ({
           )}
 
           {lastSwipedWord ? (
-            <span className="text-[#00ffcc] font-mono text-[9.5px] font-bold tracking-tight bg-[#181333] px-2 py-0.5 rounded border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.3)] animate-in fade-in">
+            <span className="text-[#00ffcc] font-mono text-[9.5px] font-bold tracking-tight bg-[#0a071b] px-2 py-0.5 rounded border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.3)] animate-in fade-in">
               ⚡ Swiped: "{lastSwipedWord}"
             </span>
           ) : (
@@ -519,7 +519,7 @@ export const SoftKeyboard: React.FC<SoftKeyboardProps> = ({
 
       {/* Emoji Drawer */}
       {showEmojiPicker && (
-        <div className="grid grid-cols-8 gap-1.5 p-2 bg-[#121318] rounded-xl mb-1.5 border border-zinc-800 shadow-[0_0_15px_rgba(0,0,0,0.8)] animate-in fade-in duration-100">
+        <div className="grid grid-cols-8 gap-1.5 p-2 bg-[#0a071b] rounded-xl mb-1.5 border border-[#1e1642] shadow-[0_0_15px_rgba(0,0,0,0.8)] animate-in fade-in duration-100">
           {emojis.map((emoji, idx) => (
             <button
               key={idx}
@@ -686,12 +686,12 @@ export const SoftKeyboard: React.FC<SoftKeyboardProps> = ({
         {/* Volumetric Spacebar named 'THE VOID' */}
         <button
           onClick={handleSpaceClick}
-          className={`flex-1 h-11 rounded-lg keycap-3d text-[#e8e6f2] text-xs font-mono flex items-center justify-center relative overflow-hidden group border border-[#211d34] hover:border-[#00ffcc]/50 ${
-            activeKey === 'space' ? 'depressed ring-1 ring-[#00ffcc]/60' : ''
+          className={`flex-1 h-11 rounded-lg keycap-3d text-[#e8e6f2] text-xs font-mono flex items-center justify-center relative overflow-hidden group border border-[#1e1642] hover:border-[#6366f1]/60 ${
+            activeKey === 'space' ? 'depressed ring-1 ring-[#6366f1]/60' : ''
           }`}
           title="The Void"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0b0a14] via-[#14121f] to-[#0b0a14]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a071b] via-[#130d2d] to-[#0a071b]" />
           
           <div className="relative z-10 flex items-center justify-center gap-2">
             <span className="text-[11px] font-black tracking-[0.38em] uppercase font-mono bg-clip-text text-transparent bg-gradient-to-r from-[#6c63ff] via-[#e8e6f2] to-[#00ffcc] drop-shadow-[0_0_8px_rgba(0,255,204,0.7)] group-hover:drop-shadow-[0_0_12px_rgba(0,255,204,0.9)] transition-all">

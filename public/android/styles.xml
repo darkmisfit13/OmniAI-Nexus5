@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Misfit Studios: Absolute Black Cyberpunk Android Global Design Tokens -->
+    <!-- 1. APPLICATION CANVAS SURFACES (THE CORE BASE) -->
+    <color name="omni_canvas_root">#000000</color>
+    <color name="omni_obsidian_purple">#0A071B</color>
+    <color name="omni_border_purple">#1E1642</color>
+    <color name="omni_border_highlight">#2A2254</color>
+
+    <!-- 2. PRIMARY BUTTON & NAVIGATION ACCENTS (PURPLISH-BLUE #0C00CA) -->
+    <color name="omni_purplish_blue">#0C00CA</color>
+    <color name="omni_purplish_blue_glow">#1A0FE0</color>
+
+    <!-- 3. DIAGNOSTIC METRICS & STATUS TEXT (BABY BLUE #00FFFF) -->
+    <color name="omni_baby_blue">#00FFFF</color>
+    <color name="omni_text_primary">#F1F5F9</color>
+    <color name="omni_text_muted">#948EB5</color>
+
+    <style name="Theme.OmniAI.Nexus" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/omni_canvas_root</item>
+        <item name="android:colorBackground">@color/omni_canvas_root</item>
+        <item name="colorPrimary">@color/omni_purplish_blue</item>
+        <item name="colorPrimaryVariant">@color/omni_obsidian_purple</item>
+        <item name="colorSecondary">@color/omni_baby_blue</item>
+        <item name="android:statusBarColor">@color/omni_canvas_root</item>
+        <item name="android:navigationBarColor">@color/omni_canvas_root</item>
+    </style>
+</resources>

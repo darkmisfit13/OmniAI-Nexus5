@@ -159,7 +159,7 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
     <div className="flex flex-col h-full bg-[#000000] text-[#e8e6f2] overflow-hidden select-none relative">
       
       {/* 1. COMPACT SCENARIO & COGNITION BAR */}
-      <div className="px-3 py-1.5 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between text-xs font-mono shrink-0">
+      <div className="px-3 py-1.5 bg-[#0a071b] border-b border-[#1e1642] flex items-center justify-between text-xs font-mono shrink-0">
         
         {/* Scenario Switcher Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
@@ -176,8 +176,8 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
                 }}
                 className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10.5px] font-medium transition-all shrink-0 ${
                   isSelected
-                    ? 'bg-[#1e1940] text-[#00ffcc] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.2)] font-bold'
-                    : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#15122c]'
+                    ? 'bg-[#6366f1]/20 text-[#00ffcc] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.2)] font-bold'
+                    : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#130d2d]'
                 }`}
               >
                 <Icon className="w-3 h-3" />
@@ -195,7 +195,7 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
             className={`p-1.5 rounded-lg border transition-all flex items-center gap-1 ${
               showDossierPopover
                 ? 'bg-[#00ffcc] text-black border-[#00ffcc] shadow-[0_0_10px_rgba(0,255,204,0.4)]'
-                : 'bg-[#15122c] text-[#00ffcc] border-[#2a2254] hover:border-[#00ffcc]/50'
+                : 'bg-[#0a071b] text-[#00ffcc] border-[#1e1642] hover:border-[#00ffcc]/50'
             }`}
             title="Live Cognition Dossier"
           >
@@ -207,7 +207,7 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-1.5 rounded-lg border border-[#2a2254] bg-[#15122c] text-[#948eb5] hover:text-[#00ffcc] transition-all"
+            className="p-1.5 rounded-lg border border-[#1e1642] bg-[#0a071b] text-[#948eb5] hover:text-[#00ffcc] transition-all"
             title="Upload screenshot"
           >
             <Upload className="w-3.5 h-3.5" />
@@ -222,8 +222,8 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
 
           {/* Compact Popover for Live Cognition Dossier */}
           {showDossierPopover && (
-            <div className="absolute top-8 right-0 w-64 bg-[#100d23] border border-[#00ffcc]/50 rounded-xl p-3 shadow-2xl z-40 space-y-2 animate-in fade-in duration-100">
-              <div className="flex items-center justify-between border-b border-[#2a2254] pb-1.5">
+            <div className="absolute top-8 right-0 w-64 bg-[#0a071b] border border-[#00ffcc]/50 rounded-xl p-3 shadow-2xl z-40 space-y-2 animate-in fade-in duration-100">
+              <div className="flex items-center justify-between border-b border-[#1e1642] pb-1.5">
                 <span className="text-[11px] font-bold text-[#00ffcc] flex items-center gap-1 font-mono">
                   <ShieldCheck className="w-3.5 h-3.5" /> Live Cognition Dossier
                 </span>
@@ -259,7 +259,7 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
 
         {customScreenshot ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="relative max-h-[220px] rounded-xl overflow-hidden border border-[#2a2254] shadow-xl">
+            <div className="relative max-h-[220px] rounded-xl overflow-hidden border border-[#1e1642] shadow-xl">
               <img
                 src={customScreenshot}
                 alt="Uploaded mobile screen"
@@ -269,7 +269,7 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
                 <button
                   type="button"
                   onClick={onClearCustomScreenshot}
-                  className="px-2 py-1 rounded-md bg-black/90 text-[#e8e6f2] text-[10px] font-mono hover:bg-[#15122c] transition border border-[#2a2254]"
+                  className="px-2 py-1 rounded-md bg-black/90 text-[#e8e6f2] text-[10px] font-mono hover:bg-[#130d2d] transition border border-[#1e1642]"
                 >
                   Clear Screen
                 </button>
@@ -282,9 +282,9 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
         ) : (
           <div className="space-y-2.5">
             {/* Counterpart Contact Subheader */}
-            <div className="flex items-center justify-between pb-2 border-b border-[#2a2254]">
+            <div className="flex items-center justify-between pb-2 border-b border-[#1e1642]">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#15122c] border border-[#2a2254] flex items-center justify-center text-xs shadow-inner">
+                <div className="w-7 h-7 rounded-full bg-[#0a071b] border border-[#1e1642] flex items-center justify-center text-xs shadow-inner">
                   {currentScenario.appHeader.avatar}
                 </div>
                 <div>
@@ -323,10 +323,10 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
                   <div
                     className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed shadow-lg ${
                       msg.sender === 'them'
-                        ? 'bg-[#13102b] text-[#e8e6f2] border border-[#2a2254] rounded-tl-sm'
+                        ? 'bg-[#0a071b] text-[#e8e6f2] border border-[#1e1642] rounded-tl-sm'
                         : msg.isAutoPilot
-                        ? 'bg-[#181333] text-[#e8e6f2] border border-[#00ffcc]/50 rounded-tr-sm shadow-[0_0_12px_rgba(0,255,204,0.15)]'
-                        : 'bg-[#00ffcc] text-black font-semibold rounded-tr-sm border border-[#00ffcc] shadow-[0_0_15px_rgba(0,255,204,0.2)]'
+                        ? 'bg-[#130d2d] text-[#e8e6f2] border border-[#00ffcc]/50 rounded-tr-sm shadow-[0_0_12px_rgba(0,255,204,0.15)]'
+                        : 'bg-[#6366f1] text-white font-semibold rounded-tr-sm border border-[#6366f1] shadow-[0_0_15px_rgba(99,102,241,0.25)]'
                     }`}
                   >
                     {msg.text}
@@ -341,7 +341,7 @@ export const SimulatedAppView: React.FC<SimulatedAppViewProps> = ({
         )}
 
         {/* Live typing draft mirror */}
-        <div className="pt-2 border-t border-[#2a2254] flex items-center justify-between text-[10.5px] font-mono text-[#948eb5]">
+        <div className="pt-2 border-t border-[#1e1642] flex items-center justify-between text-[10.5px] font-mono text-[#948eb5]">
           <span className="truncate pr-2">
             Drafting: <span className="text-[#e8e6f2] font-medium">{currentDraftText || '(empty)'}</span>
           </span>

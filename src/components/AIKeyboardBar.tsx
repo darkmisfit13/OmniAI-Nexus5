@@ -165,10 +165,10 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
   const ToneIcon = currentToneMeta.icon;
 
   return (
-    <div className="w-full bg-[#000000] border-t border-[#2a2254] flex flex-col select-none relative z-20">
+    <div className="w-full bg-[#000000] border-t border-[#1e1642] flex flex-col select-none relative z-20">
       
       {/* 1. CONSOLIDATED QUICK ACTIONS: SINGLE CLEAN TAB INTERFACE */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#100d23] border-b border-[#2a2254]">
+      <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#0a071b] border-b border-[#1e1642]">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {[
             { id: 'answers', label: 'Quick Answers', icon: Sparkles },
@@ -196,8 +196,8 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all shrink-0 ${
                   isSelected
-                    ? 'bg-[#1e1940] text-[#00ffcc] border border-[#00ffcc]/60 shadow-[0_0_10px_rgba(0,255,204,0.2)]'
-                    : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#15122c] border border-transparent'
+                    ? 'bg-[#6366f1]/20 text-[#00ffcc] border border-[#00ffcc]/60 shadow-[0_0_10px_rgba(0,255,204,0.2)]'
+                    : 'text-[#948eb5] hover:text-[#e8e6f2] hover:bg-[#130d2d] border border-transparent'
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#00ffcc]' : 'text-[#948eb5]'}`} />
@@ -221,7 +221,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
 
       {/* 2. EXPANDED CONSOLIDATED PANEL (CONDITIONAL ACCORDING TO ACTIVE TAB) */}
       {activeTab === 'answers' && (
-        <div className="p-2.5 bg-[#0b0819] border-b border-[#2a2254] space-y-2 animate-in slide-in-from-top-1 duration-150">
+        <div className="p-2.5 bg-[#0a071b] border-b border-[#1e1642] space-y-2 animate-in slide-in-from-top-1 duration-150">
           <div className="flex items-center justify-between text-[10px] font-mono text-[#948eb5]">
             <span className="text-[#00ffcc] font-bold flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-[#00ffcc]" /> 1-Tap Predictive Responses ({suggestedReplies.length})
@@ -238,7 +238,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                   triggerHaptic(10);
                   onSelectSuggestion(reply);
                 }}
-                className="p-2 rounded-xl bg-[#13102b] hover:bg-[#1a1638] border border-[#2a2254] hover:border-[#00ffcc]/50 text-left transition-all group"
+                className="p-2 rounded-xl bg-[#130d2d] hover:bg-[#1a123d] border border-[#1e1642] hover:border-[#00ffcc]/50 text-left transition-all group"
               >
                 <p className="text-xs font-mono text-[#e8e6f2] group-hover:text-[#00ffcc] line-clamp-2 leading-relaxed">
                   {reply}
@@ -250,7 +250,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
       )}
 
       {activeTab === 'grammar' && (
-        <div className="p-2.5 bg-[#0b0819] border-b border-[#2a2254] space-y-2 animate-in slide-in-from-top-1 duration-150">
+        <div className="p-2.5 bg-[#0a071b] border-b border-[#1e1642] space-y-2 animate-in slide-in-from-top-1 duration-150">
           <div className="flex items-center justify-between text-[10px] font-mono text-[#948eb5]">
             <span className="text-[#00ffcc] font-bold">Rewrite Formality Style</span>
             <span className="text-[#00ffcc] font-bold uppercase">{formalityLevel}</span>
@@ -268,7 +268,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                 className={`py-1.5 px-2 rounded-xl text-center text-xs font-mono capitalize transition-all ${
                   formalityLevel === lvl
                     ? 'bg-[#00ffcc] text-black font-bold shadow-[0_0_10px_rgba(0,255,204,0.3)]'
-                    : 'bg-[#13102b] text-[#948eb5] hover:text-[#e8e6f2] border border-[#2a2254]'
+                    : 'bg-[#130d2d] text-[#948eb5] hover:text-[#e8e6f2] border border-[#1e1642]'
                 }`}
               >
                 {lvl}
@@ -280,7 +280,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
 
       {/* 3. CORE INTERACTION TONE SELECTION POPOVER (INCLUDES "FLIRTY") */}
       {showToneMenu && (
-        <div className="p-3 bg-[#13102b] border-b border-[#2a2254] animate-in slide-in-from-top-2 duration-150 space-y-2 shadow-2xl relative z-30">
+        <div className="p-3 bg-[#0a071b] border-b border-[#1e1642] animate-in slide-in-from-top-2 duration-150 space-y-2 shadow-2xl relative z-30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-white">
               <ToneIcon className={`w-3.5 h-3.5 ${currentToneMeta.color}`} />
@@ -310,8 +310,8 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
                   }}
                   className={`p-2 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? 'bg-[#1f1942] border-[#00ffcc] shadow-[0_0_12px_rgba(0,255,204,0.25)]'
-                      : 'bg-[#0b0819] border-[#2a2254] hover:border-[#00ffcc]/40'
+                      ? 'bg-[#130d2d] border-[#00ffcc] shadow-[0_0_12px_rgba(0,255,204,0.25)]'
+                      : 'bg-[#0a071b] border-[#1e1642] hover:border-[#00ffcc]/40'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -344,7 +344,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
           className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all shrink-0 active:scale-95 ${
             showToneMenu
               ? 'bg-[#00ffcc] text-black border-[#00ffcc] shadow-[0_0_12px_rgba(0,255,204,0.4)]'
-              : 'bg-[#13102b] text-[#00ffcc] border-[#2a2254] hover:border-[#00ffcc]/50 hover:bg-[#1a1638]'
+              : 'bg-[#0a071b] text-[#00ffcc] border-[#1e1642] hover:border-[#00ffcc]/50 hover:bg-[#130d2d]'
           }`}
           title="Interaction Tone Selector (Direct Action, Raw & Honest, Witty, Flirty)"
         >
@@ -366,7 +366,7 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
               }
             }}
             placeholder="Type with OmniAI..."
-            className="w-full rounded-xl bg-[#100d23] border border-[#2a2254] px-3.5 py-2 text-xs text-[#e8e6f2] placeholder-[#7d779f] focus:outline-none focus:border-[#00ffcc] focus:ring-1 focus:ring-[#00ffcc]/40 font-mono transition-all pr-8 shadow-inner"
+            className="w-full rounded-xl bg-[#0a071b] border border-[#1e1642] px-3.5 py-2 text-xs text-[#e8e6f2] placeholder-[#7d779f] focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]/40 font-mono transition-all pr-8 shadow-inner"
           />
           {currentText && (
             <button
@@ -388,22 +388,22 @@ export const AIKeyboardBar: React.FC<AIKeyboardBarProps> = ({
           className={`p-2 rounded-xl border transition-all disabled:opacity-30 shrink-0 ${
             copied
               ? 'bg-[#00ffcc]/20 text-[#00ffcc] border-[#00ffcc]/60 shadow-[0_0_10px_rgba(0,255,204,0.3)]'
-              : 'bg-[#13102b] text-[#948eb5] border-[#2a2254] hover:text-[#e8e6f2] hover:bg-[#1a1638]'
+              : 'bg-[#0a071b] text-[#948eb5] border-[#1e1642] hover:text-[#e8e6f2] hover:bg-[#130d2d]'
           }`}
           title="Copy text"
         >
           {copied ? <Check className="w-4 h-4 text-[#00ffcc]" /> : <Copy className="w-4 h-4" />}
         </button>
 
-        {/* Send Button */}
+        {/* Send Button: Purplish-Blue primary accent */}
         <button
           type="button"
           onClick={() => onSend(currentText)}
           disabled={!currentText.trim()}
-          className="p-2 rounded-xl bg-[#00ffcc] hover:bg-[#33ffdd] text-black font-extrabold border border-[#00ffcc] shadow-[0_0_15px_rgba(0,255,204,0.35)] active:scale-95 transition-all disabled:opacity-30 shrink-0"
+          className="p-2 rounded-xl bg-[#6366f1] hover:bg-[#4f46e5] text-white font-extrabold border border-[#6366f1] shadow-[0_0_15px_rgba(99,102,241,0.35)] active:scale-95 transition-all disabled:opacity-30 shrink-0"
           title="Send message"
         >
-          <Send className="w-4 h-4 text-black stroke-[2.5]" />
+          <Send className="w-4 h-4 text-white stroke-[2.5]" />
         </button>
       </div>
     </div>

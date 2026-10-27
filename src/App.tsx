@@ -761,7 +761,7 @@ export default function App() {
           <span className="font-bold text-white tracking-wider text-xs">
             Omni<span className="text-[#00ffcc]">AI</span>
           </span>
-          <span className="px-1.5 py-0.5 rounded text-[8.5px] bg-[#100d23] border border-[#2a2254] text-[#00ffcc] font-bold">
+          <span className="px-1.5 py-0.5 rounded text-[8.5px] bg-[#0a071b] border border-[#2a2254] text-[#00ffcc] font-bold">
             Mobile-First OS
           </span>
         </div>
@@ -771,8 +771,8 @@ export default function App() {
             onClick={() => setIsDesktopOverlayActive(!isDesktopOverlayActive)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition ${
               isDesktopOverlayActive
-                ? 'bg-[#00ffcc] text-black border-[#00ffcc] font-bold shadow-[0_0_12px_rgba(0,255,204,0.4)]'
-                : 'bg-[#100d23] border-[#2a2254] hover:border-[#00ffcc]/40 text-[#948eb5] hover:text-white'
+                ? 'bg-[#6366f1] text-white border-[#6366f1] font-bold shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                : 'bg-[#0a071b] border-[#2a2254] hover:border-[#6366f1]/60 text-[#948eb5] hover:text-white'
             }`}
             title="Launch Floating Desktop Companion Overlay (⌘+Shift+K)"
           >
@@ -781,7 +781,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setPhoneFrameMode(!phoneFrameMode)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#100d23] border border-[#2a2254] hover:border-[#00ffcc]/40 text-[#948eb5] hover:text-white transition"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0a071b] border border-[#2a2254] hover:border-[#6366f1]/60 text-[#948eb5] hover:text-white transition"
             title="Toggle between phone bezel and full view"
           >
             {phoneFrameMode ? <Maximize2 className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
@@ -795,7 +795,7 @@ export default function App() {
       <div
         className={`w-full flex flex-col bg-[#000000] overflow-hidden transition-all duration-300 ${
           phoneFrameMode
-            ? 'sm:max-w-[430px] sm:h-[min(860px,calc(100dvh-44px))] sm:rounded-[44px] sm:border-[8px] sm:border-[#100d23] sm:shadow-[0_0_70px_rgba(42,34,84,0.4)] sm:ring-1 sm:ring-[#2a2254]'
+            ? 'sm:max-w-[430px] sm:h-[min(860px,calc(100dvh-44px))] sm:rounded-[44px] sm:border-[8px] sm:border-[#0a071b] sm:shadow-[0_0_70px_rgba(42,34,84,0.4)] sm:ring-1 sm:ring-[#2a2254]'
             : 'max-w-6xl w-full h-[100dvh] rounded-none sm:rounded-2xl border-0 sm:border sm:border-[#2a2254]'
         } relative h-[100dvh] text-[#e8e6f2]`}
       >
@@ -809,7 +809,7 @@ export default function App() {
           <span className="text-[#e8e6f2]">{currentTime}</span>
 
           {/* Dynamic Island / Hardware Notch */}
-          <div className="w-24 h-4 bg-[#100d23] rounded-full flex items-center justify-center gap-2 border border-[#2a2254] shadow-inner px-2">
+          <div className="w-24 h-4 bg-[#0a071b] rounded-full flex items-center justify-center gap-2 border border-[#2a2254] shadow-inner px-2">
             <div className="w-2 h-2 rounded-full bg-[#000000] border border-[#2a2254]" />
             <div className={`w-1.5 h-1.5 rounded-full ${isStreaming ? 'bg-[#00ffcc] animate-pulse' : 'bg-[#2a2254]'}`} />
           </div>
@@ -829,7 +829,7 @@ export default function App() {
               }}
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition ${
                 hapticFeedback
-                  ? 'text-[#00ffcc] bg-[#100d23] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.35)]'
+                  ? 'text-[#00ffcc] bg-[#0a071b] border border-[#00ffcc]/50 shadow-[0_0_8px_rgba(0,255,204,0.35)]'
                   : 'text-[#948eb5] hover:text-[#e8e6f2] border border-transparent'
               }`}
               title={hapticFeedback ? '3D Keyboard Haptics: ENABLED (Tap to toggle)' : '3D Keyboard Haptics: DISABLED (Tap to toggle)'}
@@ -854,7 +854,7 @@ export default function App() {
         <header className="px-3.5 py-2.5 bg-[#000000] border-b border-[#2a2254] flex items-center justify-between shrink-0 z-20">
           {/* Static Pinned OmniAI Orb anchored to far upper-left directly adjacent to "OmniAI - Nexus" */}
           <div className="flex items-center gap-2 pl-0.5">
-            <div className="relative flex items-center justify-center shrink-0 w-7 h-7 overflow-hidden rounded-full bg-[#100d23] border border-[#2a2254]">
+            <div className="relative flex items-center justify-center shrink-0 w-7 h-7 overflow-hidden rounded-full bg-[#0a071b] border border-[#2a2254]">
               <HoloOrb
                 size="xs"
                 className="w-7 h-7"
@@ -877,7 +877,7 @@ export default function App() {
                 }
                 setIsLiveCallOpen(true);
               }}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#100d23] border border-[#00ffcc]/60 text-[#00ffcc] hover:bg-[#181333] hover:border-[#00ffcc] transition-all shadow-[0_0_12px_rgba(0,255,204,0.25)] active:scale-95"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#0a071b] border border-[#00ffcc]/60 text-[#00ffcc] hover:bg-[#130d2d] hover:border-[#00ffcc] transition-all shadow-[0_0_12px_rgba(0,255,204,0.25)] active:scale-95"
               title="Launch Real-Time Calling Suite (Audio HUD & Eye-Line Video)"
             >
               <Phone className="w-3.5 h-3.5 text-[#00ffcc] animate-pulse" />
@@ -888,7 +888,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsCompanionOpen(true)}
-              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#100d23] border border-[#2a2254] text-[#948eb5] hover:text-[#00ffcc] hover:bg-[#181333] hover:border-[#00ffcc]/50 transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#0a071b] border border-[#2a2254] text-[#948eb5] hover:text-[#00ffcc] hover:bg-[#130d2d] hover:border-[#00ffcc]/50 transition-all shadow-sm active:scale-95"
               title="Open OmniAI - Nexus Companion"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#00ffcc]" />
@@ -899,7 +899,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsStudiosSidebarOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#100d23] border border-[#2a2254] text-[#e8e6f2] hover:text-[#00ffcc] hover:border-[#00ffcc]/50 transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#0a071b] border border-[#2a2254] text-[#e8e6f2] hover:text-[#00ffcc] hover:border-[#00ffcc]/50 transition-all shadow-sm active:scale-95"
               title="Open OmniAI - Nexus Navigation Drawer"
             >
               <Menu className="w-4 h-4 text-[#00ffcc]" />
@@ -916,7 +916,7 @@ export default function App() {
         >
           {/* Mobile Horizontal Swipe Gesture Indicator for Primary Tabs */}
           {isPrimaryTab && (
-            <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#100d23]/90 backdrop-blur-md border border-[#2a2254] text-[9px] font-mono text-[#948eb5] select-none shadow-sm">
+            <div className="absolute top-1.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0a071b]/90 backdrop-blur-md border border-[#2a2254] text-[9px] font-mono text-[#948eb5] select-none shadow-sm">
               <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'keyboard' ? 'bg-[#00ffcc] scale-125 shadow-[0_0_6px_#00ffcc]' : 'bg-[#2a2254]'}`} />
               <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'vision' ? 'bg-[#00ffcc] scale-125 shadow-[0_0_6px_#00ffcc]' : 'bg-[#2a2254]'}`} />
               <span className={`w-1.5 h-1.5 rounded-full transition-all ${activeTab === 'workspace' ? 'bg-[#00ffcc] scale-125 shadow-[0_0_6px_#00ffcc]' : 'bg-[#2a2254]'}`} />
@@ -1233,7 +1233,7 @@ export default function App() {
       {isAdminModalOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-6 animate-in fade-in">
           <div className="relative w-full max-w-4xl max-h-[92vh] bg-[#000000] border border-[#2a2254] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div className="p-3 bg-[#100d23] border-b border-[#2a2254] flex items-center justify-between">
+            <div className="p-3 bg-[#0a071b] border-b border-[#2a2254] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4 text-[#00ffcc]" />
                 <span className="font-bold text-sm text-white">OmniAI<span className="text-[#00ffcc]"> - Nexus</span> Settings & Admin Hub</span>
@@ -1254,8 +1254,8 @@ export default function App() {
                   }}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition ${
                     hapticFeedback
-                      ? 'bg-[#15122c] border-[#00ffcc]/60 text-[#00ffcc] shadow-[0_0_8px_rgba(0,255,204,0.3)]'
-                      : 'bg-[#15122c] border-[#2a2254] text-[#948eb5] hover:text-[#e8e6f2]'
+                      ? 'bg-[#0a071b] border-[#00ffcc]/60 text-[#00ffcc] shadow-[0_0_8px_rgba(0,255,204,0.3)]'
+                      : 'bg-[#0a071b] border-[#2a2254] text-[#948eb5] hover:text-[#e8e6f2]'
                   }`}
                   title={hapticFeedback ? 'Disable 3D Keyboard Vibration' : 'Enable 3D Keyboard Vibration'}
                 >
@@ -1264,14 +1264,14 @@ export default function App() {
                   <span className="font-bold">{hapticFeedback ? 'ON' : 'OFF'}</span>
                 </button>
 
-                {/* Haptic Intensity Slider Control (Persists & Updates Haptic State Immediately) */}
+                {/* Haptic Intensity Slider Control (Purplish-Blue track #6366f1) */}
                 <div 
-                  className={`flex items-center gap-2 bg-[#15122c] px-2.5 py-1 rounded-xl border border-[#2a2254] transition ${
-                    hapticFeedback ? 'border-[#00ffcc]/40' : 'opacity-40'
+                  className={`flex items-center gap-2 bg-[#0a071b] px-2.5 py-1 rounded-xl border border-[#2a2254] transition ${
+                    hapticFeedback ? 'border-[#6366f1]/60 shadow-[0_0_8px_rgba(99,102,241,0.25)]' : 'opacity-40'
                   }`}
                   title="3D Keyboard Haptic Feedback Intensity (1-10)"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-[#00ffcc] shrink-0" />
+                  <Sliders className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
                   <span className="text-[10px] font-mono text-[#e8e6f2] font-semibold whitespace-nowrap">
                     {hapticLevel}/10
                   </span>
@@ -1293,7 +1293,7 @@ export default function App() {
                       }
                       window.dispatchEvent(new CustomEvent('omni_haptic_changed', { detail: { level: val, enabled: hapticFeedback } }));
                     }}
-                    className="w-16 xs:w-24 accent-[#00ffcc] h-1.5 bg-[#0b0a14] rounded-lg cursor-pointer"
+                    className="w-16 xs:w-24 accent-[#6366f1] h-1.5 bg-[#1e1642] rounded-lg cursor-pointer"
                   />
                 </div>
                 {/* Relocated Train Your Voice Button (from Top Bar) */}
@@ -1303,7 +1303,7 @@ export default function App() {
                     setIsAdminModalOpen(false);
                     setIsAutoPilotSetupOpen(true);
                   }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-[#15122c] border-[#00ffcc]/50 text-[#00ffcc] hover:bg-[#00ffcc]/20 shadow-sm"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-medium transition bg-[#0a071b] border-[#00ffcc]/50 text-[#00ffcc] hover:bg-[#00ffcc]/20 shadow-sm"
                   title="Train Your Voice: Calibrate AI Voice Clone & Persona"
                 >
                   <Volume2 className="w-3.5 h-3.5 text-[#00ffcc]" />
@@ -1312,7 +1312,7 @@ export default function App() {
 
                 <button
                   onClick={() => setIsAdminModalOpen(false)}
-                  className="p-1 rounded-lg text-[#9490ac] hover:text-[#e8e6f2] hover:bg-[#211d34] transition"
+                  className="p-1 rounded-lg text-[#9490ac] hover:text-[#e8e6f2] hover:bg-[#1e1642] transition"
                   title="Close Settings"
                 >
                   ✕
@@ -1332,6 +1332,7 @@ export default function App() {
         onClose={() => setIsLiveCallOpen(false)}
         caller={liveCallCaller}
         onInsertToKeyboard={(text) => setCurrentDraftText(text)}
+        onSaveToVault={handleSaveToVault}
       />
 
       {/* 11. OMNINEXUS MODEL & AUTONOMOUS SCHEDULE ONBOARDING MODAL */}

@@ -3000,15 +3000,15 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
                     </div>
 
                     {/* 3D Keyboard Vibration Setting with Slider respecting toggle state */}
-                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                    <div className="p-3.5 rounded-xl bg-[#0a071b] border border-[#1e1642] space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                            <Zap className="w-3.5 h-3.5 text-[#00ffcc]" />
                             <span>3D Keyboard Haptic Vibration Responses</span>
                           </div>
-                          <div className="text-[11px] text-slate-400">
-                            Master toggle: <span className="font-mono text-cyan-300 font-bold">{hapticFeedback ? 'ENABLED' : 'DISABLED'}</span> ({hapticIntensity})
+                          <div className="text-[11px] text-zinc-400">
+                            Master toggle: <span className="font-mono text-[#00ffcc] font-bold">{hapticFeedback ? 'ENABLED' : 'DISABLED'}</span> ({hapticIntensity})
                           </div>
                         </div>
                         <button
@@ -3018,21 +3018,21 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
                             handleUpdateHapticConfig(next, hapticIntensity);
                             showNotification(`3D Keyboard haptics ${next ? 'enabled' : 'disabled'}`);
                           }}
-                          className="text-cyan-400 hover:text-cyan-300"
+                          className="text-[#6366f1] hover:text-[#818cf8]"
                           title={hapticFeedback ? 'Disable 3D Keyboard Vibration' : 'Enable 3D Keyboard Vibration'}
                         >
-                          {hapticFeedback ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6 text-slate-600" />}
+                          {hapticFeedback ? <ToggleRight className="w-6 h-6 text-[#6366f1]" /> : <ToggleLeft className="w-6 h-6 text-zinc-600" />}
                         </button>
                       </div>
 
                       {/* Haptic Intensity Slider (Respects toggle state: disabled when toggle is off) */}
-                      <div className={`pt-2.5 border-t border-slate-800 space-y-2 transition-opacity ${!hapticFeedback ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                      <div className={`pt-2.5 border-t border-[#1e1642] space-y-2 transition-opacity ${!hapticFeedback ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                         <div className="flex items-center justify-between text-xs font-mono">
-                          <span className="text-slate-300 font-bold flex items-center gap-1.5">
-                            <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
+                          <span className="text-zinc-300 font-bold flex items-center gap-1.5">
+                            <SlidersHorizontal className="w-3.5 h-3.5 text-[#6366f1]" />
                             Haptic Vibration Intensity
                           </span>
-                          <span className="text-[11px] font-bold font-mono px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/40">
+                          <span className="text-[11px] font-bold font-mono px-2 py-0.5 rounded bg-[#00ffcc]/15 text-[#00ffcc] border border-[#00ffcc]/40">
                             {hapticFeedback ? `Level ${hapticLevel} / 10 (${hapticIntensity})` : 'Haptics Off'}
                           </span>
                         </div>
@@ -3048,11 +3048,11 @@ export const AdminHub: React.FC<AdminHubProps> = ({ onClose, initialSubPage }) =
                             onChange={(e) => {
                               handleUpdateHapticLevel(Number(e.target.value));
                             }}
-                            className="w-full accent-cyan-400 h-2 bg-slate-950 rounded-lg cursor-pointer border border-slate-800"
+                            className="w-full accent-[#6366f1] h-2 bg-[#1e1642] rounded-lg cursor-pointer border border-[#2a2254]"
                           />
-                          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
                             <span>1 (Subtle Micro-Tick)</span>
-                            <span className="text-cyan-400 font-bold">
+                            <span className="text-[#00ffcc] font-bold">
                               {hapticLevel <= 3 ? 'Subtle (5-11ms)' : hapticLevel <= 7 ? 'Balanced (15-27ms)' : hapticLevel <= 9 ? 'Heavy Dual Strike' : 'Max Volumetric Wave'}
                             </span>
                             <span>10 (Max Wave)</span>

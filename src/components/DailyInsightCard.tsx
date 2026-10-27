@@ -100,9 +100,9 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
   if (!insight) return null;
 
   return (
-    <div className={`rounded-xl bg-[#100d23] border border-[#2a2254] shadow-lg text-[#e8e6f2] overflow-hidden transition-all duration-200 ${className}`}>
+    <div className={`rounded-xl bg-[#0a071b] border border-[#1e1642] shadow-lg text-[#e8e6f2] overflow-hidden transition-all duration-200 ${className}`}>
       {/* Top Header Row */}
-      <div className="px-3 py-2 bg-[#000000] border-b border-[#2a2254] flex items-center justify-between">
+      <div className="px-3 py-2 bg-[#000000] border-b border-[#1e1642] flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Neon cyan icon badge */}
           <div className="w-5 h-5 rounded-md bg-[#00ffcc]/15 border border-[#00ffcc]/30 flex items-center justify-center text-[#00ffcc]">
@@ -128,7 +128,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
           {/* Google Search Grounding Indicator */}
           {insight.grounded && (
             <span 
-              className="hidden xs:flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-mono bg-[#15122c] border border-[#2a2254] text-[#948eb5]"
+              className="hidden xs:flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-mono bg-[#130d2d] border border-[#1e1642] text-[#948eb5]"
               title="Verified via real-time Google Search grounding"
             >
               <Search className="w-2.5 h-2.5 text-[#00ffcc]" />
@@ -140,7 +140,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
           <button
             onClick={() => fetchDailyInsight(true)}
             disabled={isLoading}
-            className="p-1 rounded-md text-[#948eb5] hover:text-white hover:bg-[#1a1638] transition active:scale-95 disabled:opacity-50"
+            className="p-1 rounded-md text-[#948eb5] hover:text-white hover:bg-[#130d2d] transition active:scale-95 disabled:opacity-50"
             title="Fetch Fresh Industry Trend or Quote"
           >
             <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin text-[#00ffcc]' : ''}`} />
@@ -149,7 +149,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
           {/* Collapse/Expand Toggle */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded-md text-[#948eb5] hover:text-white hover:bg-[#1a1638] transition"
+            className="p-1 rounded-md text-[#948eb5] hover:text-white hover:bg-[#130d2d] transition"
             title={isExpanded ? 'Collapse Insight Card' : 'Expand Insight Card'}
           >
             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -176,7 +176,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
           </p>
 
           {/* Author/Source & Footer Controls */}
-          <div className="pt-2 border-t border-[#2a2254] flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono text-[#948eb5]">
+          <div className="pt-2 border-t border-[#1e1642] flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono text-[#948eb5]">
             <span className="text-[#948eb5] font-medium truncate max-w-[190px]">
               — {insight.authorOrSource}
             </span>
@@ -185,7 +185,7 @@ export const DailyInsightCard: React.FC<DailyInsightCardProps> = ({
               {/* Copy Quote Button */}
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#15122c] hover:bg-[#1a1638] text-[#c6c1e1] hover:text-white transition active:scale-95 border border-[#2a2254]"
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#130d2d] hover:bg-[#1a123d] text-[#c6c1e1] hover:text-white transition active:scale-95 border border-[#1e1642]"
                 title="Copy insight"
               >
                 {copied ? <Check className="w-2.5 h-2.5 text-[#00ffcc]" /> : <Copy className="w-2.5 h-2.5" />}

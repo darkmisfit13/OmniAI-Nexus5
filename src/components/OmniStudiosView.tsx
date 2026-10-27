@@ -106,9 +106,9 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
   const Icon = meta.icon;
 
   const isMotionStudio = selectedStudio === 'motion';
+  const isSpatialStudio = selectedStudio === 'spatial';
   const isMobileViewportStudio = 
     selectedStudio === 'style' || 
-    selectedStudio === 'spatial' || 
     selectedStudio === 'wave' || 
     selectedStudio === 'beat' || 
     selectedStudio === 'mockup' || 
@@ -177,7 +177,7 @@ export const OmniStudiosView: React.FC<OmniStudiosViewProps> = ({
       )}
 
       {/* Render the Active Studio Component inside studio-canvas container */}
-      <div className={`studio-canvas flex-1 min-h-0 w-full flex flex-col ${isMotionStudio ? 'studio-canvas-motion !p-0 !pb-0 !gap-0 overflow-hidden' : isMobileViewportStudio ? '!p-0 !pb-0 !gap-0 overflow-y-auto' : 'overflow-y-auto'}`}>
+      <div className={`studio-canvas flex-1 min-h-0 w-full flex flex-col ${isMotionStudio || isSpatialStudio ? 'studio-canvas-motion !p-0 !pb-0 !gap-0 overflow-hidden' : isMobileViewportStudio ? '!p-0 !pb-0 !gap-0 overflow-y-auto' : 'overflow-y-auto'}`}>
         {selectedStudio === 'motion' && (
           <OmniMotionStudio 
             onSaveToVault={onSaveToVault} 
